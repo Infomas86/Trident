@@ -523,199 +523,129 @@ export default function UktSection() {
             </button>
           </div>
 
+          {/* KARTU INFORMASI PRIBADI PENDAFTARAN PESERTA UKT */}
           <div className="trident-card rounded-2xl p-6 sm:p-8 border border-blue-900/40 relative overflow-hidden space-y-6 shadow-2xl">
             
-            {/* Top Bar Candidate Info */}
+            {/* Header Data Pendaftaran */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
               <div className="flex items-center gap-4">
                 <img
                   src={myCandidateData.photo}
                   alt={myCandidateData.name}
-                  className="w-16 h-16 rounded-2xl object-cover border-2 border-amber-500/50 shadow-md"
+                  className="w-20 h-20 rounded-2xl object-cover border-2 border-amber-500/50 shadow-md"
                 />
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold text-white font-['Cinzel']">
+                    <h3 className="text-xl sm:text-2xl font-bold text-white font-['Cinzel']">
                       {myCandidateData.name}
                     </h3>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-amber-400 border border-slate-700">
                       {myCandidateData.regNumber}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 mt-0.5">
-                    Kenaikan: <strong className="text-amber-400">{myCandidateData.currentBelt} ➔ {myCandidateData.targetBelt}</strong>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Kenaikan Tingkat: <strong className="text-amber-400">{myCandidateData.currentBelt} ➔ {myCandidateData.targetBelt}</strong>
                   </p>
-                  <p className="text-[11px] text-slate-500">
-                    Cabang: {myCandidateData.branch} • Ujian: {myCandidateData.dateExam}
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Ranting / Cabang: <strong className="text-slate-200">{myCandidateData.branch}</strong>
                   </p>
                 </div>
               </div>
 
-              {/* Status Badge */}
-              <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
-                <div className={`px-5 py-2 rounded-xl border text-xs font-black uppercase tracking-wider text-center ${myResult.statusColor}`}>
-                  ★ {myResult.status} ★
+              {/* Status Pendaftaran Badge */}
+              <div className="flex flex-col sm:items-end gap-1.5 w-full sm:w-auto">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                  Status Registrasi Peserta:
+                </span>
+                <div className="px-4 py-1.5 rounded-xl border text-xs font-black uppercase tracking-wider text-center text-emerald-400 bg-emerald-950/60 border-emerald-600/50 flex items-center gap-2 shadow-md">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  <span>TERDAFTAR & TERVERIFIKASI</span>
                 </div>
               </div>
             </div>
 
-            {/* Final Score Hero Card */}
-            <div className="bg-gradient-to-r from-blue-950/80 via-slate-900 to-amber-950/40 rounded-2xl p-6 border border-blue-800/40 flex flex-col md:flex-row items-center justify-between gap-6">
+            {/* Title Section */}
+            <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs text-amber-400 font-bold uppercase tracking-wider block mb-1">
-                  Akumulasi Nilai Akhir Terpadu
-                </span>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl sm:text-5xl font-black text-white font-['Cinzel']">
-                    {myResult.score.toFixed(1)}
-                  </span>
-                  <span className="text-slate-400 text-sm font-semibold">/ 100.0</span>
-                </div>
-                <p className="text-xs text-slate-400 mt-1 max-w-lg">
-                  Formula: (Pos 1 × 25%) + (Pos 2 × 30%) + (Pos 3 × 20%) + (Pos 4 × 25%)
+                <h4 className="text-base font-bold text-white font-['Cinzel'] flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-amber-400" />
+                  Informasi Pribadi & Data Registrasi Pendaftaran
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Berikut adalah rincian data diri resmi yang diisi saat mendaftarkan diri pada Ujian Kenaikan Tingkat.
                 </p>
               </div>
-
-              <div className="text-right border-l-0 md:border-l border-slate-800 pl-0 md:pl-6 space-y-1">
-                <p className="text-xs text-slate-400">Penguji Utama:</p>
-                <p className="text-sm font-bold text-white">{myCandidateData.examinerName}</p>
-                <p className="text-[11px] text-emerald-400 font-medium">Rekap Terverifikasi Dewan UKT</p>
-              </div>
             </div>
 
-            {/* 4 Pos Individual Breakdown Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Grid Data Pribadi yang diisi ketika daftar */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               
-              {/* Pos 1 */}
-              <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800/50">
-                    Pos 1 (25%)
-                  </span>
-                  <Activity className="w-4 h-4 text-blue-400" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-300">Pengujian Fisik</h4>
-                  <div className="text-2xl font-black text-white font-mono mt-1">
-                    {myP1} <span className="text-xs font-normal text-slate-500">pts</span>
-                  </div>
-                </div>
-                <div className="pt-2 border-t border-slate-800/80 space-y-1 text-[11px] text-slate-400">
-                  <div className="flex justify-between">
-                    <span>Stamina:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos1.sub?.stamina}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Daya Tahan Fisik:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos1.sub?.physicalEndurance}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Agilitas:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos1.sub?.agility}</strong>
-                  </div>
-                </div>
+              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
+                <span className="text-[11px] text-slate-400 block">Nama Lengkap Pesilat</span>
+                <p className="text-sm font-bold text-white">{myCandidateData.name}</p>
+                <p className="text-[10px] text-slate-500">Sesuai KTP / Akta Kelahiran</p>
               </div>
 
-              {/* Pos 2 */}
-              <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800/50">
-                    Pos 2 (30%)
-                  </span>
-                  <Sword className="w-4 h-4 text-amber-400" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-300">Teknik Jurus</h4>
-                  <div className="text-2xl font-black text-amber-300 font-mono mt-1">
-                    {myP2} <span className="text-xs font-normal text-slate-500">pts</span>
-                  </div>
-                </div>
-                <div className="pt-2 border-t border-slate-800/80 space-y-1 text-[11px] text-slate-400">
-                  <div className="flex justify-between">
-                    <span>Presisi Jurus:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos2.sub?.jurusPrecision}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Akurasi Serangan:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos2.sub?.strikeAccuracy}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Kuda-kuda:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos2.sub?.stancesStability}</strong>
-                  </div>
-                </div>
+              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
+                <span className="text-[11px] text-slate-400 block">Nomor Registrasi / No. Anggota</span>
+                <p className="text-sm font-mono font-bold text-amber-400">{myCandidateData.regNumber}</p>
+                <p className="text-[10px] text-slate-500">Terdaftar di Buku Induk Padepokan</p>
               </div>
 
-              {/* Pos 3 */}
-              <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800/50">
-                    Pos 3 (20%)
-                  </span>
-                  <BookOpen className="w-4 h-4 text-blue-400" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-300">Materi & Etika</h4>
-                  <div className="text-2xl font-black text-white font-mono mt-1">
-                    {myP3} <span className="text-xs font-normal text-slate-500">pts</span>
-                  </div>
-                </div>
-                <div className="pt-2 border-t border-slate-800/80 space-y-1 text-[11px] text-slate-400">
-                  <div className="flex justify-between">
-                    <span>Teori Beladiri:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos3.sub?.theory}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Sejarah Perguruan:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos3.sub?.history}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Etika Penghormatan:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos3.sub?.ethicsRespect}</strong>
-                  </div>
-                </div>
+              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
+                <span className="text-[11px] text-slate-400 block">Ranting / Asal Cabang</span>
+                <p className="text-sm font-bold text-white">{myCandidateData.branch}</p>
+                <p className="text-[10px] text-slate-500">Wilayah Pembinaan Silat</p>
               </div>
 
-              {/* Pos 4 */}
-              <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800/50">
-                    Pos 4 (25%)
-                  </span>
-                  <Shield className="w-4 h-4 text-amber-400" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-300">Sabung / Sparring</h4>
-                  <div className="text-2xl font-black text-amber-300 font-mono mt-1">
-                    {myP4} <span className="text-xs font-normal text-slate-500">pts</span>
-                  </div>
-                </div>
-                <div className="pt-2 border-t border-slate-800/80 space-y-1 text-[11px] text-slate-400">
-                  <div className="flex justify-between">
-                    <span>Keberanian Tarung:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos4.sub?.fightingCourage}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Penerapan Teknik:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos4.sub?.techniqueApplication}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Kontrol Emosi:</span>
-                    <strong className="text-slate-200">{myCandidateData.posScores.pos4.sub?.emotionalControl}</strong>
-                  </div>
-                </div>
+              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
+                <span className="text-[11px] text-slate-400 block">Tingkatan Sabuk Saat Ini</span>
+                <p className="text-sm font-bold text-emerald-400">{myCandidateData.currentBelt}</p>
+                <p className="text-[10px] text-slate-500">Tingkat Kemahiran Aktif</p>
+              </div>
+
+              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
+                <span className="text-[11px] text-slate-400 block">Target Kenaikan Jenjang</span>
+                <p className="text-sm font-bold text-amber-400">{myCandidateData.targetBelt}</p>
+                <p className="text-[10px] text-slate-500">Tingkat Ujian yang Ditempuh</p>
+              </div>
+
+              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
+                <span className="text-[11px] text-slate-400 block">Pelatih / Pembina Ranting</span>
+                <p className="text-sm font-bold text-white">Pendekar Hendro Suwarno</p>
+                <p className="text-[10px] text-slate-500">Rekomendasi Dewan Pelatih</p>
+              </div>
+
+              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
+                <span className="text-[11px] text-slate-400 block">Tempat & Tanggal Lahir</span>
+                <p className="text-sm font-semibold text-slate-200">Jakarta, 14 Juli 2004 (22 Th)</p>
+                <p className="text-[10px] text-slate-500">Kategori Usia: Dewasa</p>
+              </div>
+
+              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
+                <span className="text-[11px] text-slate-400 block">Kontak WhatsApp / HP</span>
+                <p className="text-sm font-mono font-semibold text-slate-200">+62 812-9842-1084</p>
+                <p className="text-[10px] text-slate-500">Nomor Aktif Pemberitahuan</p>
+              </div>
+
+              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
+                <span className="text-[11px] text-slate-400 block">Lokasi & Jadwal Ujian UKT</span>
+                <p className="text-sm font-semibold text-white">Padepokan Pusat • 22 Nov 2026</p>
+                <p className="text-[10px] text-slate-500">Pukul 07:30 WIB - Selesai</p>
               </div>
 
             </div>
 
-            {/* Examiner Notes */}
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
-              <span className="text-xs font-bold text-amber-400 block">
-                Catatan Resmi Penguji:
+            {/* Perlengkapan yang harus dibawa */}
+            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+              <span className="text-xs font-bold text-amber-400 block uppercase tracking-wider">
+                Catatan Perlengkapan Saat Mengikuti Ujian:
               </span>
-              <p className="text-xs sm:text-sm text-slate-300 italic leading-relaxed">
-                "{myCandidateData.examinerNotes}"
-              </p>
+              <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside leading-relaxed">
+                <li>Mengenakan seragam sakral resmi perguruan lengkap dengan sabuk saat ini ({myCandidateData.currentBelt}).</li>
+                <li>Membawa perlengkapan pelindung pribadi: gumshield, pelindung tulang kering, dan body protector.</li>
+                <li>Wajib hadir di lokasi padepokan minimal 30 menit sebelum apel pembukaan ujian dimulai.</li>
+              </ul>
             </div>
 
           </div>
