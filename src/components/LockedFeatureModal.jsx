@@ -1,9 +1,9 @@
 import React from 'react';
 import { useApp, ROLES } from '../context/AppContext';
-import { Lock, ShieldAlert, ArrowRight, UserCheck, Sword, X } from 'lucide-react';
+import { Lock, ShieldAlert, ArrowRight, UserCheck, Sword, X, KeyRound, ShieldCheck } from 'lucide-react';
 
 export default function LockedFeatureModal() {
-  const { lockedModal, setLockedModal, handleRoleChange, setActiveTab } = useApp();
+  const { lockedModal, setLockedModal, handleRoleChange, setActiveTab, setIsLoginModalOpen } = useApp();
 
   if (!lockedModal.open) return null;
 
@@ -13,6 +13,11 @@ export default function LockedFeatureModal() {
     if (targetTab) {
       setActiveTab(targetTab);
     }
+  };
+
+  const handleOpenLogin = () => {
+    setLockedModal({ open: false, featureName: '' });
+    setIsLoginModalOpen(true);
   };
 
   return (
@@ -84,6 +89,14 @@ export default function LockedFeatureModal() {
               </div>
             </div>
             <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
+          </button>
+
+          <button
+            onClick={handleOpenLogin}
+            className="w-full py-2.5 rounded-xl bg-slate-950 border border-slate-700 hover:border-amber-500/60 text-slate-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+            <span>Buka Halaman Login Lengkap</span>
           </button>
         </div>
 

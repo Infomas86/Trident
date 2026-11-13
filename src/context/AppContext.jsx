@@ -8,6 +8,8 @@ import {
   INITIAL_AGENDAS,
   INITIAL_CAMPAIGNS,
   INITIAL_CANDIDATES,
+  INITIAL_HERO_DATA,
+  INITIAL_TRAINING_GROUNDS,
   calculateUktScore,
 } from '../data/mockData';
 
@@ -17,6 +19,7 @@ export const ROLES = {
   PUBLIC: 'public',
   MEMBER: 'member',
   EXAMINER: 'examiner',
+  ADMIN: 'admin',
 };
 
 const USER_PROFILES = {
@@ -46,6 +49,15 @@ const USER_PROFILES = {
     regNumber: 'TRD-EXAM-1984-001',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
   },
+  [ROLES.ADMIN]: {
+    id: 'admin-1',
+    name: 'Dewan Sekretariat Pusat',
+    role: ROLES.ADMIN,
+    title: 'Administrator Utama Perguruan',
+    belt: 'Sabuk Hijau Strip Hitam (Pengurus Pusat)',
+    regNumber: 'TRD-ADM-PST-001',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80',
+  },
 };
 
 export function AppProvider({ children }) {
@@ -57,18 +69,83 @@ export function AppProvider({ children }) {
   const [activeTab, setActiveTab] = useState('visi');
   const [lockedModal, setLockedModal] = useState({ open: false, featureName: '' });
 
+  // Login Modal State
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
   // Admin Verification Code Modal State (for Anggota wanting to act as Penguji)
   const [isAdminCodeModalOpen, setIsAdminCodeModalOpen] = useState(false);
 
-  // Data states
-  const [stats, setStats] = useState(INITIAL_STATS);
-  const [timeline, setTimeline] = useState(INITIAL_TIMELINE);
-  const [pillars, setPillars] = useState(INITIAL_PILLARS);
+  // OFFLINE & AUTO-SYNC ENGINE STATE
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+  const [isSimulatingOffline, setIsSimulatingOffline] = useState(false);
+  const [offlineQueue, setOfflineQueue] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_offline_queue');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Data states with LocalStorage persistence
+  const [stats, setStats] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_stats');
+      return saved ? JSON.parse(saved) : INITIAL_STATS;
+    } catch {
+      return INITIAL_STATS;
+    }
+  });
+
+  const [heroData, setHeroData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_hero');
+      return saved ? JSON.parse(saved) : INITIAL_HERO_DATA;
+    } catch {
+      return INITIAL_HERO_DATA;
+    }
+  });
+
+  const [trainingGrounds, setTrainingGrounds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_training_grounds');
+      return saved ? JSON.parse(saved) : INITIAL_TRAINING_GROUNDS;
+    } catch {
+      return INITIAL_TRAINING_GROUNDS;
+    }
+  });
+
+  const [timeline, setTimeline] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_timeline');
+      return saved ? JSON.parse(saved) : INITIAL_TIMELINE;
+    } catch {
+      return INITIAL_TIMELINE;
+    }
+  });
+
+  const [pillars, setPillars] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_pillars');
+      return saved ? JSON.parse(saved) : INITIAL_PILLARS;
+    } catch {
+      return INITIAL_PILLARS;
+    }
+  });
+
   const [newsList, setNewsList] = useState(INITIAL_NEWS);
   const [achievementsList, setAchievementsList] = useState(INITIAL_ACHIEVEMENTS);
   const [agendaList, setAgendaList] = useState(INITIAL_AGENDAS);
   const [campaignList, setCampaignList] = useState(INITIAL_CAMPAIGNS);
-  const [candidatesList, setCandidatesList] = useState(INITIAL_CANDIDATES);
+
+  const [candidatesList, setCandidatesList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_candidates');
+      return saved ? JSON.parse(saved) : INITIAL_CANDIDATES;
+    } catch {
+      return INITIAL_CANDIDATES;
+    }
+  });
 
   // Modal for donation receipt printing
   const [selectedReceipt, setSelectedReceipt] = useState(null);
@@ -80,11 +157,84 @@ export function AppProvider({ children }) {
     setToast({ message, type });
     setTimeout(() => {
       setToast(null);
-    }, 3800);
+    }, 4500);
   };
 
+  // Auto-Sync Function: Processes offline queue when connection returns
+  const syncOfflineQueue = (customQueue = null) => {
+    const queueToProcess = customQueue || offlineQueue;
+    if (!queueToProcess || queueToProcess.length === 0) return;
+
+    setCandidatesList((prev) => {
+      let current = [...prev];
+      queueToProcess.forEach((item) => {
+        current = current.map((c) =>
+          c.id === item.candidateId
+            ? {
+                ...c,
+                posScores: item.posScores,
+                examinerNotes: item.examinerNotes,
+                examinerName: item.examinerName,
+                dateExam: item.dateExam || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+              }
+            : c
+        );
+      });
+      localStorage.setItem('trident_candidates', JSON.stringify(current));
+      return current;
+    });
+
+    const syncedCount = queueToProcess.length;
+    setOfflineQueue([]);
+    localStorage.removeItem('trident_offline_queue');
+
+    showToast(
+      `🟢 Sinyal Terhubung Kembali! ${syncedCount} nilai ujian tersimpan berhasil disinkronisasikan otomatis ke pusat.`,
+      'success'
+    );
+  };
+
+  // Listen to network changes (online / offline)
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      if (!isSimulatingOffline) {
+        syncOfflineQueue();
+      }
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      showToast('⚠️ Sinyal internet terputus. Mode Offline otomatis aktif: progres penilaian Anda tetap tersimpan aman di perangkat.', 'warning');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [offlineQueue, isSimulatingOffline]);
+
+  // Toggle simulation of lost signal for easy demo and testing
+  const toggleOfflineSimulation = () => {
+    setIsSimulatingOffline((prev) => {
+      const next = !prev;
+      if (next) {
+        showToast('🔴 Mode Uji: Simulasi Sinyal Hilang DIAKTIFKAN. Nilai yang Anda input akan ditampung di antrean offline lokal.', 'warning');
+      } else {
+        showToast('🟢 Mode Uji: Simulasi Sinyal Kembali DINONAKTIFKAN. Memulai sinkronisasi otomatis ke server pusat...', 'success');
+        setTimeout(() => {
+          syncOfflineQueue();
+        }, 600);
+      }
+      return next;
+    });
+  };
+
+  // Role switching
   const handleRoleChange = (newRole, bypassCode = false) => {
-    // If logged in as Anggota and wanting to switch to Penguji, require admin verification code!
     if (role === ROLES.MEMBER && newRole === ROLES.EXAMINER && !bypassCode) {
       setIsAdminCodeModalOpen(true);
       return;
@@ -92,8 +242,31 @@ export function AppProvider({ children }) {
 
     setRole(newRole);
     localStorage.setItem('trident_role', newRole);
-    const roleName = newRole === ROLES.PUBLIC ? 'Tamu Publik' : newRole === ROLES.MEMBER ? 'Anggota (Ahmad Fauzi)' : 'Penguji UKT (Master Bambang)';
+    const roleName =
+      newRole === ROLES.PUBLIC
+        ? 'Tamu Publik'
+        : newRole === ROLES.MEMBER
+        ? 'Anggota (Ahmad Fauzi)'
+        : newRole === ROLES.ADMIN
+        ? 'Administrator Pusat'
+        : 'Penguji UKT (Master Bambang)';
     showToast(`Beralih peran menjadi: ${roleName}`, 'info');
+  };
+
+  // Login handler
+  const handleLogin = (targetRole) => {
+    setRole(targetRole);
+    localStorage.setItem('trident_role', targetRole);
+    setIsLoginModalOpen(false);
+    const profile = USER_PROFILES[targetRole];
+    showToast(`Berhasil Masuk! Selamat datang, ${profile?.name || 'Pengguna'} (${profile?.title || targetRole}).`, 'success');
+  };
+
+  // Logout handler
+  const handleLogout = () => {
+    setRole(ROLES.PUBLIC);
+    localStorage.setItem('trident_role', ROLES.PUBLIC);
+    showToast('Anda telah keluar dari akun. Fitur dibatasi kembali untuk mode publik.', 'info');
   };
 
   // Verify Admin Code and unlock Examiner Mode
@@ -120,10 +293,7 @@ export function AppProvider({ children }) {
   const checkAccess = (moduleName) => {
     if (role === ROLES.PUBLIC) {
       if (['agenda', 'donasi', 'ukt'].includes(moduleName)) {
-        setLockedModal({
-          open: true,
-          featureName: moduleName === 'agenda' ? 'Agenda Kegiatan' : moduleName === 'donasi' ? 'Donasi Perguruan' : 'Ujian Kenaikan Tingkat',
-        });
+        setIsLoginModalOpen(true);
         return false;
       }
     }
@@ -133,10 +303,7 @@ export function AppProvider({ children }) {
   // Switch tab with access check
   const navigateToTab = (tabName) => {
     if (['agenda', 'donasi', 'ukt'].includes(tabName) && role === ROLES.PUBLIC) {
-      setLockedModal({
-        open: true,
-        featureName: tabName === 'agenda' ? 'Agenda Kegiatan' : tabName === 'donasi' ? 'Donasi Perguruan' : 'Ujian Kenaikan Tingkat',
-      });
+      setIsLoginModalOpen(true);
       return;
     }
     setActiveTab(tabName);
@@ -146,7 +313,7 @@ export function AppProvider({ children }) {
   // Agenda RSVP action
   const handleRsvp = (agendaId, status, reason = '') => {
     if (role === ROLES.PUBLIC) {
-      checkAccess('agenda');
+      setIsLoginModalOpen(true);
       return;
     }
 
@@ -237,22 +404,59 @@ export function AppProvider({ children }) {
     showToast(`Donasi sebesar Rp ${numAmount.toLocaleString('id-ID')} berhasil diproses! Bukti resi telah diterbitkan.`, 'success');
   };
 
-  // UKT Candidate Score Update (Examiner only)
+  // UKT Candidate Score Update with Offline-First Auto-Save
   const handleUpdateCandidateScores = (candidateId, newPosScores, notes) => {
-    setCandidatesList((prev) =>
-      prev.map((c) => {
+    const dateExam = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    // 1. Always update candidate in local state immediately so UI and progress are NEVER lost!
+    setCandidatesList((prev) => {
+      const updated = prev.map((c) => {
         if (c.id !== candidateId) return c;
         return {
           ...c,
           posScores: newPosScores,
           examinerNotes: notes,
           examinerName: currentUser.name,
-          dateExam: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+          dateExam,
         };
-      })
-    );
+      });
+      localStorage.setItem('trident_candidates', JSON.stringify(updated));
+      return updated;
+    });
 
-    showToast('Nilai Ujian Kenaikan Tingkat berhasil dikalkulasi & disimpan!', 'success');
+    const targetCandidate = candidatesList.find((c) => c.id === candidateId);
+    const candidateName = targetCandidate ? targetCandidate.name : 'Peserta UKT';
+
+    // 2. Check if currently offline or in offline simulation mode
+    const isCurrentlyOffline = !isOnline || isSimulatingOffline;
+
+    if (isCurrentlyOffline) {
+      const queueItem = {
+        id: `offline-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        candidateId,
+        candidateName,
+        posScores: newPosScores,
+        examinerNotes: notes,
+        examinerName: currentUser.name,
+        dateExam,
+        timestamp: new Date().toISOString(),
+        formattedTime: new Date().toLocaleTimeString('id-ID'),
+      };
+
+      setOfflineQueue((prev) => {
+        const filtered = prev.filter((item) => item.candidateId !== candidateId);
+        const nextQueue = [...filtered, queueItem];
+        localStorage.setItem('trident_offline_queue', JSON.stringify(nextQueue));
+        return nextQueue;
+      });
+
+      showToast(
+        `⚠️ Sinyal Hilang! Progres nilai ${candidateName} tersimpan lokal di HP. Nilai otomatis terkirim saat sinyal kembali.`,
+        'warning'
+      );
+    } else {
+      showToast(`Nilai UKT ${candidateName} berhasil dikalkulasi & tersinkronisasi ke server!`, 'success');
+    }
   };
 
   // Import Candidates
@@ -260,7 +464,9 @@ export function AppProvider({ children }) {
     setCandidatesList((prev) => {
       const existingIds = new Set(prev.map((c) => c.id));
       const filteredNew = newCandidates.filter((c) => !existingIds.has(c.id));
-      return [...filteredNew, ...prev];
+      const updated = [...filteredNew, ...prev];
+      localStorage.setItem('trident_candidates', JSON.stringify(updated));
+      return updated;
     });
     showToast(`Berhasil mengimpor ${newCandidates.length} peserta Ujian Kenaikan Tingkat!`, 'success');
   };
@@ -319,7 +525,77 @@ export function AppProvider({ children }) {
 
   const handleUpdateStats = (newStats) => {
     setStats(newStats);
+    localStorage.setItem('trident_stats', JSON.stringify(newStats));
     showToast('Statistik perguruan berhasil diperbarui!', 'success');
+  };
+
+  // ADMIN CMS MUTATORS (Mengubah isi aplikasi: Pilar Visi Misi, Hero, Info Tempat Latihan, Timeline)
+  const handleUpdatePillar = (id, updatedPillar) => {
+    setPillars((prev) => {
+      const updated = prev.map((p) => (p.id === id ? { ...p, ...updatedPillar } : p));
+      localStorage.setItem('trident_pillars', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Pilar Visi & Misi berhasil diperbarui oleh Administrator!', 'success');
+  };
+
+  const handleAddPillar = (newPillar) => {
+    setPillars((prev) => {
+      const id = Date.now();
+      const updated = [...prev, { ...newPillar, id }];
+      localStorage.setItem('trident_pillars', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Pilar Visi & Misi baru berhasil ditambahkan!', 'success');
+  };
+
+  const handleDeletePillar = (id) => {
+    setPillars((prev) => {
+      const updated = prev.filter((p) => p.id !== id);
+      localStorage.setItem('trident_pillars', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Pilar Visi & Misi berhasil dihapus!', 'info');
+  };
+
+  const handleUpdateTrainingGround = (id, updatedGround) => {
+    setTrainingGrounds((prev) => {
+      const updated = prev.map((g) => (g.id === id ? { ...g, ...updatedGround } : g));
+      localStorage.setItem('trident_training_grounds', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Info Tempat Latihan & Kontak Pelatih berhasil diperbarui!', 'success');
+  };
+
+  const handleAddTrainingGround = (newGround) => {
+    setTrainingGrounds((prev) => {
+      const id = `par-${Date.now()}`;
+      const updated = [{ ...newGround, id }, ...prev];
+      localStorage.setItem('trident_training_grounds', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Tempat Latihan (PAR) baru berhasil didaftarkan!', 'success');
+  };
+
+  const handleDeleteTrainingGround = (id) => {
+    setTrainingGrounds((prev) => {
+      const updated = prev.filter((g) => g.id !== id);
+      localStorage.setItem('trident_training_grounds', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Tempat Latihan berhasil dihapus dari daftar!', 'info');
+  };
+
+  const handleUpdateHero = (newHero) => {
+    setHeroData(newHero);
+    localStorage.setItem('trident_hero', JSON.stringify(newHero));
+    showToast('Slogan & Teks Hero Padepokan berhasil diperbarui!', 'success');
+  };
+
+  const handleUpdateTimeline = (newTimeline) => {
+    setTimeline(newTimeline);
+    localStorage.setItem('trident_timeline', JSON.stringify(newTimeline));
+    showToast('Sejarah Perjalanan Perguruan berhasil diperbarui!', 'success');
   };
 
   return (
@@ -328,6 +604,10 @@ export function AppProvider({ children }) {
         role,
         ROLES,
         handleRoleChange,
+        handleLogin,
+        handleLogout,
+        isLoginModalOpen,
+        setIsLoginModalOpen,
         requestExaminerAccess,
         isAdminCodeModalOpen,
         setIsAdminCodeModalOpen,
@@ -341,8 +621,18 @@ export function AppProvider({ children }) {
         setLockedModal,
         stats,
         handleUpdateStats,
+        heroData,
+        handleUpdateHero,
+        trainingGrounds,
+        handleUpdateTrainingGround,
+        handleAddTrainingGround,
+        handleDeleteTrainingGround,
         timeline,
+        handleUpdateTimeline,
         pillars,
+        handleUpdatePillar,
+        handleAddPillar,
+        handleDeletePillar,
         newsList,
         handleAddNews,
         achievementsList,
@@ -358,6 +648,12 @@ export function AppProvider({ children }) {
         handleImportCandidates,
         selectedReceipt,
         setSelectedReceipt,
+        // Offline & Auto-sync Engine
+        isOnline,
+        isSimulatingOffline,
+        toggleOfflineSimulation,
+        offlineQueue,
+        syncOfflineQueue,
         toast,
         showToast,
       }}

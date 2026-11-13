@@ -18,19 +18,28 @@ export default function RoleBanner() {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-slate-300">Mode Akses Aktif:</span>
             <span className={`px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[11px] border ${
-              role === ROLES.EXAMINER
+              role === ROLES.ADMIN
+                ? 'bg-amber-500 text-slate-950 border-amber-400 font-black'
+                : role === ROLES.EXAMINER
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                 : role === ROLES.MEMBER
                 ? 'bg-blue-600/20 text-blue-300 border-blue-500/40'
                 : 'bg-slate-800 text-slate-300 border-slate-700'
             }`}>
-              {role === ROLES.EXAMINER ? 'Penguji / Admin (Master Bambang)' : role === ROLES.MEMBER ? 'Anggota (Ahmad Fauzi)' : 'Tamu (Public)'}
+              {role === ROLES.ADMIN
+                ? 'Administrator Pusat (CMS Admin)'
+                : role === ROLES.EXAMINER
+                ? 'Penguji UKT (Master Bambang)'
+                : role === ROLES.MEMBER
+                ? 'Anggota (Ahmad Fauzi)'
+                : 'Tamu (Public)'}
             </span>
             <span className="hidden sm:inline text-slate-500">•</span>
             <span className="hidden sm:inline text-slate-400">
               {role === ROLES.PUBLIC && 'Fitur Agenda, Donasi, & UKT berstatus Terkunci (Read-Only Berita & Prestasi)'}
-              {role === ROLES.MEMBER && 'Dapat RSVP Agenda, Berdonasi & Cetak Resi, Cek Hasil Ujian Kenaikan Tingkat Pribadi'}
-              {role === ROLES.EXAMINER && 'Hak Penuh: Penilaian Pos 1-4, Impor/Ekspor Peserta, Publish Berita & Prestasi'}
+              {role === ROLES.MEMBER && 'Informasi Pendaftaran UKT Pribadi, Garis Struktural 6 Tingkat, RSVP Agenda, Donasi'}
+              {role === ROLES.EXAMINER && 'Hak Penuh Penilaian Pos 1-4, Mode Offline & Auto-Sync, Impor/Ekspor Peserta CSV'}
+              {role === ROLES.ADMIN && 'Hak Otoritas Penuh: Mengubah Isi Aplikasi (Pilar Visi Misi, Info Tempat Latihan, Slogan, Timeline)'}
             </span>
           </div>
         </div>
@@ -69,7 +78,18 @@ export default function RoleBanner() {
                 : 'text-slate-400 hover:text-amber-300 hover:bg-slate-800'
             }`}
           >
-            Penguji / Admin
+            Penguji UKT
+          </button>
+
+          <button
+            onClick={() => handleRoleChange(ROLES.ADMIN)}
+            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
+              role === ROLES.ADMIN
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-sm'
+                : 'text-amber-400 hover:text-amber-300 hover:bg-slate-800'
+            }`}
+          >
+            Admin Pusat
           </button>
         </div>
 

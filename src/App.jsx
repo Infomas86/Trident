@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import RoleBanner from './components/RoleBanner';
 import LockedFeatureModal from './components/LockedFeatureModal';
 import AdminCodeModal from './components/AdminCodeModal';
+import LoginPage from './components/LoginPage';
 import VisiMisiSection from './components/VisiMisiSection';
 import BeritaSection from './components/BeritaSection';
 import PrestasiSection from './components/PrestasiSection';
@@ -30,6 +31,9 @@ function MainContent() {
 
       {/* Admin Code Verification Modal */}
       <AdminCodeModal />
+
+      {/* User Login Portal Modal */}
+      <LoginPage />
 
       {/* Toast Notification */}
       {toast && (

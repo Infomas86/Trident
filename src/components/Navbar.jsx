@@ -15,10 +15,23 @@ import {
   Sparkles,
   Sword,
   User,
+  KeyRound,
+  LogOut,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function Navbar() {
-  const { role, ROLES, handleRoleChange, currentUser, activeTab, navigateToTab } = useApp();
+  const {
+    role,
+    ROLES,
+    handleRoleChange,
+    currentUser,
+    activeTab,
+    navigateToTab,
+    isLoginModalOpen,
+    setIsLoginModalOpen,
+    handleLogout,
+  } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
@@ -106,6 +119,11 @@ export default function Navbar() {
                 <div className="hidden xl:block">
                   <div className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                     {currentUser.name}
+                    {role === ROLES.ADMIN && (
+                      <span className="text-[10px] px-1 rounded bg-amber-500 text-slate-950 font-black">
+                        Admin Pusat
+                      </span>
+                    )}
                     {role === ROLES.EXAMINER && (
                       <span className="text-[10px] px-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                         Penguji
@@ -188,16 +206,61 @@ export default function Navbar() {
                       <Sword className="w-4 h-4 mt-0.5 text-amber-400" />
                       <div>
                         <div className="text-xs font-bold flex items-center gap-1.5">
-                          Penguji / Admin (Examiner)
+                          Penguji UKT (Examiner)
                           {role === ROLES.EXAMINER && <span className="text-[10px] text-amber-400 font-normal">● Aktif</span>}
                         </div>
-                        <p className="text-[11px] text-slate-400">Master Bambang: Ujian Kenaikan Tingkat, Publish Berita & Prestasi.</p>
+                        <p className="text-[11px] text-slate-400">Master Bambang: Penilaian Pos 1-4, Mode Offline & Auto-Sync Sinyal.</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        handleRoleChange(ROLES.ADMIN);
+                        setRoleDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
+                        role === ROLES.ADMIN ? 'bg-amber-950/70 border border-amber-500/50 text-white' : 'hover:bg-slate-800 text-slate-300'
+                      }`}
+                    >
+                      <ShieldCheck className="w-4 h-4 mt-0.5 text-amber-400" />
+                      <div>
+                        <div className="text-xs font-bold flex items-center gap-1.5">
+                          Administrator Pusat (CMS Admin)
+                          {role === ROLES.ADMIN && <span className="text-[10px] text-amber-400 font-normal">● Aktif</span>}
+                        </div>
+                        <p className="text-[11px] text-slate-400">Pengurus Pusat: Mengubah isi aplikasi (Pilar Visi Misi, Tempat Latihan, Slogan).</p>
                       </div>
                     </button>
                   </div>
+
+                  {role !== ROLES.PUBLIC && (
+                    <div className="mt-2 pt-2 border-t border-slate-800">
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setRoleDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-950/40 transition-colors"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Keluar dari Akun (Logout)</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Login Button when Guest */}
+            {role === ROLES.PUBLIC && (
+              <button
+                onClick={() => setIsLoginModalOpen(true)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-xs shadow-md shadow-amber-950/40 transition-all hover:scale-105"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Masuk Akun</span>
+              </button>
+            )}
           </div>
 
           {/* Mobile menu button */}
