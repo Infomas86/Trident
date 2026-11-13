@@ -7,12 +7,12 @@ Aplikasi web manajemen perguruan seni bela diri modern yang mengintegrasikan tra
 ## 🥋 Tingkatan Sabuk (Belt Hierarchy)
 
 Perguruan menggunakan hierarki tingkatan sabuk berjenjang:
-1. **Sabuk Hijau Strip Putih** (Tingkat Dasar)
+1. **Sabuk Hijau Strip Putih** 
 2. **Sabuk Hijau Strip Kuning**
 3. **Sabuk Hijau Strip Merah**
 4. **Sabuk Hijau Strip Biru**
 5. **Sabuk Hijau Strip Cokelat**
-6. **Sabuk Hijau Strip Hitam** (Dewan Pendekar / Penguji Utama)
+6. **Sabuk Hijau Strip Hitam** 
 
 ---
 
