@@ -53,15 +53,6 @@ Perguruan menggunakan hierarki tingkatan sabuk berjenjang:
 
 ---
 
-## 💻 Teknologi yang Digunakan
-
-- **React 19**
-- **Vite**
-- **Tailwind CSS v4**
-- **Lucide Icons**
-
----
-
 ## 🚀 Menjalankan Aplikasi Secara Lokal
 
 ```bash
