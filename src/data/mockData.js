@@ -9,6 +9,65 @@ export const TRIDENT_BELT_LEVELS = [
   "Sabuk Hijau Strip Hitam",
 ];
 
+// Hierarki Struktural Resmi Organisasi Perguruan:
+// Pimpinan Pusat ➔ Pimpinan Wilayah ➔ Pimpinan Cabang ➔ Pimpinan Anak Cabang ➔ Pimpinan Ranting ➔ Pimpinan Anak Ranting (Tempat Latihan)
+export const ORGANIZATIONAL_HIERARCHY = [
+  {
+    level: 1,
+    tier: "Pimpinan Pusat (PP)",
+    short: "PP",
+    scope: "Tingkat Nasional / Pusat",
+    desc: "Penetapan AD/ART, kurikulum baku bela diri, standarisasi Ujian Kenaikan Tingkat (UKT) nasional, dan sertifikasi dewan penguji utama.",
+    example: "PP Pagar Nusa Trident",
+    badge: "Otoritas Tertinggi",
+  },
+  {
+    level: 2,
+    tier: "Pimpinan Wilayah (PW)",
+    short: "PW",
+    scope: "Tingkat Provinsi",
+    desc: "Koordinasi wilayah provinsi, pengawasan standarisasi kurikulum daerah, serta pembinaan dan seleksi kejuaraan tingkat provinsi.",
+    example: "PW Kepulauan Riau",
+    badge: "Tingkat Provinsi",
+  },
+  {
+    level: 3,
+    tier: "Pimpinan Cabang (PC)",
+    short: "PC",
+    scope: "Tingkat Kota / Kabupaten",
+    desc: "Registrasi anggota terpadu (E-KTA), pembinaan anak cabang se-kabupaten/kota, dan koordinasi kejuaraan antar ranting.",
+    example: "PC Kota Batam",
+    badge: "Kota / Kabupaten",
+  },
+  {
+    level: 4,
+    tier: "Pimpinan Anak Cabang (PAC)",
+    short: "PAC",
+    scope: "Tingkat Kecamatan",
+    desc: "Penyelenggara teknis Ujian Kenaikan Tingkat (UKT), penerbitan nomor registrasi kelulusan, dan pengesahan kenaikan strip sabuk.",
+    example: "PAC Kecamatan Sungai Beduk",
+    badge: "Tingkat Kecamatan",
+  },
+  {
+    level: 5,
+    tier: "Pimpinan Ranting (PR)",
+    short: "PR",
+    scope: "Tingkat Kelurahan / Desa",
+    desc: "Kaderisasi langsung santri/pesilat di lingkungan desa/kelurahan, bimbingan akhlak moral kesatria, dan pengawasan rayon.",
+    example: "PR Kelurahan Tanjung Piayu",
+    badge: "Kelurahan / Desa",
+  },
+  {
+    level: 6,
+    tier: "Pimpinan Anak Ranting (PAR)",
+    short: "PAR",
+    scope: "Tempat Latihan / Rayon / RW",
+    desc: "Ujung tombak latihan fisik, teknik jurus dasar, latihan pernafasan, dan penggemblengan rutin berkala setiap minggu.",
+    example: "PAR Buana Garden (Tempat Latihan)",
+    badge: "Tempat Latihan",
+  },
+];
+
 export const INITIAL_STATS = {
   activeMembers: 1284,
   medalsCount: 342,
@@ -77,9 +136,9 @@ export const INITIAL_NEWS = [
     title: "Pengumuman Jadwal Ujian Kenaikan Tingkat (UKT) Semester Gasal 2026",
     category: "Pengumuman",
     date: "12 November 2026",
-    author: "Sekretariat Padepokan",
+    author: "PAC Sungai Beduk",
     summary: "Seluruh calon peserta sabuk Hijau Strip Putih dan Kuning diwajibkan mendaftar verifikasi pos fisik.",
-    content: "Pelaksanaan UKT Semester Gasal 2026 akan dipusatkan di Padepokan Agung Gedung Mandala Krida. Pengujian mencakup 4 Pos Penilaian standar Trident: Pengujian Fisik (25%), Teknik Jurus (30%), Pemahaman Materi & Etika (20%), serta Pertarungan Sabung / Sparring (25%). Peserta diharapkan membawa seragam sakral lengkap beserta pelindung kaki dan tulang kering.",
+    content: "Pelaksanaan UKT Semester Gasal 2026 akan dipusatkan di Padepokan Agung. Pengujian mencakup 4 Pos Penilaian standar Trident: Pengujian Fisik (25%), Teknik Jurus (30%), Pemahaman Materi & Etika (20%), serta Pertarungan Sabung / Sparring (25%). Peserta diharapkan membawa seragam sakral lengkap beserta pelindung kaki dan tulang kering.",
     image: "https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&w=800&q=80",
     tags: ["UKT", "Ujian", "Pengumuman"],
   },
@@ -96,11 +155,11 @@ export const INITIAL_NEWS = [
   },
   {
     id: "news-3",
-    title: "Latihan Gabungan Serentak 28 Cabang dan Sarasehan Sesepuh Pendekar",
+    title: "Latihan Gabungan Serentak Pimpinan Ranting dan Sarasehan Sesepuh Pendekar",
     category: "Perguruan",
     date: "01 November 2026",
     author: "Humas Perguruan",
-    summary: "Ratusan pesilat dari penjuru nusantara berkumpul mempererat silaturahmi dan pemantapan jurus tradisi.",
+    summary: "Ratusan pesilat dari seluruh pimpinan ranting berkumpul mempererat silaturahmi dan pemantapan jurus tradisi.",
     content: "Latihan gabungan triwulanan berlangsung khidmat di pelataran utama padepokan. Agenda dibuka dengan penghormatan bendera perguruan dilanjutkan dengan bedah sejarah jurus pusaka bersama Dewan Pendekar. Kegiatan ini sekaligus meresmikan pembaruan sistem digitalisasi UKT berbasis aplikasi Trident.",
     image: "https://images.unsplash.com/photo-1509563033688-b666666572e9?auto=format&fit=crop&w=800&q=80",
     tags: ["Latgab", "Silaturahmi", "Perguruan"],
@@ -182,7 +241,7 @@ export const INITIAL_AGENDAS = [
     title: "Latihan Pemantapan Jurus Sabuk Hijau Strip Putih & Kuning",
     date: "18 November 2026",
     time: "15:30 - 18:00 WIB",
-    location: "Padepokan Pusat - Dojo Cakra Bhakti",
+    location: "PAC Sungai Beduk - Dojo Buana Garden",
     speaker: "Pendekar Madya Hendro & Pelatih Utama",
     description: "Fokus pada penguasaan 12 Jurus Pokok, langkah geseran egos, dan simulasi tangkisan beruntun untuk persiapan pos teknik Ujian Kenaikan Tingkat.",
   },
@@ -191,7 +250,7 @@ export const INITIAL_AGENDAS = [
     title: "Ujian Kenaikan Tingkat (UKT) Akbar 4 Pos",
     date: "22 November 2026",
     time: "07:30 - 16:30 WIB",
-    location: "Gedung Serbaguna Padepokan Trident",
+    location: "Gedung Serbaguna PAC Sungai Beduk, Batam",
     speaker: "Dewan Penguji Utama Master Bambang Wijaya",
     description: "Pelaksanaan UKT terpadu: Pos 1 Fisik, Pos 2 Jurus, Pos 3 Materi Etika, dan Pos 4 Sabung. Wajib hadir 30 menit sebelum apel pembukaan dengan seragam sakral lengkap.",
   },
@@ -238,13 +297,8 @@ export const INITIAL_CAMPAIGNS = [
   },
 ];
 
-// Candidates with the exact Pagar Nusa / Pencak Silat belt hierarchy:
-// 1. Sabuk Hijau Strip Putih
-// 2. Sabuk Hijau Strip Kuning
-// 3. Sabuk Hijau Strip Merah
-// 4. Sabuk Hijau Strip Biru
-// 5. Sabuk Hijau Strip Cokelat
-// 6. Sabuk Hijau Strip Hitam
+// Candidates with complete structural lineage:
+// PP ➔ PW ➔ PC ➔ PAC ➔ PR ➔ PAR (Tempat Latihan)
 export const INITIAL_CANDIDATES = [
   {
     id: "cand-1",
@@ -252,7 +306,15 @@ export const INITIAL_CANDIDATES = [
     name: "Ahmad Fauzi",
     currentBelt: "Sabuk Hijau Strip Putih",
     targetBelt: "Sabuk Hijau Strip Kuning",
-    branch: "Padepokan Pusat Jakarta",
+    branch: "PAC Sungai Beduk - PR Tanjung Piayu",
+    structure: {
+      pp: "Pimpinan Pusat (PP) Trident",
+      pw: "PW Kepulauan Riau",
+      pc: "PC Kota Batam",
+      pac: "PAC Sungai Beduk",
+      pr: "PR Tanjung Piayu",
+      par: "PAR Buana Garden (Tempat Latihan)",
+    },
     photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
     posScores: {
       pos1: {
@@ -282,7 +344,15 @@ export const INITIAL_CANDIDATES = [
     name: "Rian Saputra",
     currentBelt: "Sabuk Hijau Strip Kuning",
     targetBelt: "Sabuk Hijau Strip Merah",
-    branch: "Cabang Bandung Utara",
+    branch: "PAC Sungai Beduk - PR Mangsang",
+    structure: {
+      pp: "Pimpinan Pusat (PP) Trident",
+      pw: "PW Kepulauan Riau",
+      pc: "PC Kota Batam",
+      pac: "PAC Sungai Beduk",
+      pr: "PR Mangsang",
+      par: "PAR Puri Agung (Tempat Latihan)",
+    },
     photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
     posScores: {
       pos1: {
@@ -312,7 +382,15 @@ export const INITIAL_CANDIDATES = [
     name: "Bayu Perkasa",
     currentBelt: "Sabuk Hijau Strip Merah",
     targetBelt: "Sabuk Hijau Strip Biru",
-    branch: "Cabang Surabaya Barat",
+    branch: "PAC Batam Kota - PR Belian",
+    structure: {
+      pp: "Pimpinan Pusat (PP) Trident",
+      pw: "PW Kepulauan Riau",
+      pc: "PC Kota Batam",
+      pac: "PAC Batam Kota",
+      pr: "PR Belian",
+      par: "PAR Duta Mas (Tempat Latihan)",
+    },
     photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
     posScores: {
       pos1: {
@@ -342,7 +420,15 @@ export const INITIAL_CANDIDATES = [
     name: "Siti Rahmawati",
     currentBelt: "Sabuk Hijau Strip Biru",
     targetBelt: "Sabuk Hijau Strip Cokelat",
-    branch: "Padepokan Pusat Jakarta",
+    branch: "PAC Sungai Beduk - PR Duriangkang",
+    structure: {
+      pp: "Pimpinan Pusat (PP) Trident",
+      pw: "PW Kepulauan Riau",
+      pc: "PC Kota Batam",
+      pac: "PAC Sungai Beduk",
+      pr: "PR Duriangkang",
+      par: "PAR Bida Asri (Tempat Latihan)",
+    },
     photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80",
     posScores: {
       pos1: {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp, ROLES } from '../context/AppContext';
+import { ORGANIZATIONAL_HIERARCHY } from '../data/mockData';
 import {
   Shield,
   Zap,
@@ -14,12 +15,18 @@ import {
   GraduationCap,
   ChevronRight,
   TrendingUp,
+  Network,
+  Layers,
+  MapPin,
+  ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function VisiMisiSection() {
   const { stats, handleUpdateStats, timeline, pillars, role, ROLES, navigateToTab } = useApp();
   const [isEditingStats, setIsEditingStats] = useState(false);
   const [statsForm, setStatsForm] = useState({ ...stats });
+  const [activeTierLevel, setActiveTierLevel] = useState(4); // Default to PAC / Ranting
 
   const handleStatsSubmit = (e) => {
     e.preventDefault();
@@ -288,6 +295,153 @@ export default function VisiMisiSection() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* BAGAN STRUKTURAL ORGANISASI RESMI PERGURUAN (6 TINGKATAN)                */}
+      {/* PP ➔ PW ➔ PC ➔ PAC ➔ PR ➔ PAR (Tempat Latihan)                         */}
+      {/* ========================================================================= */}
+      <section className="space-y-8">
+        <div className="text-center max-w-3xl mx-auto space-y-2">
+          <div className="inline-flex items-center gap-1.5 text-amber-400 text-xs font-bold uppercase tracking-widest">
+            <Network className="w-3.5 h-3.5" />
+            <span>Tata Kelola Organisasi Terpadu</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
+            Bagan Struktur Organisasi Perguruan
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400">
+            Garis koordinasi dan hierarki komando dari Pimpinan Pusat hingga Tempat Latihan akar rumput (Pimpinan Anak Ranting).
+          </p>
+        </div>
+
+        {/* 6-Level Interactive Visual Hierarchy Flow */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {ORGANIZATIONAL_HIERARCHY.map((tier, idx) => {
+            const isSelected = activeTierLevel === tier.level;
+            return (
+              <button
+                key={tier.level}
+                onClick={() => setActiveTierLevel(tier.level)}
+                className={`text-left p-4 rounded-2xl border transition-all duration-300 flex flex-col justify-between relative group ${
+                  isSelected
+                    ? 'bg-gradient-to-b from-blue-900/60 to-slate-900 border-amber-500 shadow-lg shadow-amber-950/40 ring-1 ring-amber-500/50 scale-[1.02]'
+                    : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-900'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="w-6 h-6 rounded-lg bg-slate-950 border border-slate-700 text-amber-400 text-xs font-black flex items-center justify-center font-mono">
+                      {tier.level}
+                    </span>
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                      isSelected ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {tier.short}
+                    </span>
+                  </div>
+
+                  <h4 className="text-xs font-extrabold text-white leading-tight font-['Cinzel'] mb-1">
+                    {tier.tier}
+                  </h4>
+                  <p className="text-[10px] text-amber-400/90 font-medium">
+                    {tier.scope}
+                  </p>
+                </div>
+
+                <div className="mt-3 pt-2 border-t border-slate-800 text-[9px] text-slate-400 flex items-center justify-between">
+                  <span>{tier.badge}</span>
+                  <ChevronRight className={`w-3 h-3 transition-transform ${isSelected ? 'text-amber-400 rotate-90' : 'text-slate-600'}`} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active Tier Highlight Detail Card */}
+        {(() => {
+          const currentTier = ORGANIZATIONAL_HIERARCHY.find((t) => t.level === activeTierLevel) || ORGANIZATIONAL_HIERARCHY[0];
+          return (
+            <div className="trident-card rounded-2xl p-6 sm:p-8 border border-amber-500/30 bg-gradient-to-r from-slate-900 via-blue-950/40 to-slate-900 shadow-2xl relative overflow-hidden">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-3 max-w-2xl">
+                  <div className="flex items-center gap-2.5">
+                    <span className="px-3 py-1 rounded-lg bg-amber-500 text-slate-950 text-xs font-black font-mono">
+                      Level {currentTier.level}
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white font-['Cinzel']">
+                      {currentTier.tier}
+                    </h3>
+                    <span className="text-xs text-blue-300 font-semibold px-2.5 py-0.5 rounded-full bg-blue-950 border border-blue-800">
+                      {currentTier.scope}
+                    </span>
+                  </div>
+
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    {currentTier.desc}
+                  </p>
+
+                  <div className="flex items-center gap-2 pt-1 text-xs">
+                    <span className="text-slate-400">Contoh Satuan Administrasi:</span>
+                    <strong className="text-amber-400 font-mono bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                      {currentTier.example}
+                    </strong>
+                  </div>
+                </div>
+
+                {/* Flow Breadcrumb */}
+                <div className="shrink-0 bg-slate-950/80 p-4 rounded-xl border border-slate-800 text-xs space-y-2">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">
+                    Alur Struktural Perguruan:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5 font-bold font-mono text-[11px]">
+                    <span className={currentTier.level === 1 ? 'text-amber-400 underline' : 'text-slate-400'}>PP</span>
+                    <span className="text-slate-600">➔</span>
+                    <span className={currentTier.level === 2 ? 'text-amber-400 underline' : 'text-slate-400'}>PW</span>
+                    <span className="text-slate-600">➔</span>
+                    <span className={currentTier.level === 3 ? 'text-amber-400 underline' : 'text-slate-400'}>PC</span>
+                    <span className="text-slate-600">➔</span>
+                    <span className={currentTier.level === 4 ? 'text-amber-400 underline' : 'text-slate-400'}>PAC</span>
+                    <span className="text-slate-600">➔</span>
+                    <span className={currentTier.level === 5 ? 'text-amber-400 underline' : 'text-slate-400'}>PR</span>
+                    <span className="text-slate-600">➔</span>
+                    <span className={currentTier.level === 6 ? 'text-amber-400 underline' : 'text-slate-400'}>PAR</span>
+                  </div>
+                  <p className="text-[10px] text-emerald-400 pt-1 flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Sistem Terisolasi Per-Ranting (Anti-Bentrok)</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Callout: Solusi Anti-Bentrok Ujian Serentak Multi-Ranting */}
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-900 to-amber-950/30 border border-blue-800/50 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+              <ShieldCheck className="w-5 h-5 text-amber-400" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-white font-['Cinzel'] flex items-center gap-2">
+                <span>Ujian Serentak Antar Ranting: Apakah Data Bisa Bentrok?</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-500 text-emerald-400 font-sans font-bold">100% AMAN & TIDAK BENTROK</span>
+              </h4>
+              <p className="text-xs text-slate-300 leading-relaxed max-w-3xl">
+                Arsitektur sistem Trident menggunakan metode <strong className="text-amber-300">Multi-Tenant Data Sharding</strong>. Ketika 2 atau lebih Ranting (misal <em>PR Tanjung Piayu</em> dan <em>PR Mangsang</em>) mengadakan tes UKT di jam yang sama, data peserta, sesi meja penguji Pos 1 s/d Pos 4, serta rekapitulasi nilai tersimpan secara independen berdasarkan ID ranting dan tempat latihan.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigateToTab('ukt')}
+            className="shrink-0 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+          >
+            <span>Buka Ujian Kenaikan Tingkat</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </section>
 

@@ -23,6 +23,10 @@ import {
   FileText,
   Plus,
   RefreshCw,
+  Filter,
+  Network,
+  ShieldCheck,
+  MapPin,
 } from 'lucide-react';
 
 export default function UktSection() {
@@ -42,6 +46,7 @@ export default function UktSection() {
   const [activePosTab, setActivePosTab] = useState('all');
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRantingFilter, setSelectedRantingFilter] = useState('all');
   const [selectedCandidateForEval, setSelectedCandidateForEval] = useState(null);
   const [evalScores, setEvalScores] = useState(null);
   const [examinerNotesInput, setExaminerNotesInput] = useState('');
@@ -163,13 +168,22 @@ export default function UktSection() {
     setQuickPosModal(null);
   };
 
-  // Filter candidates
+  // Filter candidates with Multi-Tenant Ranting & Structural search
   const filteredCandidates = candidatesList.filter((c) => {
-    return (
+    const matchesSearch =
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.regNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.branch.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+      c.branch.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.structure?.pr && c.structure.pr.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (c.structure?.par && c.structure.par.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesRanting =
+      selectedRantingFilter === 'all' ||
+      c.branch.toLowerCase().includes(selectedRantingFilter.toLowerCase()) ||
+      (c.structure?.pr && c.structure.pr.toLowerCase().includes(selectedRantingFilter.toLowerCase())) ||
+      (c.structure?.par && c.structure.par.toLowerCase().includes(selectedRantingFilter.toLowerCase()));
+
+    return matchesSearch && matchesRanting;
   });
 
   // Calculate summary counts for Examiner
@@ -636,6 +650,58 @@ export default function UktSection() {
 
             </div>
 
+            {/* Garis Struktural Hirarki Organisasi Pendaftaran Peserta (PP ➔ PW ➔ PC ➔ PAC ➔ PR ➔ PAR) */}
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-900 to-slate-950 border border-blue-800/50 space-y-3 shadow-inner">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 font-['Cinzel']">
+                  <Network className="w-4 h-4 text-amber-400" />
+                  Garis Struktural Organisasi Resmi (6 Tingkatan)
+                </span>
+                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-600/50 text-emerald-300 font-bold flex items-center gap-1 w-fit">
+                  <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                  TERDATA DI BUKU INDUK PERGURUAN
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-1">
+                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">1. Pimpinan Pusat</span>
+                  <p className="text-xs font-bold text-white mt-1">{myCandidateData.structure?.pp || 'PP Trident'}</p>
+                  <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Nasional</span>
+                </div>
+
+                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">2. Pimpinan Wilayah</span>
+                  <p className="text-xs font-bold text-white mt-1">{myCandidateData.structure?.pw || 'PW Kepulauan Riau'}</p>
+                  <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Provinsi</span>
+                </div>
+
+                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">3. Pimpinan Cabang</span>
+                  <p className="text-xs font-bold text-white mt-1">{myCandidateData.structure?.pc || 'PC Kota Batam'}</p>
+                  <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Kab / Kota</span>
+                </div>
+
+                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">4. Pimpinan Anak Cabang</span>
+                  <p className="text-xs font-bold text-white mt-1">{myCandidateData.structure?.pac || 'PAC Sungai Beduk'}</p>
+                  <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Kecamatan</span>
+                </div>
+
+                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">5. Pimpinan Ranting</span>
+                  <p className="text-xs font-bold text-white mt-1">{myCandidateData.structure?.pr || 'PR Tanjung Piayu'}</p>
+                  <span className="text-[9px] text-slate-500 mt-1 block">Kelurahan / Desa</span>
+                </div>
+
+                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between ring-1 ring-amber-500/40">
+                  <span className="text-[9px] text-emerald-400 font-bold uppercase block tracking-wider">6. Tempat Latihan (PAR)</span>
+                  <p className="text-xs font-bold text-amber-300 mt-1">{myCandidateData.structure?.par || 'PAR Buana Garden'}</p>
+                  <span className="text-[9px] text-emerald-400/80 mt-1 block">Tempat Latihan</span>
+                </div>
+              </div>
+            </div>
+
             {/* Perlengkapan yang harus dibawa */}
             <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
               <span className="text-xs font-bold text-amber-400 block uppercase tracking-wider">
@@ -690,22 +756,70 @@ export default function UktSection() {
           </div>
 
           {/* Search bar & Controls */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
-            <div className="relative min-w-[280px]">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Cari nama peserta, nomor registrasi, atau cabang..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-              />
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+              <div className="relative min-w-[260px] flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Cari nama peserta, nomor registrasi, atau cabang/ranting..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              {/* Multi-Tenant Ranting Filter (Anti-Bentrok) */}
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-amber-400 shrink-0" />
+                <select
+                  value={selectedRantingFilter}
+                  onChange={(e) => setSelectedRantingFilter(e.target.value)}
+                  className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer"
+                >
+                  <option value="all">Semua Ranting & Tempat Latihan (Multi-Tenant)</option>
+                  <option value="Tanjung Piayu">PR Tanjung Piayu (PAR Buana Garden)</option>
+                  <option value="Mangsang">PR Mangsang (PAR Puri Agung)</option>
+                  <option value="Belian">PR Belian (PAR Duta Mas)</option>
+                  <option value="Duriangkang">PR Duriangkang (PAR Bida Asri)</option>
+                </select>
+              </div>
             </div>
 
-            <div className="text-xs text-slate-400 font-medium">
+            <div className="text-xs text-slate-400 font-medium shrink-0">
               Menampilkan {filteredCandidates.length} dari {candidatesList.length} peserta ujian
             </div>
           </div>
+
+          {/* Anti-Bentrok Banner Sesi Ujian Serentak */}
+          {selectedRantingFilter !== 'all' ? (
+            <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-600/40 text-emerald-300 text-xs flex items-center justify-between shadow-lg">
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span>
+                  <strong>Sesi Ujian Terisolasi:</strong> Menampilkan peserta dari unit <strong>{selectedRantingFilter}</strong>. Sesi pengujian di ranting lain berjalan serentak tanpa risiko bentrok data.
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedRantingFilter('all')}
+                className="text-xs text-emerald-400 underline font-semibold shrink-0 hover:text-emerald-300 ml-2"
+              >
+                Tampilkan Semua
+              </button>
+            </div>
+          ) : (
+            <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-800/40 text-slate-300 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-md">
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0" />
+                <span>
+                  <strong>Sistem Multi-Ranting Aktif:</strong> Setiap Ranting (PR) dan Tempat Latihan (PAR) memiliki sesi penilaian Pos 1-4 independen. Penilaian serentak di hari yang sama terisolasi rapi dan tidak akan saling bentrok.
+                </span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-900/50 text-blue-300 border border-blue-700/50 shrink-0 w-fit">
+                ANTI-BENTROK OK
+              </span>
+            </div>
+          )}
 
           {/* ===================================================================== */}
           {/* SUB-VIEW A: SEMUA POS (REKAPITULASI)                                  */}
@@ -747,7 +861,10 @@ export default function UktSection() {
                               <div>
                                 <p className="font-bold text-white text-xs">{c.name}</p>
                                 <p className="text-[10px] text-amber-400 font-mono">{c.regNumber}</p>
-                                <p className="text-[10px] text-slate-500">{c.branch}</p>
+                                <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                  <MapPin className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                                  <span>{c.structure?.pr ? `${c.structure.pr} • ${c.structure.par}` : c.branch}</span>
+                                </p>
                               </div>
                             </div>
                           </td>
@@ -857,7 +974,10 @@ export default function UktSection() {
                             <div>
                               <p className="font-bold text-white text-xs">{c.name}</p>
                               <p className="text-[10px] text-amber-400 font-mono">{c.regNumber}</p>
-                              <p className="text-[10px] text-slate-400">{c.branch}</p>
+                              <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                <MapPin className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                                <span>{c.structure?.pr ? `${c.structure.pr} • ${c.structure.par}` : c.branch}</span>
+                              </p>
                             </div>
                           </div>
 
