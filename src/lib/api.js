@@ -5,6 +5,12 @@ const ok = ({ data, error }) => {
   return data;
 };
 
+export const NOT_ALLOWED = 'Tidak diizinkan atau data tidak ditemukan';
+// RLS-blocked update/delete returns no error and 0 rows; surface that as an error.
+const hit = async (query) => {
+  if (!ok(await query.select('id')).length) throw new Error(NOT_ALLOWED);
+};
+
 // Copy only the keys present in `patch`, renamed via map {appKey: dbColumn}.
 const toRow = (patch, map) =>
   Object.fromEntries(Object.entries(map).filter(([k]) => patch[k] !== undefined).map(([k, col]) => [col, patch[k]]));
@@ -31,7 +37,7 @@ export async function listNews() {
   return rows.map(({ created_at, ...n }) => ({ ...n, date: fmtDate(created_at) }));
 }
 export const addNews = async (input) => ok(await supabase.from('news').insert(toRow(input, NEWS_MAP)));
-export const deleteNews = async (id) => ok(await supabase.from('news').delete().eq('id', id));
+export const deleteNews = async (id) => hit(supabase.from('news').delete().eq('id', id));
 
 // --- Prestasi ---
 const ACH_MAP = { athleteName: 'athlete_name', championship: 'championship', scope: 'scope', medal: 'medal', category: 'category', year: 'year', notes: 'notes', photo: 'photo_url' };
@@ -46,7 +52,7 @@ export async function listAchievements() {
 }
 export const addAchievement = async (input) =>
   ok(await supabase.from('achievements').insert(toRow({ year: String(new Date().getFullYear()), ...input }, ACH_MAP)));
-export const deleteAchievement = async (id) => ok(await supabase.from('achievements').delete().eq('id', id));
+export const deleteAchievement = async (id) => hit(supabase.from('achievements').delete().eq('id', id));
 
 // --- Agenda + RSVP ---
 const AGENDA_MAP = { title: 'title', date: 'date', time: 'time_text', location: 'location', speaker: 'speaker', description: 'description' };
@@ -75,7 +81,7 @@ export async function listAgendas() {
   });
 }
 export const addAgenda = async (input) => ok(await supabase.from('agendas').insert(toRow(input, AGENDA_MAP)));
-export const deleteAgenda = async (id) => ok(await supabase.from('agendas').delete().eq('id', id));
+export const deleteAgenda = async (id) => hit(supabase.from('agendas').delete().eq('id', id));
 // fullName comes from the caller (currentUser.name); user_id defaults to auth.uid() in the DB.
 export const upsertRsvp = async (agendaId, status, reason, fullName) =>
   ok(
@@ -99,7 +105,7 @@ export async function getSiteStats() {
       .single(),
   );
 }
-export const updateSiteStats = async (patch) => ok(await supabase.from('site_stats').update(toRow(patch, STATS_MAP)).eq('id', 1));
+export const updateSiteStats = async (patch) => hit(supabase.from('site_stats').update(toRow(patch, STATS_MAP)).eq('id', 1));
 
 // --- Konten situs (hero; rekening/QRIS dipakai Task 9) ---
 const CONTENT_MAP = { bankName: 'bank_name', bankAccount: 'bank_account', bankHolder: 'bank_holder', qrisImageUrl: 'qris_image_url' };
@@ -116,8 +122,8 @@ export async function getSiteContent() {
   };
 }
 export const updateSiteContent = async (patch) =>
-  ok(
-    await supabase
+  hit(
+    supabase
       .from('site_content')
       .update({ ...toRow(patch, CONTENT_MAP), ...toRow(patch.heroData ?? {}, HERO_MAP) })
       .eq('id', 1),
@@ -131,8 +137,8 @@ export async function addPillar(input) {
   const last = ok(await supabase.from('pillars').select('sort_order').order('sort_order', { ascending: false }).limit(1));
   return ok(await supabase.from('pillars').insert({ ...toRow(input, PILLAR_MAP), sort_order: (last[0]?.sort_order ?? 0) + 1 }));
 }
-export const updatePillar = async (id, patch) => ok(await supabase.from('pillars').update(toRow(patch, PILLAR_MAP)).eq('id', id));
-export const deletePillar = async (id) => ok(await supabase.from('pillars').delete().eq('id', id));
+export const updatePillar = async (id, patch) => hit(supabase.from('pillars').update(toRow(patch, PILLAR_MAP)).eq('id', id));
+export const deletePillar = async (id) => hit(supabase.from('pillars').delete().eq('id', id));
 
 // --- Tempat latihan ---
 const GROUND_MAP = {
@@ -149,5 +155,5 @@ export const listTrainingGrounds = async () =>
       .order('created_at', { ascending: false }),
   );
 export const addTrainingGround = async (input) => ok(await supabase.from('training_grounds').insert(toRow(input, GROUND_MAP)));
-export const updateTrainingGround = async (id, patch) => ok(await supabase.from('training_grounds').update(toRow(patch, GROUND_MAP)).eq('id', id));
-export const deleteTrainingGround = async (id) => ok(await supabase.from('training_grounds').delete().eq('id', id));
+export const updateTrainingGround = async (id, patch) => hit(supabase.from('training_grounds').update(toRow(patch, GROUND_MAP)).eq('id', id));
+export const deleteTrainingGround = async (id) => hit(supabase.from('training_grounds').delete().eq('id', id));

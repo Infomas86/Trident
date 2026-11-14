@@ -140,8 +140,9 @@ export function AppProvider({ children }) {
   const mutate = async (call, list, okMsg, failMsg, okType = 'success') => {
     try {
       await call();
-    } catch {
-      showToast(failMsg, 'error');
+    } catch (e) {
+      console.error(e);
+      showToast(e.message === api.NOT_ALLOWED ? e.message : failMsg, 'error');
       return false;
     }
     showToast(okMsg, okType);
