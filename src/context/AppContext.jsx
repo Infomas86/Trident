@@ -1,47 +1,151 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { INITIAL_TIMELINE } from '../data/static';
-import { supabase } from '../lib/supabase';
-import * as api from '../lib/api';
-import { enqueueForUser, withoutUser, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearCaches, overlayQueued, mineScores, mergeKeys, storedAuthUserId } from '../lib/offline';
-
-const PROFILE_TIMEOUT_MS = 8000;
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  INITIAL_STATS,
+  INITIAL_TIMELINE,
+  INITIAL_PILLARS,
+  INITIAL_NEWS,
+  INITIAL_ACHIEVEMENTS,
+  INITIAL_AGENDAS,
+  INITIAL_CAMPAIGNS,
+  INITIAL_CANDIDATES,
+  INITIAL_HERO_DATA,
+  INITIAL_TRAINING_GROUNDS,
+  calculateUktScore,
+} from '../data/mockData';
 
 const AppContext = createContext();
 
 export const ROLES = {
   PUBLIC: 'public',
-  MEMBER: 'anggota',
-  EXAMINER: 'penguji',
+  MEMBER: 'member',
+  EXAMINER: 'examiner',
   ADMIN: 'admin',
 };
 
+const USER_PROFILES = {
+  [ROLES.PUBLIC]: {
+    id: 'guest',
+    name: 'Tamu Publik',
+    role: ROLES.PUBLIC,
+    title: 'Pengunjung Umum',
+    belt: 'Belum Terdaftar',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+  },
+  [ROLES.MEMBER]: {
+    id: 'cand-1',
+    name: 'Ahmad Fauzi',
+    role: ROLES.MEMBER,
+    title: 'Pesilat Aktif (Ksatria Muda)',
+    belt: 'Sabuk Hijau Strip Putih',
+    regNumber: 'TRD-UKT-2026-084',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+  },
+  [ROLES.EXAMINER]: {
+    id: 'ex-1',
+    name: 'Master Bambang Wijaya',
+    role: ROLES.EXAMINER,
+    title: 'Dewan Pendekar & Penguji Utama UKT',
+    belt: 'Sabuk Hijau Strip Hitam (Dewan Pendekar)',
+    regNumber: 'TRD-EXAM-1984-001',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+  },
+  [ROLES.ADMIN]: {
+    id: 'admin-1',
+    name: 'Dewan Sekretariat Pusat',
+    role: ROLES.ADMIN,
+    title: 'Administrator Utama Perguruan',
+    belt: 'Sabuk Hijau Strip Hitam (Pengurus Pusat)',
+    regNumber: 'TRD-ADM-PST-001',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80',
+  },
+};
+
 export function AppProvider({ children }) {
-  const [session, setSession] = useState(null);
-  // Offline fallback: user id of the stored session when auth-js can't refresh it (see session effect).
-  const [offlineUid, setOfflineUid] = useState(null);
-  const [loadedProfile, setProfile] = useState(null);
-  const [initializing, setInitializing] = useState(true);
-  const [failedId, setFailedId] = useState(null);
+  // Load role from localStorage or default to PUBLIC
+  const [role, setRole] = useState(() => {
+    return localStorage.getItem('trident_role') || ROLES.PUBLIC;
+  });
 
   const [activeTab, setActiveTab] = useState('visi');
   const [lockedModal, setLockedModal] = useState({ open: false, featureName: '' });
+
+  // Login Modal State
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // Data states: stats/hero/pillars/grounds/news/achievements/agendas come from Supabase; campaigns/donations from Supabase
-  const [stats, setStats] = useState({ activeMembers: 0, medalsCount: 0, padepokanBranches: 0, uktPassRate: 0, masterCouncil: 0 });
-  const [heroData, setHeroData] = useState({});
-  const [trainingGrounds, setTrainingGrounds] = useState([]);
-  const timeline = INITIAL_TIMELINE;
-  const [pillars, setPillars] = useState([]);
-  const [newsList, setNewsList] = useState([]);
-  const [achievementsList, setAchievementsList] = useState([]);
-  const [agendaList, setAgendaList] = useState([]);
-  const [campaignList, setCampaignList] = useState([]);
-  const [myDonations, setMyDonations] = useState([]);
-  const [pendingDonations, setPendingDonations] = useState([]);
-  const [siteContent, setSiteContent] = useState({});
+  // Admin Verification Code Modal State (for Anggota wanting to act as Penguji)
+  const [isAdminCodeModalOpen, setIsAdminCodeModalOpen] = useState(false);
 
-  const [candidatesList, setCandidatesList] = useState([]);
+  // OFFLINE & AUTO-SYNC ENGINE STATE
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+  const [isSimulatingOffline, setIsSimulatingOffline] = useState(false);
+  const [offlineQueue, setOfflineQueue] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_offline_queue');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Data states with LocalStorage persistence
+  const [stats, setStats] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_stats');
+      return saved ? JSON.parse(saved) : INITIAL_STATS;
+    } catch {
+      return INITIAL_STATS;
+    }
+  });
+
+  const [heroData, setHeroData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_hero');
+      return saved ? JSON.parse(saved) : INITIAL_HERO_DATA;
+    } catch {
+      return INITIAL_HERO_DATA;
+    }
+  });
+
+  const [trainingGrounds, setTrainingGrounds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_training_grounds');
+      return saved ? JSON.parse(saved) : INITIAL_TRAINING_GROUNDS;
+    } catch {
+      return INITIAL_TRAINING_GROUNDS;
+    }
+  });
+
+  const [timeline, setTimeline] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_timeline');
+      return saved ? JSON.parse(saved) : INITIAL_TIMELINE;
+    } catch {
+      return INITIAL_TIMELINE;
+    }
+  });
+
+  const [pillars, setPillars] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_pillars');
+      return saved ? JSON.parse(saved) : INITIAL_PILLARS;
+    } catch {
+      return INITIAL_PILLARS;
+    }
+  });
+
+  const [newsList, setNewsList] = useState(INITIAL_NEWS);
+  const [achievementsList, setAchievementsList] = useState(INITIAL_ACHIEVEMENTS);
+  const [agendaList, setAgendaList] = useState(INITIAL_AGENDAS);
+  const [campaignList, setCampaignList] = useState(INITIAL_CAMPAIGNS);
+
+  const [candidatesList, setCandidatesList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trident_candidates');
+      return saved ? JSON.parse(saved) : INITIAL_CANDIDATES;
+    } catch {
+      return INITIAL_CANDIDATES;
+    }
+  });
 
   // Modal for donation receipt printing
   const [selectedReceipt, setSelectedReceipt] = useState(null);
@@ -56,224 +160,145 @@ export function AppProvider({ children }) {
     }, 4500);
   };
 
-  // Offline state: online flag, persisted score queue, conflicts awaiting the examiner's choice
-  const [isOnline, setIsOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
-  const [offlineQueue, setOfflineQueueState] = useState(loadQueue);
-  const [allConflicts, setAllConflictsState] = useState(loadConflicts);
-  const queueRef = useRef(offlineQueue);
-  const conflictsRef = useRef(allConflicts);
-  const syncing = useRef(false);
-  const syncRef = useRef(() => {});
-  const setOfflineQueue = (q) => {
-    queueRef.current = q;
-    setOfflineQueueState(q);
-    saveQueue(q);
-  };
+  // Auto-Sync Function: Processes offline queue when connection returns
+  const syncOfflineQueue = (customQueue = null) => {
+    const queueToProcess = customQueue || offlineQueue;
+    if (!queueToProcess || queueToProcess.length === 0) return;
 
-  // Persist like the queue; accepts a value or an updater.
-  const setAllConflicts = (u) => {
-    const next = typeof u === 'function' ? u(conflictsRef.current) : u;
-    conflictsRef.current = next;
-    setAllConflictsState(next);
-    saveConflicts(next);
-  };
-
-  useEffect(() => {
-    const on = () => {
-      setIsOnline(true);
-      syncRef.current();
-    };
-    const off = () => setIsOnline(false);
-    window.addEventListener('online', on);
-    window.addEventListener('offline', off);
-    return () => {
-      window.removeEventListener('online', on);
-      window.removeEventListener('offline', off);
-    };
-  }, []);
-
-  // Session + profile
-  useEffect(() => {
-    // Offline with an expired access token auth-js returns no session but keeps it stored:
-    // stay signed in on the cached profile so the examiner can keep scoring.
-    const fallback = () => {
-      if (navigator.onLine) return;
-      const uid = storedAuthUserId(supabase.auth.storageKey);
-      if (uid && loadCache('trident_cache_profile')?.id === uid) setOfflineUid(uid);
-    };
-    supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        setSession(data.session);
-        if (!data.session) fallback();
-      })
-      .catch(fallback)
-      .finally(() => setInitializing(false));
-    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
-      setSession(next);
-      if (next || event === 'SIGNED_OUT') setOfflineUid(null);
-    });
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  // Back online in the fallback: get the real session back, or sign out cleanly if it was revoked.
-  useEffect(() => {
-    if (!isOnline || !offlineUid) return;
-    supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        if (data.session) return setSession(data.session);
-        if (storedAuthUserId(supabase.auth.storageKey)) return; // retryable failure: auth-js keeps refreshing (TOKEN_REFRESHED)
-        setOfflineUid(null);
-        showToast('Sesi berakhir, silakan masuk lagi. Nilai yang belum terkirim tetap tersimpan.', 'error');
-      })
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline, offlineUid]);
-
-  const userId = session?.user?.id ?? offlineUid;
-  // Only this user's items are shown or synced; other users' items wait for their next sign-in.
-  const offlineQueueMine = offlineQueue.filter((i) => i.userId === userId);
-  const conflicts = allConflicts.filter((c) => c.userId === userId);
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    setFailedId(null);
-    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), PROFILE_TIMEOUT_MS));
-    Promise.race([api.getProfile(userId), timeout])
-      .then((p) => {
-        if (cancelled) return;
-        saveCache('trident_cache_profile', p);
-        setProfile(p);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        const cached = loadCache('trident_cache_profile');
-        if (cached?.id === userId) {
-          setProfile(cached);
-          return;
-        }
-        setFailedId(userId);
-        showToast('Gagal memuat profil', 'error');
+    setCandidatesList((prev) => {
+      let current = [...prev];
+      queueToProcess.forEach((item) => {
+        current = current.map((c) =>
+          c.id === item.candidateId
+            ? {
+                ...c,
+                posScores: item.posScores,
+                examinerNotes: item.examinerNotes,
+                examinerName: item.examinerName,
+                dateExam: item.dateExam || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+              }
+            : c
+        );
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+      localStorage.setItem('trident_candidates', JSON.stringify(current));
+      return current;
+    });
 
-  // Only trust a profile that belongs to the current session (avoids showing a previous account's role).
-  const profile = loadedProfile && loadedProfile.id === userId ? loadedProfile : null;
-  const authLoading = initializing || (!!userId && !profile && failedId !== userId);
-  const role = profile?.role ?? ROLES.PUBLIC;
-  const isStaff = role === ROLES.EXAMINER || role === ROLES.ADMIN;
-  const isAdmin = role === ROLES.ADMIN;
-  const currentUser = profile
-    ? {
-        id: profile.id,
-        name: profile.full_name,
-        email: session?.user?.email,
-        role: profile.role,
-        belt: profile.belt,
-        branch: profile.branch,
-        regNumber: profile.reg_number,
-        avatar: profile.photo_url,
-      }
-    : null;
+    const syncedCount = queueToProcess.length;
+    setOfflineQueue([]);
+    localStorage.removeItem('trident_offline_queue');
 
-  const signIn = async (email, password) => {
-    let error;
-    try {
-      ({ error } = await supabase.auth.signInWithPassword({ email, password }));
-    } catch {
-      showToast('Gagal masuk, periksa koneksi', 'error');
-      return false;
-    }
-    if (error) {
-      showToast('Email atau kata sandi salah', 'error');
-      return false;
-    }
-    setIsLoginModalOpen(false);
-    showToast('Berhasil masuk. Selamat datang!', 'success');
-    return true;
+    showToast(
+      `🟢 Sinyal Terhubung Kembali! ${syncedCount} nilai ujian tersimpan berhasil disinkronisasikan otomatis ke pusat.`,
+      'success'
+    );
   };
 
-  const signOut = async () => {
-    const pending = queueRef.current.filter((i) => i.userId === userId).length + conflictsRef.current.filter((i) => i.userId === userId).length;
-    if (pending && !window.confirm(`Ada ${pending} nilai belum terkirim. Keluar dan buang?`)) return;
-    const { error } = await supabase.auth.signOut({ scope: 'local' });
-    // 'local' drops this device's session even offline; the error is then only the failed revoke request.
-    if (error && storedAuthUserId(supabase.auth.storageKey)) {
-      showToast('Gagal keluar, coba lagi', 'error');
+  // Listen to network changes (online / offline)
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      if (!isSimulatingOffline) {
+        syncOfflineQueue();
+      }
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      showToast('⚠️ Sinyal internet terputus. Mode Offline otomatis aktif: progres penilaian Anda tetap tersimpan aman di perangkat.', 'warning');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [offlineQueue, isSimulatingOffline]);
+
+  // Toggle simulation of lost signal for easy demo and testing
+  const toggleOfflineSimulation = () => {
+    setIsSimulatingOffline((prev) => {
+      const next = !prev;
+      if (next) {
+        showToast('🔴 Mode Uji: Simulasi Sinyal Hilang DIAKTIFKAN. Nilai yang Anda input akan ditampung di antrean offline lokal.', 'warning');
+      } else {
+        showToast('🟢 Mode Uji: Simulasi Sinyal Kembali DINONAKTIFKAN. Memulai sinkronisasi otomatis ke server pusat...', 'success');
+        setTimeout(() => {
+          syncOfflineQueue();
+        }, 600);
+      }
+      return next;
+    });
+  };
+
+  // Role switching
+  const handleRoleChange = (newRole, bypassCode = false) => {
+    if (role === ROLES.MEMBER && newRole === ROLES.EXAMINER && !bypassCode) {
+      setIsAdminCodeModalOpen(true);
       return;
     }
-    setOfflineUid(null);
-    clearCaches();
-    setOfflineQueue(withoutUser(queueRef.current, userId));
-    setAllConflicts(withoutUser(conflictsRef.current, userId));
-    showToast('Anda telah keluar dari akun.', 'info');
+
+    setRole(newRole);
+    localStorage.setItem('trident_role', newRole);
+    const roleName =
+      newRole === ROLES.PUBLIC
+        ? 'Tamu Publik'
+        : newRole === ROLES.MEMBER
+        ? 'Anggota (Ahmad Fauzi)'
+        : newRole === ROLES.ADMIN
+        ? 'Administrator Pusat'
+        : 'Penguji UKT (Master Bambang)';
+    showToast(`Beralih peran menjadi: ${roleName}`, 'info');
   };
 
-  const loaders = {
-    news: () => api.listNews().then(setNewsList),
-    achievements: () => api.listAchievements().then(setAchievementsList),
-    agendas: () => (userId ? api.listAgendas().then(setAgendaList) : setAgendaList([])),
-    stats: () => api.getSiteStats().then(setStats),
-    content: () =>
-      api.getSiteContent().then((c) => {
-        setHeroData(c.heroData);
-        setSiteContent(c);
-      }),
-    campaigns: () => (userId ? api.listCampaigns().then(setCampaignList) : setCampaignList([])),
-    myDonations: () => (userId ? api.listMyDonations().then(setMyDonations) : setMyDonations([])),
-    pendingDonations: () => (isAdmin ? api.listPendingDonations().then(setPendingDonations) : setPendingDonations([])),
-    pillars: () => api.listPillars().then(setPillars),
-    grounds: () => api.listTrainingGrounds().then(setTrainingGrounds),
-    candidates: async () => {
-      if (!userId) return setCandidatesList([]);
-      try {
-        const list = await api.listCandidates();
-        if (isStaff) saveCache('trident_cache_candidates', list);
-        setCandidatesList(list);
-      } catch (e) {
-        const cached = isStaff ? loadCache('trident_cache_candidates') : null;
-        if (!cached) throw e;
-        setCandidatesList(cached);
-      }
-    },
-  };
-  const refresh = async () => {
-    const results = await Promise.allSettled(Object.values(loaders).map((load) => load()));
-    if (results.some((r) => r.status === 'rejected')) showToast('Sebagian data gagal dimuat', 'error');
+  // Login handler
+  const handleLogin = (targetRole) => {
+    setRole(targetRole);
+    localStorage.setItem('trident_role', targetRole);
+    setIsLoginModalOpen(false);
+    const profile = USER_PROFILES[targetRole];
+    showToast(`Berhasil Masuk! Selamat datang, ${profile?.name || 'Pengguna'} (${profile?.title || targetRole}).`, 'success');
   };
 
-  // Load on mount and whenever the signed-in user changes (agendas need a session).
-  useEffect(() => {
-    refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, role, !!session]);
+  // Logout handler
+  const handleLogout = () => {
+    setRole(ROLES.PUBLIC);
+    localStorage.setItem('trident_role', ROLES.PUBLIC);
+    showToast('Anda telah keluar dari akun. Fitur dibatasi kembali untuk mode publik.', 'info');
+  };
 
-  // Run an api call, toast the outcome, then reload the affected list.
-  const mutate = async (call, list, okMsg, failMsg, okType = 'success') => {
-    try {
-      await call();
-    } catch (e) {
-      console.error(e);
-      showToast(e.message === api.NOT_ALLOWED || e instanceof api.UserError ? e.message : failMsg, 'error');
-      return false;
+  // Verify Admin Code and unlock Examiner Mode
+  const verifyAndUnlockExaminer = (code) => {
+    const validCodes = ['TRIDENT2026', 'ADMIN123', 'PENGUJI88', '123456'];
+    const cleaned = (code || '').trim().toUpperCase();
+    if (validCodes.includes(cleaned)) {
+      setRole(ROLES.EXAMINER);
+      localStorage.setItem('trident_role', ROLES.EXAMINER);
+      setIsAdminCodeModalOpen(false);
+      showToast('Kode Admin valid! Otorisasi Penguji UKT berhasil dibuka.', 'success');
+      return true;
     }
-    showToast(okMsg, okType);
-    try {
-      await Promise.all([].concat(list).map((l) => loaders[l]()));
-    } catch {
-      showToast('Gagal menyegarkan data', 'error');
+    return false;
+  };
+
+  const requestExaminerAccess = () => {
+    setIsAdminCodeModalOpen(true);
+  };
+
+  const currentUser = USER_PROFILES[role] || USER_PROFILES[ROLES.PUBLIC];
+
+  // Helper check access
+  const checkAccess = (moduleName) => {
+    if (role === ROLES.PUBLIC) {
+      if (['agenda', 'donasi', 'ukt'].includes(moduleName)) {
+        setIsLoginModalOpen(true);
+        return false;
+      }
     }
     return true;
   };
-
-  // Leave the admin-only tab when admin rights go away (logout, role change).
-  useEffect(() => {
-    if ((activeTab === 'verifikasi' || activeTab === 'akun') && !isAdmin) setActiveTab('visi');
-  }, [activeTab, isAdmin]);
 
   // Switch tab with access check
   const navigateToTab = (tabName) => {
@@ -281,7 +306,6 @@ export function AppProvider({ children }) {
       setIsLoginModalOpen(true);
       return;
     }
-    if ((tabName === 'verifikasi' || tabName === 'akun') && !isAdmin) return;
     setActiveTab(tabName);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -292,228 +316,307 @@ export function AppProvider({ children }) {
       setIsLoginModalOpen(true);
       return;
     }
-    return mutate(
-      () => api.upsertRsvp(agendaId, status, reason, currentUser?.name),
-      'agendas',
-      status === 'hadir' ? 'Konfirmasi HADIR berhasil dicatat pada agenda!' : 'Konfirmasi IZIN berhasil dikirim beserta keterangan.',
-      'Gagal menyimpan konfirmasi kehadiran',
-    );
-  };
 
-  // Donation: proof is uploaded, donation stays pending until an admin accepts it (no receipt yet).
-  const handleDonate = (campaignId, { amount, donorName, message, paymentMethod, proofFile }) =>
-    mutate(
-      () => api.submitDonation({ campaignId, amount, donorName: donorName || currentUser?.name || 'Hamba Allah', message, paymentMethod, proofFile }),
-      ['myDonations', 'pendingDonations'],
-      'Donasi terkirim, menunggu verifikasi admin',
-      'Gagal mengirim donasi',
-    );
+    setAgendaList((prev) =>
+      prev.map((agenda) => {
+        if (agenda.id !== agendaId) return agenda;
 
-  const handleVerifyDonation = (id, status) =>
-    mutate(
-      () => api.setDonationStatus(id, status),
-      ['pendingDonations', 'campaigns', 'myDonations'],
-      status === 'accepted' ? 'Donasi diterima.' : 'Donasi ditolak.',
-      'Gagal memverifikasi donasi',
-      status === 'accepted' ? 'success' : 'info',
-    );
+        const currentAttendees = agenda.attendees || [];
+        const existingIdx = currentAttendees.findIndex((a) => a.id === currentUser.id);
 
-  const refreshCandidates = () => loaders.candidates().catch(() => showToast('Gagal menyegarkan data', 'error'));
-
-  // Send the whole queue; one run at a time. Network errors keep items queued, conflicts go to the panel.
-  const syncNow = async () => {
-    const snapshot = queueRef.current.filter((i) => i.userId === userId);
-    // needs a real session: without one (offline fallback) saves would run as a guest and look like conflicts
-    if (syncing.current || !session || !navigator.onLine || !snapshot.length) return;
-    syncing.current = true;
-    try {
-      const r = await syncQueue(
-        snapshot,
-        (item) => api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt }),
-        { online: () => navigator.onLine },
-      );
-      // others' items untouched; mine: replaced by the remaining version (may be marked failed), new/changed-while-syncing kept
-      const sent = (i) => snapshot.some((s) => s.candidateId === i.candidateId && s.savedAt === i.savedAt);
-      setOfflineQueue(
-        queueRef.current.flatMap((i) => (i.userId !== userId || !sent(i) ? [i] : r.remaining.filter((x) => x.candidateId === i.candidateId))),
-      );
-      if (r.conflicts.length) {
-        setAllConflicts((prev) => [...prev.filter((c) => c.userId !== userId || !r.conflicts.some((x) => x.candidateId === c.candidateId)), ...r.conflicts]);
-        showToast(`${r.conflicts.length} nilai bentrok dengan penguji lain, pilih di panel Nilai bentrok`, 'error');
-      }
-      if (r.synced) showToast(`${r.synced} nilai terkirim`, 'success');
-      if (r.synced || r.conflicts.length) await refreshCandidates();
-    } finally {
-      syncing.current = false;
-    }
-  };
-  syncRef.current = syncNow;
-
-  // Sync when the app opens signed in (profile ready).
-  useEffect(() => {
-    if (profile && session) syncRef.current();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.id, !!session]);
-
-  const resolveConflict = async (candidateId, choice) => {
-    const item = conflicts.find((c) => c.candidateId === candidateId);
-    if (!item) return;
-    if (choice === 'mine') {
-      if (!session) {
-        showToast('Gagal mengirim nilai, periksa koneksi', 'error');
-        return;
-      }
-      let r;
-      try {
-        if (item.posKeys == null) {
-          // full evaluation: my whole sheet wins
-          r = await api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt, force: true });
+        let updatedAttendees;
+        if (existingIdx >= 0) {
+          updatedAttendees = [...currentAttendees];
+          updatedAttendees[existingIdx] = {
+            ...updatedAttendees[existingIdx],
+            name: currentUser.name,
+            role: currentUser.role === ROLES.MEMBER ? 'Anggota' : 'Penguji',
+            status,
+            reason: status === 'izin' ? reason : undefined,
+          };
         } else {
-          // quick-pos: put only my posts into the fresh row, guarded by its updated_at
-          const fresh = await api.getCandidate(item.candidateId);
-          r = fresh ? await api.saveCandidateScores(item.candidateId, mineScores(fresh, item), fresh.examinerNotes, { baseUpdatedAt: fresh.updatedAt }) : 'gone';
+          updatedAttendees = [
+            ...currentAttendees,
+            {
+              id: currentUser.id,
+              name: currentUser.name,
+              role: currentUser.role === ROLES.MEMBER ? 'Anggota' : 'Penguji',
+              status,
+              reason: status === 'izin' ? reason : undefined,
+            },
+          ];
         }
-      } catch (e) {
-        console.error(e);
-        showToast('Gagal mengirim nilai, periksa koneksi', 'error');
-        return;
-      }
-      if (r === 'conflict') {
-        showToast('Nilai baru saja diubah lagi oleh penguji lain, coba lagi', 'error');
-        refreshCandidates();
-        return;
-      }
-      if (r !== 'ok') {
-        showToast('Nilai tidak bisa dikirim (ditolak server atau peserta dihapus)', 'error');
-        return;
-      }
-      showToast(`Nilai ${item.candidateName ?? 'peserta'} dikirim`, 'success');
-    }
-    setAllConflicts((prev) => prev.filter((c) => c.userId !== userId || c.candidateId !== candidateId));
-    refreshCandidates();
+
+        return {
+          ...agenda,
+          attendees: updatedAttendees,
+        };
+      })
+    );
+
+    showToast(
+      status === 'hadir'
+        ? 'Konfirmasi HADIR berhasil dicatat pada agenda!'
+        : 'Konfirmasi IZIN berhasil dikirim beserta keterangan.',
+      'success'
+    );
   };
 
-  // Drop a stuck queued item (after confirm).
-  const discardQueued = (candidateId) => {
-    if (!window.confirm('Buang nilai yang belum terkirim ini?')) return;
-    setOfflineQueue(queueRef.current.filter((i) => i.userId !== userId || i.candidateId !== candidateId));
-  };
+  // Donation action
+  const handleDonate = (campaignId, donationData) => {
+    const { amount, donorName, message, paymentMethod } = donationData;
+    const numAmount = Number(amount);
 
-  // UKT Candidate Score Update. baseUpdatedAt = updatedAt of the snapshot the examiner edited.
-  // posKeys = posts changed (quick-pos), null = full evaluation. newPosScores already includes my queued posts.
-  // Always resolves true: the score is saved on the server, queued on the phone, or parked as a conflict.
-  const handleUpdateCandidateScores = async (candidateId, newPosScores, notes, baseUpdatedAt, posKeys = null) => {
-    const target = candidatesList.find((c) => c.id === candidateId);
-    const queued = offlineQueueMine.find((q) => q.candidateId === candidateId);
-    const item = {
-      userId, candidateId, candidateName: target?.name, posScores: newPosScores, notes, baseUpdatedAt,
-      posKeys: queued ? mergeKeys(queued.posKeys, posKeys) : posKeys, savedAt: new Date().toISOString(),
+    const refNumber = `TRD-DON-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const newDonationItem = {
+      id: `d-${Date.now()}`,
+      refNumber,
+      donorName: donorName || currentUser.name,
+      amount: numAmount,
+      date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+      message: message || 'Salam Persaudaraan Perguruan Trident!',
+      paymentMethod,
     };
-    let result;
-    if (navigator.onLine && session) {
-      try {
-        result = await api.saveCandidateScores(candidateId, newPosScores, notes, { baseUpdatedAt });
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    if (!result) {
-      setOfflineQueue(enqueueForUser(queueRef.current, userId, item));
-      showToast('Disimpan di HP ini, dikirim saat sinyal kembali', 'info');
-      return true;
-    }
-    setOfflineQueue(queueRef.current.filter((q) => q.userId !== userId || q.candidateId !== candidateId));
-    setAllConflicts((prev) => prev.filter((c) => c.userId !== userId || c.candidateId !== candidateId));
-    if (result === 'conflict') {
-      setAllConflicts((prev) => [...prev, item]);
-      showToast('Nilai sudah diubah penguji lain, pilih di panel Nilai bentrok', 'error');
-      refreshCandidates();
-      return true;
-    }
-    showToast(`Nilai UKT ${target?.name ?? 'Peserta UKT'} berhasil disimpan!`, 'success');
-    refreshCandidates();
-    return true;
+
+    let targetCampaignTitle = '';
+
+    setCampaignList((prev) =>
+      prev.map((camp) => {
+        if (camp.id !== campaignId) return camp;
+        targetCampaignTitle = camp.title;
+        return {
+          ...camp,
+          collectedAmount: camp.collectedAmount + numAmount,
+          donorsCount: camp.donorsCount + 1,
+          recentDonations: [newDonationItem, ...(camp.recentDonations || [])],
+        };
+      })
+    );
+
+    const receiptObj = {
+      ...newDonationItem,
+      campaignTitle: targetCampaignTitle,
+      timestamp: new Date().toLocaleString('id-ID'),
+    };
+
+    setSelectedReceipt(receiptObj);
+    showToast(`Donasi sebesar Rp ${numAmount.toLocaleString('id-ID')} berhasil diproses! Bukti resi telah diterbitkan.`, 'success');
   };
 
-  // Import Candidates (rows = CandidateInput[] from parseCandidatesCsv)
-  const handleImportCandidates = async (rows) => {
-    let count;
-    try {
-      count = await api.upsertCandidates(rows);
-    } catch (e) {
-      console.error(e);
-      showToast(e.message === api.NOT_ALLOWED ? e.message : 'Gagal mengimpor peserta', 'error');
-      return false;
+  // UKT Candidate Score Update with Offline-First Auto-Save
+  const handleUpdateCandidateScores = (candidateId, newPosScores, notes) => {
+    const dateExam = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    // 1. Always update candidate in local state immediately so UI and progress are NEVER lost!
+    setCandidatesList((prev) => {
+      const updated = prev.map((c) => {
+        if (c.id !== candidateId) return c;
+        return {
+          ...c,
+          posScores: newPosScores,
+          examinerNotes: notes,
+          examinerName: currentUser.name,
+          dateExam,
+        };
+      });
+      localStorage.setItem('trident_candidates', JSON.stringify(updated));
+      return updated;
+    });
+
+    const targetCandidate = candidatesList.find((c) => c.id === candidateId);
+    const candidateName = targetCandidate ? targetCandidate.name : 'Peserta UKT';
+
+    // 2. Check if currently offline or in offline simulation mode
+    const isCurrentlyOffline = !isOnline || isSimulatingOffline;
+
+    if (isCurrentlyOffline) {
+      const queueItem = {
+        id: `offline-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        candidateId,
+        candidateName,
+        posScores: newPosScores,
+        examinerNotes: notes,
+        examinerName: currentUser.name,
+        dateExam,
+        timestamp: new Date().toISOString(),
+        formattedTime: new Date().toLocaleTimeString('id-ID'),
+      };
+
+      setOfflineQueue((prev) => {
+        const filtered = prev.filter((item) => item.candidateId !== candidateId);
+        const nextQueue = [...filtered, queueItem];
+        localStorage.setItem('trident_offline_queue', JSON.stringify(nextQueue));
+        return nextQueue;
+      });
+
+      showToast(
+        `⚠️ Sinyal Hilang! Progres nilai ${candidateName} tersimpan lokal di HP. Nilai otomatis terkirim saat sinyal kembali.`,
+        'warning'
+      );
+    } else {
+      showToast(`Nilai UKT ${candidateName} berhasil dikalkulasi & tersinkronisasi ke server!`, 'success');
     }
-    showToast(`Berhasil mengimpor ${count} peserta Ujian Kenaikan Tingkat!`, 'success');
-    loaders.candidates().catch(() => showToast('Gagal menyegarkan data', 'error'));
-    return true;
   };
 
-  const handleDeleteCandidate = (id) =>
-    mutate(() => api.deleteCandidate(id), 'candidates', 'Peserta berhasil dihapus.', 'Gagal menghapus peserta', 'info');
+  // Import Candidates
+  const handleImportCandidates = (newCandidates) => {
+    setCandidatesList((prev) => {
+      const existingIds = new Set(prev.map((c) => c.id));
+      const filteredNew = newCandidates.filter((c) => !existingIds.has(c.id));
+      const updated = [...filteredNew, ...prev];
+      localStorage.setItem('trident_candidates', JSON.stringify(updated));
+      return updated;
+    });
+    showToast(`Berhasil mengimpor ${newCandidates.length} peserta Ujian Kenaikan Tingkat!`, 'success');
+  };
 
   // Examiner additions
-  const handleAddNews = (n) =>
-    mutate(() => api.addNews({ ...n, author: currentUser?.name }), 'news', 'Berita perguruan baru berhasil dipublikasikan!', 'Gagal menerbitkan berita');
-  const handleDeleteNews = (id) => mutate(() => api.deleteNews(id), 'news', 'Berita berhasil dihapus.', 'Gagal menghapus berita', 'info');
+  const handleAddNews = (newNews) => {
+    setNewsList((prev) => [
+      {
+        id: `news-${Date.now()}`,
+        date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
+        author: currentUser.name,
+        ...newNews,
+      },
+      ...prev,
+    ]);
+    showToast('Berita perguruan baru berhasil dipublikasikan!', 'success');
+  };
 
-  const handleAddAchievement = (a) =>
-    mutate(() => api.addAchievement(a), 'achievements', 'Prestasi atlet berhasil ditambahkan ke etalase!', 'Gagal menambahkan prestasi');
-  const handleDeleteAchievement = (id) =>
-    mutate(() => api.deleteAchievement(id), 'achievements', 'Prestasi berhasil dihapus.', 'Gagal menghapus prestasi', 'info');
+  const handleAddAchievement = (newAch) => {
+    setAchievementsList((prev) => [
+      {
+        id: `ach-${Date.now()}`,
+        year: '2026',
+        ...newAch,
+      },
+      ...prev,
+    ]);
+    showToast('Prestasi atlet berhasil ditambahkan ke etalase!', 'success');
+  };
 
-  const handleAddAgenda = (a) =>
-    mutate(() => api.addAgenda(a), 'agendas', 'Agenda kegiatan baru berhasil dijadwalkan!', 'Gagal menjadwalkan agenda');
-  const handleDeleteAgenda = (id) => mutate(() => api.deleteAgenda(id), 'agendas', 'Agenda berhasil dihapus.', 'Gagal menghapus agenda', 'info');
+  const handleAddAgenda = (newAgenda) => {
+    setAgendaList((prev) => [
+      {
+        id: `agenda-${Date.now()}`,
+        attendees: [{ id: currentUser.id, name: currentUser.name, role: 'Penguji', status: 'hadir' }],
+        ...newAgenda,
+      },
+      ...prev,
+    ]);
+    showToast('Agenda kegiatan baru berhasil dijadwalkan!', 'success');
+  };
 
-  const handleAddCampaign = (c) =>
-    mutate(() => api.addCampaign(c), 'campaigns', 'Program donasi padepokan baru berhasil diluncurkan!', 'Gagal membuat program donasi');
-  const handleUpdateCampaign = (id, c) =>
-    mutate(() => api.updateCampaign(id, c), 'campaigns', 'Program donasi berhasil diperbarui.', 'Gagal memperbarui program donasi');
-  const handleDeleteCampaign = (id) =>
-    mutate(() => api.deleteCampaign(id), 'campaigns', 'Program donasi berhasil dihapus.', 'Gagal menghapus program donasi', 'info');
+  const handleAddCampaign = (newCamp) => {
+    setCampaignList((prev) => [
+      {
+        id: `camp-${Date.now()}`,
+        collectedAmount: 0,
+        donorsCount: 0,
+        recentDonations: [],
+        ...newCamp,
+      },
+      ...prev,
+    ]);
+    showToast('Program donasi padepokan baru berhasil diluncurkan!', 'success');
+  };
 
-  const handleUpdateStats = (n) =>
-    mutate(() => api.updateSiteStats(n), 'stats', 'Statistik perguruan berhasil diperbarui!', 'Gagal memperbarui statistik');
+  const handleUpdateStats = (newStats) => {
+    setStats(newStats);
+    localStorage.setItem('trident_stats', JSON.stringify(newStats));
+    showToast('Statistik perguruan berhasil diperbarui!', 'success');
+  };
 
-  // ADMIN CMS MUTATORS (Pilar Visi Misi, Hero, Info Tempat Latihan)
-  const handleUpdatePillar = (id, p) =>
-    mutate(() => api.updatePillar(id, p), 'pillars', 'Pilar Visi & Misi berhasil diperbarui oleh Administrator!', 'Gagal memperbarui pilar');
-  const handleAddPillar = (p) =>
-    mutate(() => api.addPillar(p), 'pillars', 'Pilar Visi & Misi baru berhasil ditambahkan!', 'Gagal menambahkan pilar');
-  const handleDeletePillar = (id) =>
-    mutate(() => api.deletePillar(id), 'pillars', 'Pilar Visi & Misi berhasil dihapus!', 'Gagal menghapus pilar', 'info');
+  // ADMIN CMS MUTATORS (Mengubah isi aplikasi: Pilar Visi Misi, Hero, Info Tempat Latihan, Timeline)
+  const handleUpdatePillar = (id, updatedPillar) => {
+    setPillars((prev) => {
+      const updated = prev.map((p) => (p.id === id ? { ...p, ...updatedPillar } : p));
+      localStorage.setItem('trident_pillars', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Pilar Visi & Misi berhasil diperbarui oleh Administrator!', 'success');
+  };
 
-  const handleUpdateTrainingGround = (id, g) =>
-    mutate(() => api.updateTrainingGround(id, g), 'grounds', 'Info Tempat Latihan & Kontak Pelatih berhasil diperbarui!', 'Gagal memperbarui tempat latihan');
-  const handleAddTrainingGround = (g) =>
-    mutate(() => api.addTrainingGround(g), 'grounds', 'Tempat Latihan (PAR) baru berhasil didaftarkan!', 'Gagal menambahkan tempat latihan');
-  const handleDeleteTrainingGround = (id) =>
-    mutate(() => api.deleteTrainingGround(id), 'grounds', 'Tempat Latihan berhasil dihapus dari daftar!', 'Gagal menghapus tempat latihan', 'info');
+  const handleAddPillar = (newPillar) => {
+    setPillars((prev) => {
+      const id = Date.now();
+      const updated = [...prev, { ...newPillar, id }];
+      localStorage.setItem('trident_pillars', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Pilar Visi & Misi baru berhasil ditambahkan!', 'success');
+  };
 
-  const handleUpdateSiteContent = (patch, okMsg = 'Konten situs berhasil diperbarui!') =>
-    mutate(() => api.updateSiteContent(patch), 'content', okMsg, 'Gagal memperbarui konten situs');
-  const handleUpdateHero = (h) =>
-    handleUpdateSiteContent({ heroData: h }, 'Slogan & Teks Hero Padepokan berhasil diperbarui!');
+  const handleDeletePillar = (id) => {
+    setPillars((prev) => {
+      const updated = prev.filter((p) => p.id !== id);
+      localStorage.setItem('trident_pillars', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Pilar Visi & Misi berhasil dihapus!', 'info');
+  };
+
+  const handleUpdateTrainingGround = (id, updatedGround) => {
+    setTrainingGrounds((prev) => {
+      const updated = prev.map((g) => (g.id === id ? { ...g, ...updatedGround } : g));
+      localStorage.setItem('trident_training_grounds', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Info Tempat Latihan & Kontak Pelatih berhasil diperbarui!', 'success');
+  };
+
+  const handleAddTrainingGround = (newGround) => {
+    setTrainingGrounds((prev) => {
+      const id = `par-${Date.now()}`;
+      const updated = [{ ...newGround, id }, ...prev];
+      localStorage.setItem('trident_training_grounds', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Tempat Latihan (PAR) baru berhasil didaftarkan!', 'success');
+  };
+
+  const handleDeleteTrainingGround = (id) => {
+    setTrainingGrounds((prev) => {
+      const updated = prev.filter((g) => g.id !== id);
+      localStorage.setItem('trident_training_grounds', JSON.stringify(updated));
+      return updated;
+    });
+    showToast('Tempat Latihan berhasil dihapus dari daftar!', 'info');
+  };
+
+  const handleUpdateHero = (newHero) => {
+    setHeroData(newHero);
+    localStorage.setItem('trident_hero', JSON.stringify(newHero));
+    showToast('Slogan & Teks Hero Padepokan berhasil diperbarui!', 'success');
+  };
+
+  const handleUpdateTimeline = (newTimeline) => {
+    setTimeline(newTimeline);
+    localStorage.setItem('trident_timeline', JSON.stringify(newTimeline));
+    showToast('Sejarah Perjalanan Perguruan berhasil diperbarui!', 'success');
+  };
 
   return (
     <AppContext.Provider
       value={{
         role,
         ROLES,
-        isStaff,
-        isAdmin,
-        authLoading,
-        signIn,
-        signOut,
-        refresh,
+        handleRoleChange,
+        handleLogin,
+        handleLogout,
         isLoginModalOpen,
         setIsLoginModalOpen,
+        requestExaminerAccess,
+        isAdminCodeModalOpen,
+        setIsAdminCodeModalOpen,
+        verifyAndUnlockExaminer,
         currentUser,
         activeTab,
         setActiveTab,
         navigateToTab,
+        checkAccess,
         lockedModal,
         setLockedModal,
         stats,
@@ -525,44 +628,32 @@ export function AppProvider({ children }) {
         handleAddTrainingGround,
         handleDeleteTrainingGround,
         timeline,
+        handleUpdateTimeline,
         pillars,
         handleUpdatePillar,
         handleAddPillar,
         handleDeletePillar,
         newsList,
         handleAddNews,
-        handleDeleteNews,
         achievementsList,
         handleAddAchievement,
-        handleDeleteAchievement,
         agendaList,
         handleAddAgenda,
-        handleDeleteAgenda,
         handleRsvp,
         campaignList,
         handleAddCampaign,
-        handleUpdateCampaign,
-        handleDeleteCampaign,
         handleDonate,
-        myDonations,
-        pendingDonations,
-        handleVerifyDonation,
-        siteContent,
-        handleUpdateSiteContent,
-        candidatesList: overlayQueued(candidatesList, offlineQueueMine),
-        serverCandidatesList: candidatesList,
+        candidatesList,
         handleUpdateCandidateScores,
-        isOnline,
-        offlineQueue: offlineQueueMine,
-        conflicts,
-        discardQueued,
-        syncNow,
-        resolveConflict,
         handleImportCandidates,
-        handleDeleteCandidate,
-        myCandidate: candidatesList.find((c) => c.userId === currentUser?.id) ?? null,
         selectedReceipt,
         setSelectedReceipt,
+        // Offline & Auto-sync Engine
+        isOnline,
+        isSimulatingOffline,
+        toggleOfflineSimulation,
+        offlineQueue,
+        syncOfflineQueue,
         toast,
         showToast,
       }}
