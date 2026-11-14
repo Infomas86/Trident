@@ -3,7 +3,7 @@ import { INITIAL_CAMPAIGNS } from '../data/mockData';
 import { INITIAL_TIMELINE } from '../data/static';
 import { supabase } from '../lib/supabase';
 import * as api from '../lib/api';
-import { enqueueScore, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearOfflineData } from '../lib/offline';
+import { enqueueForUser, withoutUser, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearCaches } from '../lib/offline';
 
 const PROFILE_TIMEOUT_MS = 8000;
 
@@ -166,12 +166,12 @@ export function AppProvider({ children }) {
   };
 
   const signOut = async () => {
-    const pending = queueRef.current.length + conflictsRef.current.length;
+    const pending = queueRef.current.filter((i) => i.userId === userId).length + conflictsRef.current.filter((i) => i.userId === userId).length;
     if (pending && !window.confirm(`Ada ${pending} nilai belum terkirim. Keluar dan buang?`)) return;
     await supabase.auth.signOut();
-    clearOfflineData();
-    setOfflineQueue([]);
-    setAllConflicts([]);
+    clearCaches();
+    setOfflineQueue(withoutUser(queueRef.current, userId));
+    setAllConflicts(withoutUser(conflictsRef.current, userId));
     showToast('Anda telah keluar dari akun.', 'info');
   };
 
@@ -369,7 +369,7 @@ export function AppProvider({ children }) {
       }
     }
     if (!result) {
-      setOfflineQueue([...queueRef.current.filter((q) => q.userId !== userId || q.candidateId !== candidateId), ...enqueueScore(queueRef.current.filter((q) => q.userId === userId), item)]);
+      setOfflineQueue(enqueueForUser(queueRef.current, userId, item));
       showToast('Disimpan di HP ini, dikirim saat sinyal kembali', 'info');
       return true;
     }
