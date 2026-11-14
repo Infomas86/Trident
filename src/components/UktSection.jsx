@@ -44,6 +44,7 @@ export default function UktSection() {
     conflicts,
     syncNow,
     resolveConflict,
+    discardQueued,
   } = useApp();
 
   // Active Pos Sub-Tab: 'all' | 'pos1' | 'pos2' | 'pos3' | 'pos4'
@@ -331,6 +332,13 @@ export default function UktSection() {
               Sinkronkan Sekarang
             </button>
           </div>
+          {offlineQueue.filter((i) => i.failed).map((i) => (
+            <div key={i.candidateId} className="flex flex-wrap items-center gap-3 px-4 py-2 rounded-xl border border-rose-700/50 bg-rose-950/30 text-xs text-slate-200">
+              <strong>{i.candidateName ?? 'Peserta'}</strong>
+              <span className="text-rose-300">Gagal dikirim: {i.failed}</span>
+              <button onClick={() => discardQueued(i.candidateId)} className="ml-auto px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700">Buang</button>
+            </div>
+          ))}
           {conflicts.length > 0 && (
             <div className="rounded-xl border border-rose-700/50 bg-rose-950/30 p-4 space-y-3">
               <h3 className="text-sm font-bold text-rose-300">Nilai bentrok</h3>

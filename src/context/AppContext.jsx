@@ -3,7 +3,7 @@ import { INITIAL_CAMPAIGNS } from '../data/mockData';
 import { INITIAL_TIMELINE } from '../data/static';
 import { supabase } from '../lib/supabase';
 import * as api from '../lib/api';
-import { enqueueScore, syncQueue, loadQueue, saveQueue, loadCache, saveCache, clearOfflineData } from '../lib/offline';
+import { enqueueScore, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearOfflineData } from '../lib/offline';
 
 const PROFILE_TIMEOUT_MS = 8000;
 
@@ -55,14 +55,23 @@ export function AppProvider({ children }) {
   // Offline state: online flag, persisted score queue, conflicts awaiting the examiner's choice
   const [isOnline, setIsOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
   const [offlineQueue, setOfflineQueueState] = useState(loadQueue);
-  const [conflicts, setConflicts] = useState([]);
+  const [allConflicts, setAllConflictsState] = useState(loadConflicts);
   const queueRef = useRef(offlineQueue);
+  const conflictsRef = useRef(allConflicts);
   const syncing = useRef(false);
   const syncRef = useRef(() => {});
   const setOfflineQueue = (q) => {
     queueRef.current = q;
     setOfflineQueueState(q);
     saveQueue(q);
+  };
+
+  // Persist like the queue; accepts a value or an updater.
+  const setAllConflicts = (u) => {
+    const next = typeof u === 'function' ? u(conflictsRef.current) : u;
+    conflictsRef.current = next;
+    setAllConflictsState(next);
+    saveConflicts(next);
   };
 
   useEffect(() => {
@@ -91,6 +100,9 @@ export function AppProvider({ children }) {
   }, []);
 
   const userId = session?.user?.id;
+  // Only this user's items are shown or synced; other users' items wait for their next sign-in.
+  const offlineQueueMine = offlineQueue.filter((i) => i.userId === userId);
+  const conflicts = allConflicts.filter((c) => c.userId === userId);
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
@@ -154,11 +166,12 @@ export function AppProvider({ children }) {
   };
 
   const signOut = async () => {
-    if (queueRef.current.length && !window.confirm(`Ada ${queueRef.current.length} nilai belum terkirim. Keluar dan buang?`)) return;
+    const pending = queueRef.current.length + conflictsRef.current.length;
+    if (pending && !window.confirm(`Ada ${pending} nilai belum terkirim. Keluar dan buang?`)) return;
     await supabase.auth.signOut();
     clearOfflineData();
     setOfflineQueue([]);
-    setConflicts([]);
+    setAllConflicts([]);
     showToast('Anda telah keluar dari akun.', 'info');
   };
 
@@ -282,17 +295,22 @@ export function AppProvider({ children }) {
 
   // Send the whole queue; one run at a time. Network errors keep items queued, conflicts go to the panel.
   const syncNow = async () => {
-    if (syncing.current || !userId || !navigator.onLine || !queueRef.current.length) return;
+    const snapshot = queueRef.current.filter((i) => i.userId === userId);
+    if (syncing.current || !userId || !navigator.onLine || !snapshot.length) return;
     syncing.current = true;
-    const snapshot = queueRef.current;
     try {
-      const r = await syncQueue(snapshot, (item) =>
-        api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt }));
-      // keep what failed to send plus anything enqueued/replaced while syncing
+      const r = await syncQueue(
+        snapshot,
+        (item) => api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt }),
+        { online: () => navigator.onLine },
+      );
+      // others' items untouched; mine: replaced by the remaining version (may be marked failed), new/changed-while-syncing kept
       const sent = (i) => snapshot.some((s) => s.candidateId === i.candidateId && s.savedAt === i.savedAt);
-      setOfflineQueue(queueRef.current.filter((i) => !sent(i) || r.remaining.some((x) => x.candidateId === i.candidateId)));
+      setOfflineQueue(
+        queueRef.current.flatMap((i) => (i.userId !== userId || !sent(i) ? [i] : r.remaining.filter((x) => x.candidateId === i.candidateId))),
+      );
       if (r.conflicts.length) {
-        setConflicts((prev) => [...prev.filter((c) => !r.conflicts.some((x) => x.candidateId === c.candidateId)), ...r.conflicts]);
+        setAllConflicts((prev) => [...prev.filter((c) => c.userId !== userId || !r.conflicts.some((x) => x.candidateId === c.candidateId)), ...r.conflicts]);
         showToast(`${r.conflicts.length} nilai bentrok dengan penguji lain, pilih di panel Nilai bentrok`, 'error');
       }
       if (r.synced) showToast(`${r.synced} nilai terkirim`, 'success');
@@ -313,24 +331,35 @@ export function AppProvider({ children }) {
     const item = conflicts.find((c) => c.candidateId === candidateId);
     if (!item) return;
     if (choice === 'mine') {
+      let r;
       try {
-        await api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt, force: true });
+        r = await api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt, force: true });
       } catch (e) {
         console.error(e);
         showToast('Gagal mengirim nilai, periksa koneksi', 'error');
         return;
       }
+      if (r !== 'ok') {
+        showToast('Nilai tidak bisa dikirim (ditolak server atau peserta dihapus)', 'error');
+        return;
+      }
       showToast(`Nilai ${item.candidateName ?? 'peserta'} dikirim`, 'success');
     }
-    setConflicts((prev) => prev.filter((c) => c.candidateId !== candidateId));
+    setAllConflicts((prev) => prev.filter((c) => c.userId !== userId || c.candidateId !== candidateId));
     refreshCandidates();
+  };
+
+  // Drop a stuck queued item (after confirm).
+  const discardQueued = (candidateId) => {
+    if (!window.confirm('Buang nilai yang belum terkirim ini?')) return;
+    setOfflineQueue(queueRef.current.filter((i) => i.userId !== userId || i.candidateId !== candidateId));
   };
 
   // UKT Candidate Score Update. baseUpdatedAt = updatedAt of the snapshot the examiner edited.
   // Always resolves true: the score is saved on the server, queued on the phone, or parked as a conflict.
   const handleUpdateCandidateScores = async (candidateId, newPosScores, notes, baseUpdatedAt) => {
     const target = candidatesList.find((c) => c.id === candidateId);
-    const item = { candidateId, candidateName: target?.name, posScores: newPosScores, notes, baseUpdatedAt, savedAt: new Date().toISOString() };
+    const item = { userId, candidateId, candidateName: target?.name, posScores: newPosScores, notes, baseUpdatedAt, savedAt: new Date().toISOString() };
     let result;
     if (navigator.onLine) {
       try {
@@ -340,13 +369,14 @@ export function AppProvider({ children }) {
       }
     }
     if (!result) {
-      setOfflineQueue(enqueueScore(queueRef.current, item));
+      setOfflineQueue([...queueRef.current.filter((q) => q.userId !== userId || q.candidateId !== candidateId), ...enqueueScore(queueRef.current.filter((q) => q.userId === userId), item)]);
       showToast('Disimpan di HP ini, dikirim saat sinyal kembali', 'info');
       return true;
     }
-    setOfflineQueue(queueRef.current.filter((q) => q.candidateId !== candidateId));
+    setOfflineQueue(queueRef.current.filter((q) => q.userId !== userId || q.candidateId !== candidateId));
+    setAllConflicts((prev) => prev.filter((c) => c.userId !== userId || c.candidateId !== candidateId));
     if (result === 'conflict') {
-      setConflicts((prev) => [...prev.filter((c) => c.candidateId !== candidateId), item]);
+      setAllConflicts((prev) => [...prev, item]);
       showToast('Nilai sudah diubah penguji lain, pilih di panel Nilai bentrok', 'error');
       refreshCandidates();
       return true;
@@ -471,8 +501,9 @@ export function AppProvider({ children }) {
         candidatesList,
         handleUpdateCandidateScores,
         isOnline,
-        offlineQueue,
+        offlineQueue: offlineQueueMine,
         conflicts,
+        discardQueued,
         syncNow,
         resolveConflict,
         handleImportCandidates,
