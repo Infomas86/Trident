@@ -9,6 +9,7 @@ import PrestasiSection from './components/PrestasiSection';
 import AgendaSection from './components/AgendaSection';
 import DonasiSection from './components/DonasiSection';
 import DonasiVerifikasi from './components/DonasiVerifikasi';
+import AkunSection from './components/AkunSection';
 import UktSection from './components/UktSection';
 import Footer from './components/Footer';
 import { CheckCircle, Info, AlertCircle } from 'lucide-react';
@@ -53,6 +54,7 @@ function MainContent() {
         {activeTab === 'donasi' && <DonasiSection />}
         {activeTab === 'ukt' && <UktSection />}
         {activeTab === 'verifikasi' && isAdmin && <DonasiVerifikasi />}
+        {activeTab === 'akun' && isAdmin && <AkunSection />}
       </main>
 
       {/* Martial Arts Academy Footer */}

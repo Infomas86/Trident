@@ -236,7 +236,7 @@ export function AppProvider({ children }) {
 
   // Leave the admin-only tab when admin rights go away (logout, role change).
   useEffect(() => {
-    if (activeTab === 'verifikasi' && !isAdmin) setActiveTab('visi');
+    if ((activeTab === 'verifikasi' || activeTab === 'akun') && !isAdmin) setActiveTab('visi');
   }, [activeTab, isAdmin]);
 
   // Switch tab with access check
@@ -245,7 +245,7 @@ export function AppProvider({ children }) {
       setIsLoginModalOpen(true);
       return;
     }
-    if (tabName === 'verifikasi' && !isAdmin) return;
+    if ((tabName === 'verifikasi' || tabName === 'akun') && !isAdmin) return;
     setActiveTab(tabName);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

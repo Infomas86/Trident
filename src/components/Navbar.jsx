@@ -15,6 +15,7 @@ import {
   KeyRound,
   LogOut,
   BadgeCheck,
+  Users,
 } from 'lucide-react';
 
 const ROLE_BADGE = {
@@ -34,7 +35,7 @@ export default function Navbar() {
     { id: 'agenda', label: 'Agenda Kegiatan', icon: Calendar, locked: role === ROLES.PUBLIC },
     { id: 'donasi', label: 'Donasi', icon: HeartHandshake, locked: role === ROLES.PUBLIC },
     { id: 'ukt', label: 'Ujian Kenaikan Tingkat', icon: GraduationCap, locked: role === ROLES.PUBLIC },
-    ...(isAdmin ? [{ id: 'verifikasi', label: 'Verifikasi', icon: BadgeCheck, locked: false, badge: pendingDonations.length }] : []),
+    ...(isAdmin ? [{ id: 'verifikasi', label: 'Verifikasi', icon: BadgeCheck, locked: false, badge: pendingDonations.length }, { id: 'akun', label: 'Kelola Akun', icon: Users, locked: false }] : []),
   ];
 
   return (

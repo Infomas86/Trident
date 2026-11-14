@@ -1,0 +1,157 @@
+import React, { useEffect, useState } from 'react';
+import { useApp, ROLES } from '../context/AppContext';
+import * as api from '../lib/api';
+import { TRIDENT_BELT_LEVELS } from '../data/static';
+
+const input = 'w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none';
+const ROLE_OPTIONS = [[ROLES.MEMBER, 'Anggota'], [ROLES.EXAMINER, 'Penguji'], [ROLES.ADMIN, 'Admin']];
+const roleLabel = (r) => ROLE_OPTIONS.find(([v]) => v === r)?.[1] ?? '-';
+const EMPTY = { email: '', password: '', full_name: '', role: ROLES.MEMBER, belt: '', branch: '', reg_number: '' };
+const blank = (v) => v.trim() || null;
+
+export default function AkunSection() {
+  const { showToast } = useApp();
+  const [users, setUsers] = useState([]);
+  const [q, setQ] = useState('');
+  const [form, setForm] = useState(EMPTY);
+  const [edit, setEdit] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = () => api.listUsers().then(setUsers).catch((e) => {
+    console.error(e);
+    showToast(e instanceof api.UserError ? e.message : 'Gagal memuat akun', 'error');
+  });
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Run an admin action, toast the outcome, reload the list.
+  const run = async (call, okMsg, failMsg) => {
+    setBusy(true);
+    try {
+      await call();
+    } catch (e) {
+      console.error(e);
+      showToast(e instanceof api.UserError ? e.message : failMsg, 'error');
+      setBusy(false);
+      return false;
+    }
+    showToast(okMsg);
+    await load();
+    setBusy(false);
+    return true;
+  };
+
+  const create = async (e) => {
+    e.preventDefault();
+    if (form.password.length < 8) return showToast('Sandi awal minimal 8 karakter', 'error');
+    const done = await run(
+      () => api.createUser({
+        email: form.email.trim(), password: form.password, full_name: form.full_name.trim(), role: form.role,
+        belt: blank(form.belt), branch: blank(form.branch), reg_number: blank(form.reg_number),
+      }),
+      'Akun berhasil dibuat', 'Gagal membuat akun',
+    );
+    if (done) setForm(EMPTY);
+  };
+
+  const saveEdit = async (e) => {
+    e.preventDefault();
+    const { id, full_name, role, belt, branch, reg_number } = edit;
+    if (!full_name.trim()) return showToast('Nama wajib diisi', 'error');
+    const done = await run(
+      () => api.updateUserProfile(id, { full_name: full_name.trim(), role, belt: blank(belt), branch: blank(branch), reg_number: blank(reg_number) }),
+      'Akun berhasil diperbarui', 'Gagal memperbarui akun',
+    );
+    if (done) setEdit(null);
+  };
+
+  const reset = (u) => {
+    const pw = window.prompt(`Sandi baru untuk ${u.email} (minimal 8 karakter):`);
+    if (pw === null) return;
+    if (pw.length < 8) return showToast('Sandi minimal 8 karakter', 'error');
+    if (window.confirm(`Reset sandi ${u.email}?`)) run(() => api.resetPassword(u.id, pw), 'Sandi berhasil direset', 'Gagal mereset sandi');
+  };
+
+  const toggle = (u) => {
+    if (u.active && !window.confirm(`Nonaktifkan ${u.email}? Pengguna tidak bisa masuk lagi.`)) return;
+    run(() => api.setUserActive(u.id, !u.active), u.active ? 'Akun dinonaktifkan' : 'Akun diaktifkan', 'Gagal mengubah status akun');
+  };
+
+  const needle = q.trim().toLowerCase();
+  const shown = users.filter((u) => !needle || [u.full_name, u.email, u.branch, u.reg_number].some((v) => v?.toLowerCase().includes(needle)));
+  const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const setE = (k) => (e) => setEdit({ ...edit, [k]: e.target.value });
+
+  const fields = (v, set, withAuth) => (
+    <>
+      {withAuth && (
+        <>
+          <input className={input} type="email" required placeholder="Email" value={v.email} onChange={set('email')} />
+          <input className={input} type="password" required minLength={8} autoComplete="new-password" placeholder="Sandi awal (min. 8)" value={v.password} onChange={set('password')} />
+        </>
+      )}
+      <input className={input} required placeholder="Nama lengkap" value={v.full_name} onChange={set('full_name')} />
+      <select className={input} value={v.role} onChange={set('role')}>
+        {ROLE_OPTIONS.map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+      </select>
+      <select className={input} value={v.belt} onChange={set('belt')}>
+        <option value="">Sabuk (kosong)</option>
+        {TRIDENT_BELT_LEVELS.map((b) => <option key={b} value={b}>{b}</option>)}
+      </select>
+      <input className={input} placeholder="Cabang" value={v.branch} onChange={set('branch')} />
+      <input className={input} placeholder="No. registrasi" value={v.reg_number} onChange={set('reg_number')} />
+    </>
+  );
+
+  return (
+    <div className="space-y-8 py-6">
+      <h2 className="text-2xl font-extrabold text-white font-['Cinzel']">Kelola Akun</h2>
+
+      <form onSubmit={create} className="trident-card rounded-2xl p-5 border border-slate-800 space-y-3">
+        <h3 className="text-sm font-bold text-white">Tambah Akun</h3>
+        <div className="grid sm:grid-cols-3 gap-3">{fields(form, setF, true)}</div>
+        <button type="submit" disabled={busy} className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-xs font-bold">Tambah</button>
+      </form>
+
+      {edit && (
+        <form onSubmit={saveEdit} className="trident-card rounded-2xl p-5 border border-amber-500/40 space-y-3">
+          <h3 className="text-sm font-bold text-white">Ubah Akun</h3>
+          <div className="grid sm:grid-cols-3 gap-3">{fields(edit, setE, false)}</div>
+          <div className="flex gap-2">
+            <button type="submit" disabled={busy} className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-xs font-bold">Simpan</button>
+            <button type="button" onClick={() => setEdit(null)} className="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold">Batal</button>
+          </div>
+        </form>
+      )}
+
+      <div className="space-y-3">
+        <input className={input} placeholder="Cari nama, email, cabang, atau no. registrasi" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="overflow-x-auto rounded-xl border border-slate-800">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-slate-900 text-slate-400">
+              <tr>{['Nama', 'Email', 'Peran', 'Sabuk', 'Cabang', 'No. Reg', 'Status', 'Aksi'].map((h) => <th key={h} className="px-3 py-2 font-semibold">{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {shown.length === 0 && <tr><td colSpan={8} className="px-3 py-4 text-slate-400">Tidak ada akun.</td></tr>}
+              {shown.map((u) => (
+                <tr key={u.id} className="border-t border-slate-800 text-slate-200">
+                  <td className="px-3 py-2 font-bold text-white">{u.full_name ?? '-'}</td>
+                  <td className="px-3 py-2">{u.email}</td>
+                  <td className="px-3 py-2">{roleLabel(u.role)}</td>
+                  <td className="px-3 py-2">{u.belt ?? '-'}</td>
+                  <td className="px-3 py-2">{u.branch ?? '-'}</td>
+                  <td className="px-3 py-2 font-mono">{u.reg_number ?? '-'}</td>
+                  <td className="px-3 py-2">{u.active ? <span className="text-emerald-400">Aktif</span> : <span className="text-rose-400">Nonaktif</span>}</td>
+                  <td className="px-3 py-2 whitespace-nowrap space-x-1">
+                    <button disabled={busy} onClick={() => setEdit({ id: u.id, full_name: u.full_name ?? '', role: u.role ?? ROLES.MEMBER, belt: u.belt ?? '', branch: u.branch ?? '', reg_number: u.reg_number ?? '' })} className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700">Ubah</button>
+                    <button disabled={busy} onClick={() => reset(u)} className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700">Reset Sandi</button>
+                    <button disabled={busy} onClick={() => toggle(u)} className={`px-2 py-1 rounded text-white ${u.active ? 'bg-rose-700 hover:bg-rose-600' : 'bg-emerald-600 hover:bg-emerald-500'}`}>{u.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

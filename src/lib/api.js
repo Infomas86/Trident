@@ -343,3 +343,16 @@ export async function setDonationStatus(id, status) {
       .eq('status', 'pending'),
   );
 }
+
+// --- Kelola Akun (Edge Function manage-user, admin only) ---
+async function manageUser(body) {
+  const { data, error } = await supabase.functions.invoke('manage-user', { body });
+  if (!error) return data;
+  const msg = await error.context?.json?.().then((j) => j?.error, () => null);
+  throw msg ? new UserError(msg) : error;
+}
+export const listUsers = async () => (await manageUser({ action: 'list' })).users;
+export const createUser = (input) => manageUser({ action: 'create', ...input });
+export const resetPassword = (userId, password) => manageUser({ action: 'reset_password', user_id: userId, password });
+export const setUserActive = (userId, active) => manageUser({ action: 'set_active', user_id: userId, active });
+export const updateUserProfile = (userId, patch) => manageUser({ action: 'update_profile', user_id: userId, ...patch });
