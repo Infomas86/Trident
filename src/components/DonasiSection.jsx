@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, ROLES } from '../context/AppContext';
 import {
   HeartHandshake,
   QrCode,
@@ -7,17 +7,13 @@ import {
   CheckCircle,
   Copy,
   PlusCircle,
-  Pencil,
-  Trash2,
-  Receipt,
-  ImagePlus,
   Sparkles,
   Lock,
+  UserCheck,
   TrendingUp,
   X,
   CreditCard,
   ShieldCheck,
-  KeyRound,
 } from 'lucide-react';
 import ReceiptModal from './ReceiptModal';
 
@@ -25,30 +21,21 @@ export default function DonasiSection() {
   const {
     campaignList,
     handleAddCampaign,
-    handleUpdateCampaign,
-    handleDeleteCampaign,
     handleDonate,
-    myDonations,
-    setSelectedReceipt,
-    siteContent,
     role,
     ROLES,
     currentUser,
-    isAdmin,
-    setIsLoginModalOpen,
+    handleRoleChange,
     showToast,
   } = useApp();
 
   const [activeCampaign, setActiveCampaign] = useState(null);
   const [isAddCampaignOpen, setIsAddCampaignOpen] = useState(false);
-  const [editingId, setEditingId] = useState(null); // campaign id being edited, null = creating
-  const [proofFile, setProofFile] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
 
   // Donation form state
   const [selectedPreset, setSelectedPreset] = useState(50000);
   const [customAmount, setCustomAmount] = useState('');
-  const [donorName, setDonorName] = useState(currentUser?.name || '');
+  const [donorName, setDonorName] = useState(currentUser.name || 'Ahmad Fauzi');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [message, setMessage] = useState('Semoga padepokan semakin jaya dan berkah!');
   const [paymentMethod, setPaymentMethod] = useState('qris'); // 'qris' or 'bank'
@@ -59,12 +46,9 @@ export default function DonasiSection() {
     title: '',
     category: 'Sarana Padepokan',
     targetAmount: 25000000,
-    deadline: '2026-12-31',
+    deadline: '31 Desember 2026',
     description: '',
   });
-
-  const hasBank = !!(siteContent.bankName || siteContent.bankAccount || siteContent.bankHolder);
-  const hasPaymentInfo = hasBank || !!siteContent.qrisImageUrl;
 
   const presetAmounts = [25000, 50000, 100000, 250000, 500000];
 
@@ -83,13 +67,19 @@ export default function DonasiSection() {
             Fitur kontribusi sarana padepokan dan beasiswa atlet bersifat eksklusif bagi anggota terdaftar dan pengurus perguruan.
           </p>
         </div>
-        <div className="pt-2 flex items-center justify-center">
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
-            onClick={() => setIsLoginModalOpen(true)}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 transition-all"
+            onClick={() => handleRoleChange(ROLES.MEMBER)}
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-900/50 flex items-center justify-center gap-2 transition-all"
           >
-            <KeyRound className="w-4 h-4" />
-            <span>Masuk</span>
+            <UserCheck className="w-4 h-4" />
+            <span>Masuk sebagai Anggota (Ahmad Fauzi)</span>
+          </button>
+          <button
+            onClick={() => handleRoleChange(ROLES.EXAMINER)}
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-500/30 flex items-center justify-center gap-2 transition-all"
+          >
+            <span>Masuk sebagai Penguji / Admin</span>
           </button>
         </div>
       </div>
@@ -100,9 +90,8 @@ export default function DonasiSection() {
     setActiveCampaign(campaign);
     setSelectedPreset(50000);
     setCustomAmount('');
-    setDonorName(currentUser?.name || '');
+    setDonorName(currentUser.name);
     setIsAnonymous(false);
-    setProofFile(null);
   };
 
   const handleCopyVa = (text) => {
@@ -112,61 +101,45 @@ export default function DonasiSection() {
     setTimeout(() => setCopiedBank(false), 2500);
   };
 
-  const handleProcessDonation = async (e) => {
+  const handleProcessDonation = (e) => {
     e.preventDefault();
-    if (!activeCampaign || submitting) return;
+    if (!activeCampaign) return;
 
     const amount = customAmount ? Number(customAmount) : selectedPreset;
-    if (!Number.isInteger(amount) || amount < 1000 || amount > 1_000_000_000_000) {
-      showToast('Nominal donasi harus bilangan bulat antara Rp 1.000 dan Rp 1.000.000.000.000', 'error');
-      return;
-    }
-    if (!proofFile) {
-      showToast('Pilih foto bukti transfer terlebih dahulu', 'error');
+    if (!amount || amount <= 0) {
+      showToast('Masukkan nominal donasi yang valid!', 'error');
       return;
     }
 
-    setSubmitting(true);
-    const done = await handleDonate(activeCampaign.id, {
+    const finalDonorName = isAnonymous ? 'Hamba Allah (Anonim)' : donorName;
+
+    handleDonate(activeCampaign.id, {
       amount,
-      donorName: isAnonymous ? 'Hamba Allah (Anonim)' : donorName,
+      donorName: finalDonorName,
       message,
-      paymentMethod: paymentMethod === 'qris' ? 'QRIS' : `Transfer ${siteContent.bankName || 'Bank'}`,
-      proofFile,
+      paymentMethod: paymentMethod === 'qris' ? 'QRIS Dinamis Padepokan' : 'Virtual Account Bank Mandiri (137-00-9821-002)',
     });
-    setSubmitting(false);
-    if (done) setActiveCampaign(null);
+
+    setActiveCampaign(null);
   };
 
-  const emptyCampaignForm = { title: '', category: 'Sarana Padepokan', targetAmount: 25000000, deadline: '2026-12-31', description: '' };
-
-  const openEditCampaign = (c) => {
-    setEditingId(c.id);
-    setNewCampaignForm({ title: c.title, category: c.category || 'Sarana Padepokan', targetAmount: c.targetAmount, deadline: c.deadlineDate, description: c.description || '' });
-    setIsAddCampaignOpen(true);
-  };
-
-  const closeCampaignForm = () => {
-    setIsAddCampaignOpen(false);
-    setEditingId(null);
-    setNewCampaignForm(emptyCampaignForm);
-  };
-
-  const confirmDeleteCampaign = (c) => {
-    if (window.confirm(`Hapus program "${c.title}"?`)) handleDeleteCampaign(c.id);
-  };
-
-  const handleSubmitNewCampaign = async (e) => {
+  const handleSubmitNewCampaign = (e) => {
     e.preventDefault();
-    const payload = {
+    handleAddCampaign({
       title: newCampaignForm.title,
       category: newCampaignForm.category,
       targetAmount: Number(newCampaignForm.targetAmount),
-      deadline: newCampaignForm.deadline || null,
+      deadline: newCampaignForm.deadline,
       description: newCampaignForm.description,
-    };
-    const done = editingId ? await handleUpdateCampaign(editingId, payload) : await handleAddCampaign(payload);
-    if (done) closeCampaignForm();
+    });
+    setNewCampaignForm({
+      title: '',
+      category: 'Sarana Padepokan',
+      targetAmount: 25000000,
+      deadline: '31 Desember 2026',
+      description: '',
+    });
+    setIsAddCampaignOpen(false);
   };
 
   return (
@@ -188,13 +161,9 @@ export default function DonasiSection() {
           </p>
         </div>
 
-        {isAdmin && (
+        {role === ROLES.EXAMINER && (
           <button
-            onClick={() => {
-              setEditingId(null);
-              setNewCampaignForm(emptyCampaignForm);
-              setIsAddCampaignOpen(true);
-            }}
+            onClick={() => setIsAddCampaignOpen(true)}
             className="self-start md:self-auto flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-950/50 transition-all hover:scale-105"
           >
             <PlusCircle className="w-4 h-4" />
@@ -222,16 +191,6 @@ export default function DonasiSection() {
                     Batas: <strong className="text-slate-200">{camp.deadline}</strong>
                   </span>
                 </div>
-                {isAdmin && (
-                  <div className="flex gap-2">
-                    <button onClick={() => openEditCampaign(camp)} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold">
-                      <Pencil className="w-3 h-3" /> Ubah
-                    </button>
-                    <button onClick={() => confirmDeleteCampaign(camp)} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-rose-900/60 text-rose-300 text-[11px] font-semibold">
-                      <Trash2 className="w-3 h-3" /> Hapus
-                    </button>
-                  </div>
-                )}
 
                 <h3 className="text-lg sm:text-xl font-bold text-white font-['Cinzel'] leading-snug">
                   {camp.title}
@@ -305,36 +264,6 @@ export default function DonasiSection() {
         })}
       </div>
 
-      {/* Donasi Saya */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-bold text-white font-['Cinzel']">Donasi Saya</h3>
-        {myDonations.length === 0 ? (
-          <p className="text-xs text-slate-400">Belum ada donasi.</p>
-        ) : (
-          <div className="space-y-2">
-            {myDonations.map((d) => (
-              <div key={d.id} className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-                <div className="min-w-0">
-                  <p className="font-semibold text-white truncate">{d.campaignTitle}</p>
-                  <p className="text-slate-400">{d.timestamp} · {d.refNumber}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono font-bold text-amber-400">Rp {d.amount.toLocaleString('id-ID')}</span>
-                  <span className={`px-2 py-0.5 rounded font-bold ${d.status === 'accepted' ? 'bg-emerald-950 text-emerald-400' : d.status === 'rejected' ? 'bg-rose-950 text-rose-400' : 'bg-amber-950 text-amber-300'}`}>
-                    {d.status === 'accepted' ? 'Diterima' : d.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
-                  </span>
-                  {d.status === 'accepted' && (
-                    <button onClick={() => setSelectedReceipt(d)} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold">
-                      <Receipt className="w-3 h-3" /> Resi
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Donation Form Modal */}
       {activeCampaign && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
@@ -392,9 +321,6 @@ export default function DonasiSection() {
                 </label>
                 <input
                   type="number"
-                  min={1000}
-                  max={1000000000000}
-                  step={1}
                   placeholder="Contoh: 750000"
                   value={customAmount}
                   onChange={(e) => setCustomAmount(e.target.value)}
@@ -483,74 +409,50 @@ export default function DonasiSection() {
                 </div>
               </div>
 
-              {/* Payment info from admin settings */}
-              {!hasPaymentInfo ? (
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center text-xs text-amber-300">
-                  Info pembayaran belum diatur admin
-                </div>
-              ) : paymentMethod === 'qris' ? (
+              {/* Payment Details Simulator */}
+              {paymentMethod === 'qris' ? (
                 <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center space-y-2">
-                  {siteContent.qrisImageUrl ? (
-                    <img src={siteContent.qrisImageUrl} alt="QRIS" className="w-40 h-40 object-contain bg-white p-2 rounded-xl mx-auto" />
-                  ) : (
-                    <p className="text-xs text-slate-400">QRIS belum tersedia, gunakan transfer bank.</p>
-                  )}
-                  <p className="text-[11px] text-slate-400">Pindai dengan aplikasi m-Banking atau e-Wallet, lalu unggah bukti transfer.</p>
-                </div>
-              ) : hasBank ? (
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-400">Rekening {siteContent.bankName}:</span>
-                    {siteContent.bankAccount && (
-                      <button type="button" onClick={() => handleCopyVa(siteContent.bankAccount)} className="text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold">
-                        <Copy className="w-3 h-3" />
-                        <span>{copiedBank ? 'Tersalin!' : 'Salin'}</span>
-                      </button>
-                    )}
+                  <div className="w-32 h-32 bg-white p-2 rounded-xl mx-auto shadow-md flex items-center justify-center">
+                    <div className="w-full h-full bg-slate-900 border-2 border-slate-950 rounded flex flex-col items-center justify-center text-white text-[9px] p-1 font-mono">
+                      <span>SCAN QRIS</span>
+                      <span className="text-[12px] font-bold text-amber-400">TRIDENT</span>
+                      <span>RESMI</span>
+                    </div>
                   </div>
-                  <p className="text-base font-mono font-bold text-white tracking-wider">{siteContent.bankAccount}</p>
-                  {siteContent.bankHolder && <p className="text-[11px] text-slate-400">a.n. {siteContent.bankHolder}</p>}
+                  <p className="text-[11px] text-slate-400">
+                    Pindai menggunakan aplikasi m-Banking atau e-Wallet apa pun.
+                  </p>
                 </div>
               ) : (
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center text-xs text-slate-400">
-                  Rekening bank belum tersedia, gunakan QRIS.
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400">Nomor Rekening Mandiri Padepokan:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyVa('137009821002')}
+                      className="text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>{copiedBank ? 'Tersalin!' : 'Salin'}</span>
+                    </button>
+                  </div>
+                  <p className="text-base font-mono font-bold text-white tracking-wider">
+                    137-00-9821-002
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    a.n. Yayasan Padepokan Trident Kesatria
+                  </p>
                 </div>
               )}
-
-              {/* Proof of transfer */}
-              <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">Bukti Transfer (JPEG/PNG/WebP, maks 5 MB)</label>
-                <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-950 border border-dashed border-slate-700 text-xs text-slate-300 cursor-pointer hover:border-amber-500">
-                  <ImagePlus className="w-4 h-4 text-amber-400" />
-                  <span className="truncate">{proofFile ? proofFile.name : 'Pilih foto bukti transfer'}</span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0] ?? null;
-                      const reject = (msg) => {
-                        showToast(msg, 'error');
-                        e.target.value = '';
-                        setProofFile(null);
-                      };
-                      if (f && !['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) return reject('Bukti transfer harus berupa foto JPEG, PNG, atau WebP');
-                      if (f && f.size > 5 * 1024 * 1024) return reject('Ukuran bukti transfer maksimal 5 MB');
-                      setProofFile(f);
-                    }}
-                  />
-                </label>
-              </div>
 
               {/* Submit Button */}
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={!hasPaymentInfo || submitting}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  <span>{submitting ? 'Mengirim...' : 'Kirim Donasi'}</span>
+                  <span>Konfirmasi & Cetak Bukti Resi Digital</span>
                 </button>
               </div>
 
@@ -566,10 +468,10 @@ export default function DonasiSection() {
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
               <h3 className="text-lg font-bold text-white font-['Cinzel'] flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-amber-400" />
-                {editingId ? 'Ubah Program Donasi' : 'Buka Program Donasi / Gotong Royong Baru'}
+                Buka Program Donasi / Gotong Royong Baru
               </h3>
               <button
-                onClick={closeCampaignForm}
+                onClick={() => setIsAddCampaignOpen(false)}
                 className="text-slate-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
@@ -626,7 +528,7 @@ export default function DonasiSection() {
                   Batas Akhir Program (Deadline)
                 </label>
                 <input
-                  type="date"
+                  type="text"
                   placeholder="Contoh: 31 Desember 2026"
                   value={newCampaignForm.deadline}
                   onChange={(e) => setNewCampaignForm({ ...newCampaignForm, deadline: e.target.value })}
@@ -652,7 +554,7 @@ export default function DonasiSection() {
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={closeCampaignForm}
+                  onClick={() => setIsAddCampaignOpen(false)}
                   className="px-4 py-2 rounded-lg text-slate-400 hover:text-white text-xs font-semibold"
                 >
                   Batal
@@ -661,7 +563,7 @@ export default function DonasiSection() {
                   type="submit"
                   className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all shadow-md"
                 >
-                  {editingId ? 'Simpan Perubahan' : 'Luncurkan Program'}
+                  Luncurkan Program
                 </button>
               </div>
             </form>

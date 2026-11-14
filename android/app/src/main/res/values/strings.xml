@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Trident Academy</string>
-    <string name="title_activity_main">Trident Academy</string>
-    <string name="package_name">com.trident.academy</string>
-    <string name="custom_url_scheme">com.trident.academy</string>
-</resources>

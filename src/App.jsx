@@ -1,21 +1,21 @@
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
+import RoleBanner from './components/RoleBanner';
 import LockedFeatureModal from './components/LockedFeatureModal';
+import AdminCodeModal from './components/AdminCodeModal';
 import LoginPage from './components/LoginPage';
 import VisiMisiSection from './components/VisiMisiSection';
 import BeritaSection from './components/BeritaSection';
 import PrestasiSection from './components/PrestasiSection';
 import AgendaSection from './components/AgendaSection';
 import DonasiSection from './components/DonasiSection';
-import DonasiVerifikasi from './components/DonasiVerifikasi';
-import AkunSection from './components/AkunSection';
 import UktSection from './components/UktSection';
 import Footer from './components/Footer';
 import { CheckCircle, Info, AlertCircle } from 'lucide-react';
 
 function MainContent() {
-  const { activeTab, toast, isAdmin } = useApp();
+  const { activeTab, toast } = useApp();
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950">
@@ -23,8 +23,14 @@ function MainContent() {
       {/* Navbar with Role Indicator */}
       <Navbar />
 
+      {/* RBAC Simulation Control Banner */}
+      <RoleBanner />
+
       {/* Access Denied Modal for Locked Features */}
       <LockedFeatureModal />
+
+      {/* Admin Code Verification Modal */}
+      <AdminCodeModal />
 
       {/* User Login Portal Modal */}
       <LoginPage />
@@ -53,8 +59,6 @@ function MainContent() {
         {activeTab === 'agenda' && <AgendaSection />}
         {activeTab === 'donasi' && <DonasiSection />}
         {activeTab === 'ukt' && <UktSection />}
-        {activeTab === 'verifikasi' && isAdmin && <DonasiVerifikasi />}
-        {activeTab === 'akun' && isAdmin && <AkunSection />}
       </main>
 
       {/* Martial Arts Academy Footer */}

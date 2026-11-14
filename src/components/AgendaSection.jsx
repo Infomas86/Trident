@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, ROLES } from '../context/AppContext';
 import {
   Calendar,
   Clock,
@@ -7,21 +7,18 @@ import {
   PlusCircle,
   Sparkles,
   Lock,
+  UserCheck,
   X,
   User,
-  KeyRound,
-  Trash2,
 } from 'lucide-react';
 
 export default function AgendaSection() {
   const {
     agendaList,
     handleAddAgenda,
-    handleDeleteAgenda,
     role,
     ROLES,
-    isStaff,
-    setIsLoginModalOpen,
+    handleRoleChange,
   } = useApp();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -29,7 +26,7 @@ export default function AgendaSection() {
   // Form state for Examiner
   const [newAgendaForm, setNewAgendaForm] = useState({
     title: '',
-    date: new Date().toISOString().slice(0, 10),
+    date: '25 November 2026',
     time: '16:00 - 18:30 WIB',
     location: 'Padepokan Pusat - Dojo Cakra Bhakti',
     speaker: 'Dewan Pelatih Utama',
@@ -51,13 +48,19 @@ export default function AgendaSection() {
             Jadwal kegiatan resmi, latihan gabungan, dan agenda ujian padepokan hanya dapat diakses oleh anggota dan pengurus perguruan.
           </p>
         </div>
-        <div className="pt-2 flex items-center justify-center">
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
-            onClick={() => setIsLoginModalOpen(true)}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 transition-all"
+            onClick={() => handleRoleChange(ROLES.MEMBER)}
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-900/50 flex items-center justify-center gap-2 transition-all"
           >
-            <KeyRound className="w-4 h-4" />
-            <span>Masuk</span>
+            <UserCheck className="w-4 h-4" />
+            <span>Masuk sebagai Anggota (Ahmad Fauzi)</span>
+          </button>
+          <button
+            onClick={() => handleRoleChange(ROLES.EXAMINER)}
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-500/30 flex items-center justify-center gap-2 transition-all"
+          >
+            <span>Masuk sebagai Penguji UKT</span>
           </button>
         </div>
       </div>
@@ -76,7 +79,7 @@ export default function AgendaSection() {
     });
     setNewAgendaForm({
       title: '',
-      date: new Date().toISOString().slice(0, 10),
+      date: '25 November 2026',
       time: '16:00 - 18:30 WIB',
       location: 'Padepokan Pusat - Dojo Cakra Bhakti',
       speaker: 'Dewan Pelatih Utama',
@@ -103,7 +106,7 @@ export default function AgendaSection() {
           </p>
         </div>
 
-        {isStaff && (
+        {role === ROLES.EXAMINER && (
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="self-start md:self-auto flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-950/50 transition-all hover:scale-105"
@@ -116,12 +119,6 @@ export default function AgendaSection() {
 
       {/* Agenda Cards List (Pure event share, no RSVP) */}
       <div className="space-y-5">
-        {agendaList.length === 0 && (
-          <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-dashed border-slate-800">
-            <Calendar className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-sm font-semibold text-slate-300">Belum ada agenda</p>
-          </div>
-        )}
         {agendaList.map((agenda) => (
           <div
             key={agenda.id}
@@ -132,9 +129,7 @@ export default function AgendaSection() {
               <div className="flex flex-wrap items-center gap-2.5">
                 <span className="text-xs font-bold px-3 py-1 rounded-lg bg-blue-950 text-blue-300 border border-blue-700/40 flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5" />
-                  {agenda.date
-                    ? new Date(agenda.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-                    : '-'}
+                  {agenda.date}
                 </span>
                 <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-900 text-slate-300 flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-amber-400" />
@@ -146,22 +141,9 @@ export default function AgendaSection() {
                 </span>
               </div>
 
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-lg sm:text-xl font-bold text-white font-['Cinzel']">
-                  {agenda.title}
-                </h3>
-                {isStaff && (
-                  <button
-                    onClick={() => {
-                      if (confirm(`Hapus agenda "${agenda.title}"?`)) handleDeleteAgenda(agenda.id);
-                    }}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-400 transition-colors shrink-0"
-                    title="Hapus Agenda"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+              <h3 className="text-lg sm:text-xl font-bold text-white font-['Cinzel']">
+                {agenda.title}
+              </h3>
 
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-3xl">
                 {agenda.description}
@@ -227,7 +209,8 @@ export default function AgendaSection() {
                     Tanggal Pelaksanaan
                   </label>
                   <input
-                    type="date"
+                    type="text"
+                    placeholder="Contoh: 28 November 2026"
                     value={newAgendaForm.date}
                     onChange={(e) => setNewAgendaForm({ ...newAgendaForm, date: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
