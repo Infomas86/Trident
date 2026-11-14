@@ -89,7 +89,7 @@ export default function ReceiptModal() {
                 {selectedReceipt.refNumber}
               </p>
               <p className="text-[10px] text-slate-500">
-                {selectedReceipt.timestamp || selectedReceipt.date}
+                {selectedReceipt.timestamp}
               </p>
             </div>
           </div>
