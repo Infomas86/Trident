@@ -175,7 +175,7 @@ export default function Navbar() {
                   <span>Keluar</span>
                 </button>
               </>
-            ) : (
+            ) : authLoading ? null : (
               <button
                 onClick={() => {
                   setIsLoginModalOpen(true);

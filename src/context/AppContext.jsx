@@ -26,7 +26,8 @@ export const ROLES = {
 export function AppProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loadedProfile, setProfile] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
+  const [failedId, setFailedId] = useState(null);
 
   const [activeTab, setActiveTab] = useState('visi');
   const [lockedModal, setLockedModal] = useState({ open: false, featureName: '' });
@@ -67,7 +68,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      if (!data.session) setAuthLoading(false);
+      setInitializing(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
     return () => sub.subscription.unsubscribe();
@@ -81,16 +82,17 @@ export function AppProvider({ children }) {
       .then((p) => !cancelled && setProfile(p))
       .catch(() => {
         if (cancelled) return;
-        setProfile(null);
+        setFailedId(userId);
         showToast('Gagal memuat profil', 'error');
-      })
-      .finally(() => !cancelled && setAuthLoading(false));
+      });
     return () => {
       cancelled = true;
     };
   }, [userId]);
 
-  const profile = userId ? loadedProfile : null;
+  // Only trust a profile that belongs to the current session (avoids showing a previous account's role).
+  const profile = loadedProfile && loadedProfile.id === userId ? loadedProfile : null;
+  const authLoading = initializing || (!!userId && !profile && failedId !== userId);
   const role = profile?.role ?? ROLES.PUBLIC;
   const isStaff = role === ROLES.EXAMINER || role === ROLES.ADMIN;
   const isAdmin = role === ROLES.ADMIN;
@@ -108,7 +110,13 @@ export function AppProvider({ children }) {
     : null;
 
   const signIn = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    let error;
+    try {
+      ({ error } = await supabase.auth.signInWithPassword({ email, password }));
+    } catch {
+      showToast('Gagal masuk, periksa koneksi', 'error');
+      return false;
+    }
     if (error) {
       showToast('Email atau kata sandi salah', 'error');
       return false;

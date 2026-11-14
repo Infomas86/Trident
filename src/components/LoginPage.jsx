@@ -13,9 +13,11 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    const ok = await signIn(email.trim(), password);
-    setSubmitting(false);
-    if (ok) setPassword('');
+    try {
+      if (await signIn(email.trim(), password)) setPassword('');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
