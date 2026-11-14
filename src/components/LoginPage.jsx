@@ -14,7 +14,9 @@ export default function LoginPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      if (await signIn(email.trim(), password)) setPassword('');
+      // A bare username (no "@") is a test-domain account, e.g. "admin" → admin@trident.test.
+      const id = email.trim();
+      if (await signIn(id.includes('@') ? id : `${id}@trident.test`, password)) setPassword('');
     } finally {
       setSubmitting(false);
     }
@@ -48,12 +50,13 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
           <div>
-            <label className="text-xs text-slate-300 font-medium block mb-1">Email</label>
+            <label className="text-xs text-slate-300 font-medium block mb-1">Email / Nama Pengguna</label>
             <input
-              type="email"
+              type="text"
+              autoCapitalize="none"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="nama@email.com"
+              placeholder="nama@email.com atau admin"
               autoComplete="username"
               className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
               required
