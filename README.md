@@ -67,3 +67,69 @@ npm run dev
 ```
 
 Buka peramban pada URL `http://127.0.0.1:5173/`.
+
+---
+
+## Backend Supabase
+
+Data (profil, UKT, donasi) disimpan di Supabase. Region proyek: Tokyo (`ap-northeast-1`).
+
+### 1. Setup `.env.local`
+
+Buat `.env.local` di akar proyek (sudah di-git-ignore, jangan pernah di-commit). Variabel yang dipakai:
+
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` - dipakai aplikasi.
+- `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_REF`, `SUPABASE_ACCESS_TOKEN` - hanya untuk skrip/CLI di komputer admin.
+- `DEV_*` - akun uji untuk `npm run test:rls`.
+
+Variabel `VITE_` ikut **ter-build** ke dalam aplikasi (web dan APK). Jangan taruh rahasia di variabel berawalan `VITE_`; ubah nilainya berarti harus build ulang.
+
+### 2. Migrasi database
+
+```bash
+npx supabase db push --remote --yes
+```
+
+### 3. Deploy Edge Function
+
+```bash
+npx supabase functions deploy manage-user --project-ref <ref>
+```
+
+### 4. Membuat admin pertama
+
+1. Dashboard Supabase -> Authentication -> Add user (isi email dan password).
+2. Salin `id` user, lalu jalankan di SQL Editor:
+
+```sql
+insert into profiles (id, full_name, role) values ('<id>', '<nama>', 'admin');
+```
+
+Admin berikutnya dikelola lewat halaman Akun di aplikasi.
+
+### 5. Backup bulanan
+
+```bash
+npm run backup
+```
+
+Hasil: `backups/<YYYY-MM-DD>/` berisi `schema.sql`, `data.sql`, dan `donation-proofs/` (semua bukti donasi). Lakukan **sebulan sekali**, simpan salinannya di tempat aman. Folder `backups/` di-git-ignore. `supabase db dump` butuh Docker/Podman yang sedang berjalan.
+
+### 6. Restore proyek yang berhenti (paused)
+
+Proyek free dijeda otomatis bila tidak aktif. Buka Dashboard Supabase -> pilih proyek -> **Restore project**, tunggu hingga status aktif. Data tetap ada selama masih dalam masa pemulihan; di luar itu pulihkan dari hasil `npm run backup` (jalankan `schema.sql` lalu `data.sql` pada proyek baru, dan unggah ulang berkas `donation-proofs/`).
+
+### 7. Build ulang APK
+
+```powershell
+npm run android            # vite build + cap sync
+cd android
+$env:JAVA_HOME = "<folder JDK 21>"
+.\gradlew.bat assembleDebug
+```
+
+APK ada di `android/app/build/outputs/apk/debug/`. Karena variabel `VITE_` ter-build, ulangi langkah ini setiap kali nilainya berubah.
+
+### 8. Akun uji DEV
+
+Ada akun uji `dev-anggota@trident.test`, `dev-penguji@trident.test`, `dev-admin@trident.test` (kata sandi di `DEV_*` pada `.env.local`). Hapus sebelum produksi: Dashboard -> Authentication -> Users -> hapus ketiganya (baris `profiles` ikut terhapus), atau lewat halaman Akun di aplikasi sebagai admin.

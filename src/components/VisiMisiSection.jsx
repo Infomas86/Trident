@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ORGANIZATIONAL_HIERARCHY } from '../data/mockData';
+import { ORGANIZATIONAL_HIERARCHY } from '../data/static';
 import { waNumber } from '../lib/phone';
 import {
   Shield,

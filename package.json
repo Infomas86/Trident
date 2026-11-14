@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "node --test tests/ukt.test.js tests/phone.test.js tests/offline.test.js",
     "test:rls": "node --env-file=.env.local --test tests/rls.test.js",
+    "backup": "node --env-file=.env.local scripts/backup.mjs",
     "android": "vite build && cap sync android"
   },
   "dependencies": {
