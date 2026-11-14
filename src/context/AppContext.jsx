@@ -405,14 +405,16 @@ export function AppProvider({ children }) {
   const handleUpdateCandidateScores = async (candidateId, newPosScores, notes, baseUpdatedAt, posKeys = null) => {
     const target = candidatesList.find((c) => c.id === candidateId);
     const queued = offlineQueueMine.find((q) => q.candidateId === candidateId);
+    // newPosScores carries the queued posts, so guard against the server version they were based on.
+    const base = queued?.baseUpdatedAt ?? baseUpdatedAt;
     const item = {
-      userId, candidateId, candidateName: target?.name, posScores: newPosScores, notes, baseUpdatedAt,
+      userId, candidateId, candidateName: target?.name, posScores: newPosScores, notes, baseUpdatedAt: base,
       posKeys: queued ? mergeKeys(queued.posKeys, posKeys) : posKeys, savedAt: new Date().toISOString(),
     };
     let result;
     if (navigator.onLine && session) {
       try {
-        result = await api.saveCandidateScores(candidateId, newPosScores, notes, { baseUpdatedAt });
+        result = await api.saveCandidateScores(candidateId, newPosScores, notes, { baseUpdatedAt: base });
       } catch (e) {
         console.error(e);
       }
