@@ -84,11 +84,27 @@ Buat `.env.local` di akar proyek (sudah di-git-ignore, jangan pernah di-commit).
 
 Variabel `VITE_` ikut **ter-build** ke dalam aplikasi (web dan APK). Jangan taruh rahasia di variabel berawalan `VITE_`; ubah nilainya berarti harus build ulang.
 
-### 2. Migrasi database
+### 2. Menghubungkan CLI dan migrasi database
+
+`npx supabase` **tidak membaca `.env.local`**. Muat dulu variabelnya ke sesi terminal:
+
+```powershell
+# PowerShell
+Get-Content .env.local | ForEach-Object { if ($_ -match '^\s*([^#=\s]+)\s*=\s*(.*)$') { Set-Item "env:$($Matches[1])" $Matches[2].Trim('"') } }
+```
+
+```bash
+# Git Bash
+set -a; . ./.env.local; set +a
+```
+
+Sekali per komputer, hubungkan CLI ke proyek: `npx supabase link --project-ref <ref>`. Lalu:
 
 ```bash
 npx supabase db push --remote --yes
 ```
+
+(`--remote` memang flag yang valid: target proyek yang ter-link.) `npm run backup` dan `npm run test:rls` sudah memuat `.env.local` sendiri.
 
 ### 3. Deploy Edge Function
 
@@ -113,11 +129,18 @@ Admin berikutnya dikelola lewat halaman Akun di aplikasi.
 npm run backup
 ```
 
-Hasil: `backups/<YYYY-MM-DD>/` berisi `schema.sql`, `data.sql`, dan `donation-proofs/` (semua bukti donasi). Lakukan **sebulan sekali**, simpan salinannya di tempat aman. Folder `backups/` di-git-ignore. `supabase db dump` butuh Docker/Podman yang sedang berjalan.
+Hasil: `backups/<YYYY-MM-DD>/` berisi `schema.sql`, `data.sql`, `auth.sql` (data `auth.users` beserta hash kata sandi), dan `donation-proofs/` (semua bukti donasi). Lakukan **sebulan sekali**, simpan salinannya di tempat aman. Folder `backups/` di-git-ignore. `supabase db dump` butuh Docker/Podman yang sedang berjalan.
 
 ### 6. Restore proyek yang berhenti (paused)
 
-Proyek free dijeda otomatis bila tidak aktif. Buka Dashboard Supabase -> pilih proyek -> **Restore project**, tunggu hingga status aktif. Data tetap ada selama masih dalam masa pemulihan; di luar itu pulihkan dari hasil `npm run backup` (jalankan `schema.sql` lalu `data.sql` pada proyek baru, dan unggah ulang berkas `donation-proofs/`).
+Proyek free dijeda otomatis bila tidak aktif. Buka Dashboard Supabase -> pilih proyek -> **Restore project**, tunggu hingga status aktif. Selama masih dalam masa pemulihan, data tetap ada.
+
+Bila harus memulihkan ke proyek **baru** dari hasil backup, urutannya:
+
+1. Jalankan migrasi: `npx supabase db push --remote --yes` (membuat tabel, kebijakan RLS, bucket).
+2. Muat `auth.sql` (mengisi `auth.users`; `profiles.id` mereferensikannya). Hash kata sandi ikut terbawa, jadi pengguna tetap memakai kata sandi lama.
+3. Muat `data.sql` (isi tabel `public`). Pada CLI saat ini `data.sql` juga memuat ulang baris `auth`, sehingga baris itu akan gagal karena duplikat; abaikan galat tersebut (jangan pakai `ON_ERROR_STOP`), atau muat lewat SQL Editor/`psql` per bagian `public`.
+4. Unggah ulang berkas dari folder `donation-proofs/` ke bucket `donation-proofs` dengan path yang sama (Dashboard -> Storage).
 
 ### 7. Build ulang APK
 

@@ -34,6 +34,7 @@ function dump(label, file, extra = '') {
 }
 dump('skema', join(dir, 'schema.sql'))
 dump('data', join(dir, 'data.sql'), '--data-only')
+dump('auth', join(dir, 'auth.sql'), '--data-only --schema auth')
 
 const sb = createClient(VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
 
