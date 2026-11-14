@@ -39,6 +39,11 @@ export default function UktSection() {
     isStaff,
     setIsLoginModalOpen,
     showToast,
+    isOnline,
+    offlineQueue,
+    conflicts,
+    syncNow,
+    resolveConflict,
   } = useApp();
 
   // Active Pos Sub-Tab: 'all' | 'pos1' | 'pos2' | 'pos3' | 'pos4'
@@ -311,6 +316,43 @@ export default function UktSection() {
   return (
     <div className="space-y-8 py-6">
       
+      {isStaff && (
+        <div className="space-y-3">
+          <div className={`flex flex-wrap items-center gap-3 px-4 py-2.5 rounded-xl border text-xs font-semibold ${isOnline ? 'bg-emerald-950/30 border-emerald-700/40 text-emerald-300' : 'bg-amber-950/30 border-amber-700/40 text-amber-300'}`}>
+            <span>{isOnline ? 'Online' : 'Offline: nilai disimpan di HP ini dan dikirim saat sinyal kembali'}</span>
+            {offlineQueue.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-bold" title="Nilai belum terkirim">{offlineQueue.length}</span>
+            )}
+            <button
+              onClick={syncNow}
+              disabled={!isOnline || offlineQueue.length === 0}
+              className="ml-auto px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Sinkronkan Sekarang
+            </button>
+          </div>
+          {conflicts.length > 0 && (
+            <div className="rounded-xl border border-rose-700/50 bg-rose-950/30 p-4 space-y-3">
+              <h3 className="text-sm font-bold text-rose-300">Nilai bentrok</h3>
+              <p className="text-xs text-slate-400">Peserta ini sudah dinilai penguji lain saat nilai Anda belum terkirim. Pilih nilai yang dipakai.</p>
+              {conflicts.map((c) => {
+                const mine = calculateUktScore(c.posScores.pos1.score, c.posScores.pos2.score, c.posScores.pos3.score, c.posScores.pos4.score).score;
+                const server = candidatesList.find((x) => x.id === c.candidateId)?.finalScore;
+                return (
+                  <div key={c.candidateId} className="flex flex-wrap items-center gap-3 text-xs text-slate-200">
+                    <strong className="min-w-32">{c.candidateName ?? 'Peserta'}</strong>
+                    <span>Nilai saya: <strong>{mine.toFixed(1)}</strong></span>
+                    <span>Nilai server: <strong>{server == null ? '-' : server.toFixed(1)}</strong></span>
+                    <button onClick={() => resolveConflict(c.candidateId, 'mine')} className="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold">Pakai nilai saya</button>
+                    <button onClick={() => resolveConflict(c.candidateId, 'server')} className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700">Pakai nilai server</button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>

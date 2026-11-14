@@ -1,8 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { INITIAL_CAMPAIGNS } from '../data/mockData';
 import { INITIAL_TIMELINE } from '../data/static';
 import { supabase } from '../lib/supabase';
 import * as api from '../lib/api';
+import { enqueueScore, syncQueue, loadQueue, saveQueue, loadCache, saveCache, clearOfflineData } from '../lib/offline';
+
+const PROFILE_TIMEOUT_MS = 8000;
 
 const AppContext = createContext();
 
@@ -49,12 +52,40 @@ export function AppProvider({ children }) {
     }, 4500);
   };
 
+  // Offline state: online flag, persisted score queue, conflicts awaiting the examiner's choice
+  const [isOnline, setIsOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
+  const [offlineQueue, setOfflineQueueState] = useState(loadQueue);
+  const [conflicts, setConflicts] = useState([]);
+  const queueRef = useRef(offlineQueue);
+  const syncing = useRef(false);
+  const syncRef = useRef(() => {});
+  const setOfflineQueue = (q) => {
+    queueRef.current = q;
+    setOfflineQueueState(q);
+    saveQueue(q);
+  };
+
+  useEffect(() => {
+    const on = () => {
+      setIsOnline(true);
+      syncRef.current();
+    };
+    const off = () => setIsOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, []);
+
   // Session + profile
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setInitializing(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSession(data.session))
+      .catch(() => {})
+      .finally(() => setInitializing(false));
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -63,10 +94,21 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-    api.getProfile(userId)
-      .then((p) => !cancelled && setProfile(p))
+    setFailedId(null);
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), PROFILE_TIMEOUT_MS));
+    Promise.race([api.getProfile(userId), timeout])
+      .then((p) => {
+        if (cancelled) return;
+        saveCache('trident_cache_profile', p);
+        setProfile(p);
+      })
       .catch(() => {
         if (cancelled) return;
+        const cached = loadCache('trident_cache_profile');
+        if (cached?.id === userId) {
+          setProfile(cached);
+          return;
+        }
         setFailedId(userId);
         showToast('Gagal memuat profil', 'error');
       });
@@ -112,7 +154,11 @@ export function AppProvider({ children }) {
   };
 
   const signOut = async () => {
+    if (queueRef.current.length && !window.confirm(`Ada ${queueRef.current.length} nilai belum terkirim. Keluar dan buang?`)) return;
     await supabase.auth.signOut();
+    clearOfflineData();
+    setOfflineQueue([]);
+    setConflicts([]);
     showToast('Anda telah keluar dari akun.', 'info');
   };
 
@@ -124,7 +170,18 @@ export function AppProvider({ children }) {
     content: () => api.getSiteContent().then((c) => setHeroData(c.heroData)),
     pillars: () => api.listPillars().then(setPillars),
     grounds: () => api.listTrainingGrounds().then(setTrainingGrounds),
-    candidates: () => (userId ? api.listCandidates().then(setCandidatesList) : setCandidatesList([])),
+    candidates: async () => {
+      if (!userId) return setCandidatesList([]);
+      try {
+        const list = await api.listCandidates();
+        if (isStaff) saveCache('trident_cache_candidates', list);
+        setCandidatesList(list);
+      } catch (e) {
+        const cached = isStaff ? loadCache('trident_cache_candidates') : null;
+        if (!cached) throw e;
+        setCandidatesList(cached);
+      }
+    },
   };
   const refresh = async () => {
     const results = await Promise.allSettled(Object.values(loaders).map((load) => load()));
@@ -135,7 +192,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, role]);
 
   // Run an api call, toast the outcome, then reload the affected list.
   const mutate = async (call, list, okMsg, failMsg, okType = 'success') => {
@@ -221,25 +278,81 @@ export function AppProvider({ children }) {
     showToast(`Donasi sebesar Rp ${numAmount.toLocaleString('id-ID')} berhasil diproses! Bukti resi telah diterbitkan.`, 'success');
   };
 
+  const refreshCandidates = () => loaders.candidates().catch(() => showToast('Gagal menyegarkan data', 'error'));
+
+  // Send the whole queue; one run at a time. Network errors keep items queued, conflicts go to the panel.
+  const syncNow = async () => {
+    if (syncing.current || !userId || !navigator.onLine || !queueRef.current.length) return;
+    syncing.current = true;
+    const snapshot = queueRef.current;
+    try {
+      const r = await syncQueue(snapshot, (item) =>
+        api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt }));
+      // keep what failed to send plus anything enqueued/replaced while syncing
+      const sent = (i) => snapshot.some((s) => s.candidateId === i.candidateId && s.savedAt === i.savedAt);
+      setOfflineQueue(queueRef.current.filter((i) => !sent(i) || r.remaining.some((x) => x.candidateId === i.candidateId)));
+      if (r.conflicts.length) {
+        setConflicts((prev) => [...prev.filter((c) => !r.conflicts.some((x) => x.candidateId === c.candidateId)), ...r.conflicts]);
+        showToast(`${r.conflicts.length} nilai bentrok dengan penguji lain, pilih di panel Nilai bentrok`, 'error');
+      }
+      if (r.synced) showToast(`${r.synced} nilai terkirim`, 'success');
+      if (r.synced || r.conflicts.length) await refreshCandidates();
+    } finally {
+      syncing.current = false;
+    }
+  };
+  syncRef.current = syncNow;
+
+  // Sync when the app opens signed in (profile ready).
+  useEffect(() => {
+    if (profile) syncRef.current();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id]);
+
+  const resolveConflict = async (candidateId, choice) => {
+    const item = conflicts.find((c) => c.candidateId === candidateId);
+    if (!item) return;
+    if (choice === 'mine') {
+      try {
+        await api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt, force: true });
+      } catch (e) {
+        console.error(e);
+        showToast('Gagal mengirim nilai, periksa koneksi', 'error');
+        return;
+      }
+      showToast(`Nilai ${item.candidateName ?? 'peserta'} dikirim`, 'success');
+    }
+    setConflicts((prev) => prev.filter((c) => c.candidateId !== candidateId));
+    refreshCandidates();
+  };
+
   // UKT Candidate Score Update. baseUpdatedAt = updatedAt of the snapshot the examiner edited.
-  // Resolves true when the modal may close (saved or conflict), false to keep it open (error).
+  // Always resolves true: the score is saved on the server, queued on the phone, or parked as a conflict.
   const handleUpdateCandidateScores = async (candidateId, newPosScores, notes, baseUpdatedAt) => {
     const target = candidatesList.find((c) => c.id === candidateId);
+    const item = { candidateId, candidateName: target?.name, posScores: newPosScores, notes, baseUpdatedAt, savedAt: new Date().toISOString() };
     let result;
-    try {
-      result = await api.saveCandidateScores(candidateId, newPosScores, notes, { baseUpdatedAt });
-    } catch (e) {
-      console.error(e);
-      showToast('Gagal menyimpan, periksa koneksi', 'error');
-      return false;
+    if (navigator.onLine) {
+      try {
+        result = await api.saveCandidateScores(candidateId, newPosScores, notes, { baseUpdatedAt });
+      } catch (e) {
+        console.error(e);
+      }
     }
+    if (!result) {
+      setOfflineQueue(enqueueScore(queueRef.current, item));
+      showToast('Disimpan di HP ini, dikirim saat sinyal kembali', 'info');
+      return true;
+    }
+    setOfflineQueue(queueRef.current.filter((q) => q.candidateId !== candidateId));
     if (result === 'conflict') {
-      showToast('Nilai sudah diubah penguji lain, muat ulang', 'error');
-      loaders.candidates().catch(() => {});
+      setConflicts((prev) => [...prev.filter((c) => c.candidateId !== candidateId), item]);
+      showToast('Nilai sudah diubah penguji lain, pilih di panel Nilai bentrok', 'error');
+      refreshCandidates();
       return true;
     }
     showToast(`Nilai UKT ${target?.name ?? 'Peserta UKT'} berhasil disimpan!`, 'success');
-    loaders.candidates().catch(() => showToast('Gagal menyegarkan data', 'error'));
+    refreshCandidates();
     return true;
   };
 
@@ -357,6 +470,11 @@ export function AppProvider({ children }) {
         handleDonate,
         candidatesList,
         handleUpdateCandidateScores,
+        isOnline,
+        offlineQueue,
+        conflicts,
+        syncNow,
+        resolveConflict,
         handleImportCandidates,
         handleDeleteCandidate,
         myCandidate: candidatesList.find((c) => c.userId === currentUser?.id) ?? null,
