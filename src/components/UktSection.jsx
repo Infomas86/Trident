@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp, ROLES } from '../context/AppContext';
+import { useApp } from '../context/AppContext';
 import { calculateUktScore, statusFromScore, parseCandidatesCsv, buildCandidatesCsv } from '../lib/ukt';
 import {
   GraduationCap,
@@ -30,6 +30,7 @@ import {
 export default function UktSection() {
   const {
     candidatesList,
+    serverCandidatesList,
     handleUpdateCandidateScores,
     handleImportCandidates,
     handleDeleteCandidate,
@@ -163,7 +164,7 @@ export default function UktSection() {
       },
     };
 
-    if (await handleUpdateCandidateScores(candidateId, newPosScores, candidate.examinerNotes || '', candidate.updatedAt)) {
+    if (await handleUpdateCandidateScores(candidateId, newPosScores, candidate.examinerNotes || '', candidate.updatedAt, [posKey])) {
       setQuickPosModal(null);
     }
   };
@@ -345,12 +346,19 @@ export default function UktSection() {
               <p className="text-xs text-slate-400">Peserta ini sudah dinilai penguji lain saat nilai Anda belum terkirim. Pilih nilai yang dipakai.</p>
               {conflicts.map((c) => {
                 const mine = calculateUktScore(c.posScores.pos1.score, c.posScores.pos2.score, c.posScores.pos3.score, c.posScores.pos4.score).score;
-                const server = candidatesList.find((x) => x.id === c.candidateId)?.finalScore;
+                const srv = serverCandidatesList.find((x) => x.id === c.candidateId);
+                const server = srv?.finalScore;
                 return (
                   <div key={c.candidateId} className="flex flex-wrap items-center gap-3 text-xs text-slate-200">
                     <strong className="min-w-32">{c.candidateName ?? 'Peserta'}</strong>
-                    <span>Nilai saya: <strong>{mine.toFixed(1)}</strong></span>
-                    <span>Nilai server: <strong>{server == null ? '-' : server.toFixed(1)}</strong></span>
+                    {(c.posKeys ?? ['pos1', 'pos2', 'pos3', 'pos4']).map((k) => (
+                      <span key={k}>
+                        {k.replace('pos', 'Pos ')}: saya <strong>{c.posScores[k].score.toFixed(1)}</strong> / server <strong>{srv ? srv.posScores[k].score.toFixed(1) : '-'}</strong>
+                      </span>
+                    ))}
+                    <span>Total saya: <strong>{mine.toFixed(1)}</strong></span>
+                    <span>Total server: <strong>{server == null ? '-' : server.toFixed(1)}</strong></span>
+                    {c.posKeys && <span className="text-slate-400">(&quot;Pakai nilai saya&quot; hanya mengganti {c.posKeys.map((k) => k.replace('pos', 'Pos ')).join(', ')})</span>}
                     <button onClick={() => resolveConflict(c.candidateId, 'mine')} className="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold">Pakai nilai saya</button>
                     <button onClick={() => resolveConflict(c.candidateId, 'server')} className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700">Pakai nilai server</button>
                   </div>

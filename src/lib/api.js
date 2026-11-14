@@ -194,6 +194,11 @@ export async function listCandidates() {
   return ok(await supabase.from('ukt_candidates').select('*').order('name')).map(fromCandidateRow);
 }
 
+export async function getCandidate(id) {
+  const r = ok(await supabase.from('ukt_candidates').select('*').eq('id', id).maybeSingle());
+  return r && fromCandidateRow(r);
+}
+
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); // YYYY-MM-DD
 
 // Returns 'conflict' when the row changed since baseUpdatedAt (unless force); network/other errors throw.

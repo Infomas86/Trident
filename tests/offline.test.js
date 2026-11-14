@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { enqueueScore, enqueueForUser, withoutUser, syncQueue } from '../src/lib/offline.js';
+import { enqueueScore, enqueueForUser, withoutUser, syncQueue, overlayQueued, mineScores } from '../src/lib/offline.js';
 
 test('simpan ulang peserta sama mengganti item, base lama dipertahankan', () => {
   let q = enqueueScore([], { candidateId: 'c1', posScores: 'A', baseUpdatedAt: 't0' });
@@ -35,4 +35,26 @@ test('enqueueForUser: item pengguna lain utuh, tanpa duplikat, base lama diperta
 });
 test('withoutUser membuang hanya item satu pengguna', () => {
   assert.deepEqual(withoutUser([{ userId: 'a' }, { userId: 'b' }], 'a'), [{ userId: 'b' }]);
+});
+
+test('overlayQueued: nilai & catatan antrean saya menimpa data server, updatedAt tetap', () => {
+  const cands = [{ id: 'c1', posScores: 'srv', examinerNotes: 's', updatedAt: 't0' }, { id: 'c2', posScores: 'srv2' }];
+  const out = overlayQueued(cands, [{ candidateId: 'c1', posScores: 'mine', notes: 'n' }]);
+  assert.deepEqual(out[0], { id: 'c1', posScores: 'mine', examinerNotes: 'n', updatedAt: 't0' });
+  assert.equal(out[1], cands[1]);
+});
+test('enqueueScore menggabung posKeys; null (evaluasi penuh) menang', () => {
+  let q = enqueueScore([], { candidateId: 'c', posKeys: ['pos1'] });
+  q = enqueueScore(q, { candidateId: 'c', posKeys: ['pos2'] });
+  assert.deepEqual(q[0].posKeys, ['pos1', 'pos2']);
+  q = enqueueScore(q, { candidateId: 'c', posKeys: null });
+  assert.equal(q[0].posKeys, null);
+  q = enqueueScore(q, { candidateId: 'c', posKeys: ['pos3'] });
+  assert.equal(q[0].posKeys, null);
+});
+test('mineScores: pos milik saya saja yang diganti di baris terbaru; evaluasi penuh pakai semua nilai saya', () => {
+  const fresh = { posScores: { pos1: { score: 1 }, pos2: { score: 2 }, pos3: { score: 3 }, pos4: { score: 4 } } };
+  const mine = { pos1: { score: 10 }, pos2: { score: 20 }, pos3: { score: 30 }, pos4: { score: 40 } };
+  assert.deepEqual(mineScores(fresh, { posKeys: ['pos2'], posScores: mine }), { ...fresh.posScores, pos2: { score: 20 } });
+  assert.equal(mineScores(fresh, { posKeys: null, posScores: mine }), mine);
 });

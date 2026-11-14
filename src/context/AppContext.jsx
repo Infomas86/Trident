@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { INITIAL_TIMELINE } from '../data/static';
 import { supabase } from '../lib/supabase';
 import * as api from '../lib/api';
-import { enqueueForUser, withoutUser, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearCaches } from '../lib/offline';
+import { enqueueForUser, withoutUser, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearCaches, overlayQueued, mineScores, mergeKeys, storedAuthUserId } from '../lib/offline';
 
 const PROFILE_TIMEOUT_MS = 8000;
 
@@ -17,6 +17,8 @@ export const ROLES = {
 
 export function AppProvider({ children }) {
   const [session, setSession] = useState(null);
+  // Offline fallback: user id of the stored session when auth-js can't refresh it (see session effect).
+  const [offlineUid, setOfflineUid] = useState(null);
   const [loadedProfile, setProfile] = useState(null);
   const [initializing, setInitializing] = useState(true);
   const [failedId, setFailedId] = useState(null);
@@ -92,16 +94,44 @@ export function AppProvider({ children }) {
 
   // Session + profile
   useEffect(() => {
+    // Offline with an expired access token auth-js returns no session but keeps it stored:
+    // stay signed in on the cached profile so the examiner can keep scoring.
+    const fallback = () => {
+      if (navigator.onLine) return;
+      const uid = storedAuthUserId(supabase.auth.storageKey);
+      if (uid && loadCache('trident_cache_profile')?.id === uid) setOfflineUid(uid);
+    };
     supabase.auth
       .getSession()
-      .then(({ data }) => setSession(data.session))
-      .catch(() => {})
+      .then(({ data }) => {
+        setSession(data.session);
+        if (!data.session) fallback();
+      })
+      .catch(fallback)
       .finally(() => setInitializing(false));
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+      setSession(next);
+      if (next || event === 'SIGNED_OUT') setOfflineUid(null);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const userId = session?.user?.id;
+  // Back online in the fallback: get the real session back, or sign out cleanly if it was revoked.
+  useEffect(() => {
+    if (!isOnline || !offlineUid) return;
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (data.session) return setSession(data.session);
+        if (storedAuthUserId(supabase.auth.storageKey)) return; // retryable failure: auth-js keeps refreshing (TOKEN_REFRESHED)
+        setOfflineUid(null);
+        showToast('Sesi berakhir, silakan masuk lagi. Nilai yang belum terkirim tetap tersimpan.', 'error');
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, offlineUid]);
+
+  const userId = session?.user?.id ?? offlineUid;
   // Only this user's items are shown or synced; other users' items wait for their next sign-in.
   const offlineQueueMine = offlineQueue.filter((i) => i.userId === userId);
   const conflicts = allConflicts.filter((c) => c.userId === userId);
@@ -170,7 +200,13 @@ export function AppProvider({ children }) {
   const signOut = async () => {
     const pending = queueRef.current.filter((i) => i.userId === userId).length + conflictsRef.current.filter((i) => i.userId === userId).length;
     if (pending && !window.confirm(`Ada ${pending} nilai belum terkirim. Keluar dan buang?`)) return;
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    // 'local' drops this device's session even offline; the error is then only the failed revoke request.
+    if (error && storedAuthUserId(supabase.auth.storageKey)) {
+      showToast('Gagal keluar, coba lagi', 'error');
+      return;
+    }
+    setOfflineUid(null);
     clearCaches();
     setOfflineQueue(withoutUser(queueRef.current, userId));
     setAllConflicts(withoutUser(conflictsRef.current, userId));
@@ -187,7 +223,7 @@ export function AppProvider({ children }) {
         setHeroData(c.heroData);
         setSiteContent(c);
       }),
-    campaigns: () => api.listCampaigns().then(setCampaignList),
+    campaigns: () => (userId ? api.listCampaigns().then(setCampaignList) : setCampaignList([])),
     myDonations: () => (userId ? api.listMyDonations().then(setMyDonations) : setMyDonations([])),
     pendingDonations: () => (isAdmin ? api.listPendingDonations().then(setPendingDonations) : setPendingDonations([])),
     pillars: () => api.listPillars().then(setPillars),
@@ -214,7 +250,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, role]);
+  }, [userId, role, !!session]);
 
   // Run an api call, toast the outcome, then reload the affected list.
   const mutate = async (call, list, okMsg, failMsg, okType = 'success') => {
@@ -287,7 +323,8 @@ export function AppProvider({ children }) {
   // Send the whole queue; one run at a time. Network errors keep items queued, conflicts go to the panel.
   const syncNow = async () => {
     const snapshot = queueRef.current.filter((i) => i.userId === userId);
-    if (syncing.current || !userId || !navigator.onLine || !snapshot.length) return;
+    // needs a real session: without one (offline fallback) saves would run as a guest and look like conflicts
+    if (syncing.current || !session || !navigator.onLine || !snapshot.length) return;
     syncing.current = true;
     try {
       const r = await syncQueue(
@@ -314,20 +351,36 @@ export function AppProvider({ children }) {
 
   // Sync when the app opens signed in (profile ready).
   useEffect(() => {
-    if (profile) syncRef.current();
+    if (profile && session) syncRef.current();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.id]);
+  }, [profile?.id, !!session]);
 
   const resolveConflict = async (candidateId, choice) => {
     const item = conflicts.find((c) => c.candidateId === candidateId);
     if (!item) return;
     if (choice === 'mine') {
+      if (!session) {
+        showToast('Gagal mengirim nilai, periksa koneksi', 'error');
+        return;
+      }
       let r;
       try {
-        r = await api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt, force: true });
+        if (item.posKeys == null) {
+          // full evaluation: my whole sheet wins
+          r = await api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt, force: true });
+        } else {
+          // quick-pos: put only my posts into the fresh row, guarded by its updated_at
+          const fresh = await api.getCandidate(item.candidateId);
+          r = fresh ? await api.saveCandidateScores(item.candidateId, mineScores(fresh, item), fresh.examinerNotes, { baseUpdatedAt: fresh.updatedAt }) : 'gone';
+        }
       } catch (e) {
         console.error(e);
         showToast('Gagal mengirim nilai, periksa koneksi', 'error');
+        return;
+      }
+      if (r === 'conflict') {
+        showToast('Nilai baru saja diubah lagi oleh penguji lain, coba lagi', 'error');
+        refreshCandidates();
         return;
       }
       if (r !== 'ok') {
@@ -347,12 +400,17 @@ export function AppProvider({ children }) {
   };
 
   // UKT Candidate Score Update. baseUpdatedAt = updatedAt of the snapshot the examiner edited.
+  // posKeys = posts changed (quick-pos), null = full evaluation. newPosScores already includes my queued posts.
   // Always resolves true: the score is saved on the server, queued on the phone, or parked as a conflict.
-  const handleUpdateCandidateScores = async (candidateId, newPosScores, notes, baseUpdatedAt) => {
+  const handleUpdateCandidateScores = async (candidateId, newPosScores, notes, baseUpdatedAt, posKeys = null) => {
     const target = candidatesList.find((c) => c.id === candidateId);
-    const item = { userId, candidateId, candidateName: target?.name, posScores: newPosScores, notes, baseUpdatedAt, savedAt: new Date().toISOString() };
+    const queued = offlineQueueMine.find((q) => q.candidateId === candidateId);
+    const item = {
+      userId, candidateId, candidateName: target?.name, posScores: newPosScores, notes, baseUpdatedAt,
+      posKeys: queued ? mergeKeys(queued.posKeys, posKeys) : posKeys, savedAt: new Date().toISOString(),
+    };
     let result;
-    if (navigator.onLine) {
+    if (navigator.onLine && session) {
       try {
         result = await api.saveCandidateScores(candidateId, newPosScores, notes, { baseUpdatedAt });
       } catch (e) {
@@ -491,7 +549,8 @@ export function AppProvider({ children }) {
         handleVerifyDonation,
         siteContent,
         handleUpdateSiteContent,
-        candidatesList,
+        candidatesList: overlayQueued(candidatesList, offlineQueueMine),
+        serverCandidatesList: candidatesList,
         handleUpdateCandidateScores,
         isOnline,
         offlineQueue: offlineQueueMine,
