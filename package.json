@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "node --test tests/ukt.test.js tests/phone.test.js",
+    "test:rls": "node --env-file=.env.local --test tests/rls.test.js",
     "android": "vite build && cap sync android"
   },
   "dependencies": {
