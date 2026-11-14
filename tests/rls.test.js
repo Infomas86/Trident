@@ -105,6 +105,26 @@ test('upsert dua kali dengan reg_number sama → 1 baris, nilai terbaru', async 
   assert.equal(Number(data[0].pos1), 90);
 });
 
+test("simpan nilai dengan baseUpdatedAt lama → 'conflict', nilai server tidak berubah; dengan force → 'ok'", async () => {
+  const reg = `T-9-${RUN}`;
+  const { data: row, error } = await admin.from('ukt_candidates').insert({ reg_number: reg, name: 'Uji', pos1: 50 }).select('id, updated_at').single();
+  assert.ifError(error);
+  const save = async (pos1, base, force) => { // query yang sama dengan api.saveCandidateScores
+    let q = penguji.client.from('ukt_candidates').update({ pos1 }).eq('id', row.id);
+    if (!force) q = q.eq('updated_at', base);
+    const r = await q.select('id');
+    assert.ifError(r.error);
+    return r.data.length ? 'ok' : 'conflict';
+  };
+  assert.equal(await save(60, row.updated_at), 'ok'); // base segar
+  assert.equal(await save(70, row.updated_at), 'conflict'); // base lama
+  const { data: d } = await admin.from('ukt_candidates').select('pos1').eq('id', row.id).single();
+  assert.equal(Number(d.pos1), 60);
+  assert.equal(await save(80, row.updated_at, true), 'ok');
+  const { data: f } = await admin.from('ukt_candidates').select('pos1').eq('id', row.id).single();
+  assert.equal(Number(f.pos1), 80);
+});
+
 test('anggota tidak bisa menerima donasi sendiri', async () => {
   const { data, error } = await anggota.client.from('donations')
     .insert({ campaign_id: campaignId, donor_name: `T-own-${RUN}`, amount: 5000, proof_path: `${anggota.id}/x.png`, status: 'accepted' })

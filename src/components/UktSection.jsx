@@ -138,15 +138,15 @@ export default function UktSection() {
       pos4: { score: liveP4, sub: evalScores.pos4 },
     };
 
-    if (await handleUpdateCandidateScores(selectedCandidateForEval.id, newPosScores, examinerNotesInput)) {
+    if (await handleUpdateCandidateScores(selectedCandidateForEval.id, newPosScores, examinerNotesInput, selectedCandidateForEval.updatedAt)) {
       setSelectedCandidateForEval(null);
     }
   };
 
   // Quick Pos scoring submit
   const handleSaveQuickPos = async (candidateId, posKey, updatedSub) => {
-    const candidate = candidatesList.find((c) => c.id === candidateId);
-    if (!candidate) return;
+    const candidate = quickPosModal?.candidate; // snapshot from modal open, also the lock base
+    if (!candidate || candidate.id !== candidateId) return;
 
     const updatedAvg = getSubAverage(updatedSub);
     const newPosScores = {
@@ -157,7 +157,7 @@ export default function UktSection() {
       },
     };
 
-    if (await handleUpdateCandidateScores(candidateId, newPosScores, candidate.examinerNotes || '')) {
+    if (await handleUpdateCandidateScores(candidateId, newPosScores, candidate.examinerNotes || '', candidate.updatedAt)) {
       setQuickPosModal(null);
     }
   };

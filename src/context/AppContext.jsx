@@ -221,12 +221,13 @@ export function AppProvider({ children }) {
     showToast(`Donasi sebesar Rp ${numAmount.toLocaleString('id-ID')} berhasil diproses! Bukti resi telah diterbitkan.`, 'success');
   };
 
-  // UKT Candidate Score Update. Resolves true when saved; false keeps the caller's modal open.
-  const handleUpdateCandidateScores = async (candidateId, newPosScores, notes) => {
+  // UKT Candidate Score Update. baseUpdatedAt = updatedAt of the snapshot the examiner edited.
+  // Resolves true when the modal may close (saved or conflict), false to keep it open (error).
+  const handleUpdateCandidateScores = async (candidateId, newPosScores, notes, baseUpdatedAt) => {
     const target = candidatesList.find((c) => c.id === candidateId);
     let result;
     try {
-      result = await api.saveCandidateScores(candidateId, newPosScores, notes, { baseUpdatedAt: target?.updatedAt });
+      result = await api.saveCandidateScores(candidateId, newPosScores, notes, { baseUpdatedAt });
     } catch (e) {
       console.error(e);
       showToast('Gagal menyimpan, periksa koneksi', 'error');
@@ -235,7 +236,7 @@ export function AppProvider({ children }) {
     if (result === 'conflict') {
       showToast('Nilai sudah diubah penguji lain, muat ulang', 'error');
       loaders.candidates().catch(() => {});
-      return false;
+      return true;
     }
     showToast(`Nilai UKT ${target?.name ?? 'Peserta UKT'} berhasil disimpan!`, 'success');
     loaders.candidates().catch(() => showToast('Gagal menyegarkan data', 'error'));
