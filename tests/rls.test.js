@@ -1,9 +1,21 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { adminClient, createTestUser, cleanup, RUN } from './helpers.js';
+import { adminClient, anonClient, createTestUser, cleanup, RUN } from './helpers.js';
 
 const admin = adminClient();
-before(cleanup);
+const anon = anonClient();
+let anggota, penguji, campaignId, agendaId;
+
+before(async () => {
+  anggota = await createTestUser('anggota');
+  penguji = await createTestUser('penguji');
+  const c = await admin.from('campaigns').insert({ title: `T-rls-${RUN}`, target_amount: 1000 }).select('id').single();
+  assert.ifError(c.error);
+  campaignId = c.data.id;
+  const a = await admin.from('agendas').insert({ title: `T-agenda-${RUN}` }).select('id').single();
+  assert.ifError(a.error);
+  agendaId = a.data.id;
+});
 after(cleanup);
 
 test('final_score dihitung database', async () => {
@@ -23,8 +35,10 @@ test('peserta terhubung ke akun lewat reg_number, dua arah', async () => {
   const { data } = await admin.from('ukt_candidates').insert({ reg_number: reg, name: 'Uji' }).select('user_id').single();
   assert.equal(data.user_id, a.id);
   const b = await createTestUser('anggota');
-  await admin.from('profiles').update({ reg_number: null }).eq('id', a.id);
-  await admin.from('profiles').update({ reg_number: reg }).eq('id', b.id);
+  assert.ifError((await admin.from('profiles').update({ reg_number: null }).eq('id', a.id)).error);
+  const { data: u } = await admin.from('ukt_candidates').select('user_id').eq('reg_number', reg).single();
+  assert.equal(u.user_id, null); // a sudah terlepas
+  assert.ifError((await admin.from('profiles').update({ reg_number: reg }).eq('id', b.id)).error);
   const { data: c } = await admin.from('ukt_candidates').select('user_id').eq('reg_number', reg).single();
   assert.equal(c.user_id, b.id);
 });
@@ -47,4 +61,144 @@ test('seed: hero dan 4 pilar', async () => {
   assert.equal(s.hero_title_main, 'TRIDENT');
   const { data: p } = await admin.from('pillars').select('icon').order('sort_order');
   assert.deepEqual(p.map((x) => x.icon), ['Shield', 'Zap', 'Users', 'Award']);
+});
+
+// ---- RLS ----
+
+test('anggota tidak bisa mengubah nilai', async () => {
+  const reg = `T-4-${RUN}`;
+  const m = await createTestUser('anggota', { reg_number: reg });
+  assert.ifError((await admin.from('ukt_candidates').insert({ reg_number: reg, name: 'Uji' })).error);
+  const { data, error } = await m.client.from('ukt_candidates').update({ pos1: 100 }).eq('reg_number', reg).select();
+  assert.ifError(error);
+  assert.equal(data.length, 0);
+  const { data: d } = await admin.from('ukt_candidates').select('pos1').eq('reg_number', reg).single();
+  assert.equal(Number(d.pos1), 0);
+});
+
+test('anggota hanya melihat peserta miliknya', async () => {
+  const reg = `T-5-${RUN}`;
+  const m = await createTestUser('anggota', { reg_number: reg });
+  assert.ifError((await admin.from('ukt_candidates').insert([{ reg_number: reg, name: 'Uji' }, { reg_number: `T-6-${RUN}`, name: 'Lain' }])).error);
+  const { data, error } = await m.client.from('ukt_candidates').select('reg_number');
+  assert.ifError(error);
+  assert.deepEqual(data.map((x) => x.reg_number), [reg]);
+});
+
+test('anggota tanpa peserta melihat 0 baris', async () => {
+  assert.ifError((await admin.from('ukt_candidates').insert({ reg_number: `T-7-${RUN}`, name: 'Lain' })).error);
+  const { data, error } = await anggota.client.from('ukt_candidates').select('id');
+  assert.ifError(error);
+  assert.equal(data.length, 0);
+});
+
+test('anggota tidak bisa menerima donasi sendiri', async () => {
+  const { data, error } = await anggota.client.from('donations')
+    .insert({ campaign_id: campaignId, donor_name: `T-own-${RUN}`, amount: 5000, proof_path: `${anggota.id}/x.png`, status: 'accepted' })
+    .select('id, status, user_id').single();
+  assert.ifError(error);
+  assert.equal(data.status, 'pending'); // trigger memaksa pending
+  assert.equal(data.user_id, anggota.id);
+  const up = await anggota.client.from('donations').update({ status: 'accepted' }).eq('id', data.id).select();
+  assert.ifError(up.error);
+  assert.equal(up.data.length, 0);
+  const { data: d } = await admin.from('donations').select('status').eq('id', data.id).single();
+  assert.equal(d.status, 'pending');
+});
+
+test('anggota tidak bisa mengubah perannya', async () => {
+  const { data, error } = await anggota.client.from('profiles').update({ role: 'admin' }).eq('id', anggota.id).select();
+  assert.ifError(error);
+  assert.equal(data.length, 0);
+  const { data: p } = await admin.from('profiles').select('role').eq('id', anggota.id).single();
+  assert.equal(p.role, 'anggota');
+});
+
+test('tamu bisa baca berita, tidak bisa baca agenda', async () => {
+  assert.ifError((await admin.from('news').insert({ title: `T-news-${RUN}` })).error);
+  const n = await anon.from('news').select('id').eq('title', `T-news-${RUN}`);
+  assert.ifError(n.error);
+  assert.equal(n.data.length, 1);
+  const a = await anon.from('agendas').select('id').eq('id', agendaId);
+  assert.ifError(a.error);
+  assert.equal(a.data.length, 0);
+  assert.ok((await anon.from('news').insert({ title: `T-anon-${RUN}` })).error, 'tamu menulis berita');
+});
+
+test('alasan izin tidak terlihat anggota lain', async () => {
+  const b = await createTestUser('anggota');
+  const ins = await anggota.client.from('agenda_rsvps').insert({ agenda_id: agendaId, full_name: 'Uji A', status: 'izin', reason: 'sakit' });
+  assert.ifError(ins.error);
+  const own = await b.client.from('agenda_rsvps').select('*').eq('user_id', anggota.id);
+  assert.ifError(own.error);
+  assert.equal(own.data.length, 0);
+  const pub = await b.client.from('agenda_rsvps_public').select('*').eq('agenda_id', agendaId);
+  assert.ifError(pub.error);
+  assert.equal(pub.data.length, 1);
+  assert.equal(pub.data[0].user_id, anggota.id);
+  assert.equal(pub.data[0].status, 'izin');
+  assert.ok(!('reason' in pub.data[0]));
+  const staff = await penguji.client.from('agenda_rsvps').select('reason').eq('agenda_id', agendaId);
+  assert.deepEqual(staff.data, [{ reason: 'sakit' }]);
+});
+
+test('view hanya bisa dibaca anggota login', async () => {
+  for (const v of ['agenda_rsvps_public', 'campaign_totals', 'public_donations']) {
+    const r = await anon.from(v).select('*').limit(1);
+    assert.ok(r.error, `tamu membaca ${v}`);
+  }
+  // view pemilik tidak boleh jadi jalan pintas menulis tabel di baliknya
+  const w = await anggota.client.from('agenda_rsvps_public').update({ status: 'hadir' }).eq('agenda_id', agendaId).select();
+  assert.ok(w.error, 'view bisa ditulis');
+  const t = await anggota.client.from('campaign_totals').select('collected_amount').eq('campaign_id', campaignId).single();
+  assert.ifError(t.error);
+});
+
+test('penguji tidak bisa verifikasi donasi', async () => {
+  const r = await admin.from('donations').insert({ campaign_id: campaignId, donor_name: `T-pj-${RUN}`, amount: 1000, proof_path: 'x/y.png' }).select('id').single();
+  assert.ifError(r.error);
+  const { data, error } = await penguji.client.from('donations').update({ status: 'accepted' }).eq('id', r.data.id).select();
+  assert.ifError(error);
+  assert.equal(data.length, 0);
+});
+
+const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+test('bukti bukan gambar ditolak', async () => {
+  const { error } = await anggota.client.storage.from('donation-proofs')
+    .upload(`${anggota.id}/x.pdf`, new Uint8Array([0x25, 0x50, 0x44, 0x46]), { contentType: 'application/pdf' });
+  assert.ok(error);
+});
+
+test('anggota tidak bisa unggah ke folder orang lain', async () => {
+  const ok = await anggota.client.storage.from('donation-proofs').upload(`${anggota.id}/ok.png`, png, { contentType: 'image/png' });
+  assert.ifError(ok.error); // folder sendiri boleh
+  const { error } = await anggota.client.storage.from('donation-proofs').upload(`${penguji.id}/x.png`, png, { contentType: 'image/png' });
+  assert.ok(error);
+  const other = await penguji.client.storage.from('donation-proofs').download(`${anggota.id}/ok.png`);
+  assert.ok(other.error, 'penguji membaca bukti orang lain');
+});
+
+test('penguji bisa ubah statistik, tidak bisa ubah pilar/tempat latihan/hero', async () => {
+  const { data: cur } = await admin.from('site_stats').select('active_members').eq('id', 1).single();
+  const st = await penguji.client.from('site_stats').update({ active_members: cur.active_members }).eq('id', 1).select();
+  assert.ifError(st.error);
+  assert.equal(st.data.length, 1);
+  assert.ok((await penguji.client.from('pillars').insert({ title: `T-p-${RUN}` })).error);
+  assert.ok((await penguji.client.from('training_grounds').insert({ name: `T-tg-${RUN}` })).error);
+  // tulis nilai yang sama, supaya bila policy bocor data produksi tetap utuh
+  const sc = await penguji.client.from('site_content').update({ hero_title_main: 'TRIDENT' }).eq('id', 1).select();
+  assert.ifError(sc.error);
+  assert.equal(sc.data.length, 0);
+});
+
+test('tamu bisa baca pilar, tempat latihan, hero', async () => {
+  const p = await anon.from('pillars').select('id');
+  assert.ifError(p.error);
+  assert.equal(p.data.length, 4);
+  const t = await anon.from('training_grounds').select('id');
+  assert.ifError(t.error);
+  const s = await anon.from('site_content').select('hero_title_main');
+  assert.ifError(s.error);
+  assert.equal(s.data.length, 1);
 });
