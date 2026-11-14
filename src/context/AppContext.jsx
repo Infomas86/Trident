@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { INITIAL_CAMPAIGNS } from '../data/mockData';
 import { INITIAL_TIMELINE } from '../data/static';
 import { supabase } from '../lib/supabase';
 import * as api from '../lib/api';
@@ -26,7 +25,7 @@ export function AppProvider({ children }) {
   const [lockedModal, setLockedModal] = useState({ open: false, featureName: '' });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // Data states: stats/hero/pillars/grounds/news/achievements/agendas come from Supabase; campaigns stay mock until Task 9
+  // Data states: stats/hero/pillars/grounds/news/achievements/agendas come from Supabase; campaigns/donations from Supabase
   const [stats, setStats] = useState({ activeMembers: 0, medalsCount: 0, padepokanBranches: 0, uktPassRate: 0, masterCouncil: 0 });
   const [heroData, setHeroData] = useState({});
   const [trainingGrounds, setTrainingGrounds] = useState([]);
@@ -35,7 +34,10 @@ export function AppProvider({ children }) {
   const [newsList, setNewsList] = useState([]);
   const [achievementsList, setAchievementsList] = useState([]);
   const [agendaList, setAgendaList] = useState([]);
-  const [campaignList, setCampaignList] = useState(INITIAL_CAMPAIGNS);
+  const [campaignList, setCampaignList] = useState([]);
+  const [myDonations, setMyDonations] = useState([]);
+  const [pendingDonations, setPendingDonations] = useState([]);
+  const [siteContent, setSiteContent] = useState({});
 
   const [candidatesList, setCandidatesList] = useState([]);
 
@@ -180,7 +182,14 @@ export function AppProvider({ children }) {
     achievements: () => api.listAchievements().then(setAchievementsList),
     agendas: () => (userId ? api.listAgendas().then(setAgendaList) : setAgendaList([])),
     stats: () => api.getSiteStats().then(setStats),
-    content: () => api.getSiteContent().then((c) => setHeroData(c.heroData)),
+    content: () =>
+      api.getSiteContent().then((c) => {
+        setHeroData(c.heroData);
+        setSiteContent(c);
+      }),
+    campaigns: () => api.listCampaigns().then(setCampaignList),
+    myDonations: () => (userId ? api.listMyDonations().then(setMyDonations) : setMyDonations([])),
+    pendingDonations: () => (isAdmin ? api.listPendingDonations().then(setPendingDonations) : setPendingDonations([])),
     pillars: () => api.listPillars().then(setPillars),
     grounds: () => api.listTrainingGrounds().then(setTrainingGrounds),
     candidates: async () => {
@@ -213,12 +222,12 @@ export function AppProvider({ children }) {
       await call();
     } catch (e) {
       console.error(e);
-      showToast(e.message === api.NOT_ALLOWED ? e.message : failMsg, 'error');
+      showToast(e.message === api.NOT_ALLOWED || e instanceof api.UserError ? e.message : failMsg, 'error');
       return false;
     }
     showToast(okMsg, okType);
     try {
-      await loaders[list]();
+      await Promise.all([].concat(list).map((l) => loaders[l]()));
     } catch {
       showToast('Gagal menyegarkan data', 'error');
     }
@@ -231,6 +240,7 @@ export function AppProvider({ children }) {
       setIsLoginModalOpen(true);
       return;
     }
+    if (tabName === 'verifikasi' && !isAdmin) return;
     setActiveTab(tabName);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -249,47 +259,23 @@ export function AppProvider({ children }) {
     );
   };
 
-  // Donation action
-  const handleDonate = (campaignId, donationData) => {
-    const { amount, donorName, message, paymentMethod } = donationData;
-    const numAmount = Number(amount);
-
-    const refNumber = `TRD-DON-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-    const newDonationItem = {
-      id: `d-${Date.now()}`,
-      refNumber,
-      donorName: donorName || currentUser?.name || 'Hamba Allah',
-      amount: numAmount,
-      date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
-      message: message || 'Salam Persaudaraan Perguruan Trident!',
-      paymentMethod,
-    };
-
-    let targetCampaignTitle = '';
-
-    setCampaignList((prev) =>
-      prev.map((camp) => {
-        if (camp.id !== campaignId) return camp;
-        targetCampaignTitle = camp.title;
-        return {
-          ...camp,
-          collectedAmount: camp.collectedAmount + numAmount,
-          donorsCount: camp.donorsCount + 1,
-          recentDonations: [newDonationItem, ...(camp.recentDonations || [])],
-        };
-      })
+  // Donation: proof is uploaded, donation stays pending until an admin accepts it (no receipt yet).
+  const handleDonate = (campaignId, { amount, donorName, message, paymentMethod, proofFile }) =>
+    mutate(
+      () => api.submitDonation({ campaignId, amount, donorName: donorName || currentUser?.name || 'Hamba Allah', message, paymentMethod, proofFile }),
+      ['myDonations', 'pendingDonations'],
+      'Donasi terkirim, menunggu verifikasi admin',
+      'Gagal mengirim donasi',
     );
 
-    const receiptObj = {
-      ...newDonationItem,
-      campaignTitle: targetCampaignTitle,
-      timestamp: new Date().toLocaleString('id-ID'),
-    };
-
-    setSelectedReceipt(receiptObj);
-    showToast(`Donasi sebesar Rp ${numAmount.toLocaleString('id-ID')} berhasil diproses! Bukti resi telah diterbitkan.`, 'success');
-  };
+  const handleVerifyDonation = (id, status) =>
+    mutate(
+      () => api.setDonationStatus(id, status),
+      ['pendingDonations', 'campaigns', 'myDonations'],
+      status === 'accepted' ? 'Donasi diterima.' : 'Donasi ditolak.',
+      'Gagal memverifikasi donasi',
+      status === 'accepted' ? 'success' : 'info',
+    );
 
   const refreshCandidates = () => loaders.candidates().catch(() => showToast('Gagal menyegarkan data', 'error'));
 
@@ -418,19 +404,12 @@ export function AppProvider({ children }) {
     mutate(() => api.addAgenda(a), 'agendas', 'Agenda kegiatan baru berhasil dijadwalkan!', 'Gagal menjadwalkan agenda');
   const handleDeleteAgenda = (id) => mutate(() => api.deleteAgenda(id), 'agendas', 'Agenda berhasil dihapus.', 'Gagal menghapus agenda', 'info');
 
-  const handleAddCampaign = (newCamp) => {
-    setCampaignList((prev) => [
-      {
-        id: `camp-${Date.now()}`,
-        collectedAmount: 0,
-        donorsCount: 0,
-        recentDonations: [],
-        ...newCamp,
-      },
-      ...prev,
-    ]);
-    showToast('Program donasi padepokan baru berhasil diluncurkan!', 'success');
-  };
+  const handleAddCampaign = (c) =>
+    mutate(() => api.addCampaign(c), 'campaigns', 'Program donasi padepokan baru berhasil diluncurkan!', 'Gagal membuat program donasi');
+  const handleUpdateCampaign = (id, c) =>
+    mutate(() => api.updateCampaign(id, c), 'campaigns', 'Program donasi berhasil diperbarui.', 'Gagal memperbarui program donasi');
+  const handleDeleteCampaign = (id) =>
+    mutate(() => api.deleteCampaign(id), 'campaigns', 'Program donasi berhasil dihapus.', 'Gagal menghapus program donasi', 'info');
 
   const handleUpdateStats = (n) =>
     mutate(() => api.updateSiteStats(n), 'stats', 'Statistik perguruan berhasil diperbarui!', 'Gagal memperbarui statistik');
@@ -450,8 +429,10 @@ export function AppProvider({ children }) {
   const handleDeleteTrainingGround = (id) =>
     mutate(() => api.deleteTrainingGround(id), 'grounds', 'Tempat Latihan berhasil dihapus dari daftar!', 'Gagal menghapus tempat latihan', 'info');
 
+  const handleUpdateSiteContent = (patch, okMsg = 'Konten situs berhasil diperbarui!') =>
+    mutate(() => api.updateSiteContent(patch), 'content', okMsg, 'Gagal memperbarui konten situs');
   const handleUpdateHero = (h) =>
-    mutate(() => api.updateSiteContent({ heroData: h }), 'content', 'Slogan & Teks Hero Padepokan berhasil diperbarui!', 'Gagal memperbarui teks hero');
+    handleUpdateSiteContent({ heroData: h }, 'Slogan & Teks Hero Padepokan berhasil diperbarui!');
 
   return (
     <AppContext.Provider
@@ -497,7 +478,14 @@ export function AppProvider({ children }) {
         handleRsvp,
         campaignList,
         handleAddCampaign,
+        handleUpdateCampaign,
+        handleDeleteCampaign,
         handleDonate,
+        myDonations,
+        pendingDonations,
+        handleVerifyDonation,
+        siteContent,
+        handleUpdateSiteContent,
         candidatesList,
         handleUpdateCandidateScores,
         isOnline,

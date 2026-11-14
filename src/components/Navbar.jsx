@@ -14,6 +14,7 @@ import {
   Sword,
   KeyRound,
   LogOut,
+  BadgeCheck,
 } from 'lucide-react';
 
 const ROLE_BADGE = {
@@ -23,7 +24,7 @@ const ROLE_BADGE = {
 };
 
 export default function Navbar() {
-  const { role, currentUser, authLoading, activeTab, navigateToTab, setIsLoginModalOpen, signOut } = useApp();
+  const { role, isAdmin, pendingDonations, currentUser, authLoading, activeTab, navigateToTab, setIsLoginModalOpen, signOut } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -33,6 +34,7 @@ export default function Navbar() {
     { id: 'agenda', label: 'Agenda Kegiatan', icon: Calendar, locked: role === ROLES.PUBLIC },
     { id: 'donasi', label: 'Donasi', icon: HeartHandshake, locked: role === ROLES.PUBLIC },
     { id: 'ukt', label: 'Ujian Kenaikan Tingkat', icon: GraduationCap, locked: role === ROLES.PUBLIC },
+    ...(isAdmin ? [{ id: 'verifikasi', label: 'Verifikasi', icon: BadgeCheck, locked: false, badge: pendingDonations.length }] : []),
   ];
 
   return (
@@ -82,6 +84,9 @@ export default function Navbar() {
                 >
                   <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
+                  {item.badge > 0 && (
+                    <span className="min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">{item.badge}</span>
+                  )}
                   {item.locked && (
                     <span className="flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-amber-400/80 border border-amber-500/20 ml-0.5" title="Khusus Anggota & Penguji">
                       <Lock className="w-2.5 h-2.5" />
@@ -207,6 +212,9 @@ export default function Navbar() {
                   <div className="flex items-center gap-3">
                     <Icon className="w-4 h-4 text-slate-400" />
                     <span>{item.label}</span>
+                    {item.badge > 0 && (
+                    <span className="min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">{item.badge}</span>
+                  )}
                   </div>
                   {item.locked && (
                     <span className="flex items-center gap-1 text-[11px] text-amber-400/90 bg-slate-900 px-2 py-0.5 rounded border border-amber-500/20">

@@ -58,35 +58,3 @@ export const ORGANIZATIONAL_HIERARCHY = [
     badge: "Tempat Latihan",
   },
 ];
-
-export const INITIAL_CAMPAIGNS = [
-  {
-    id: "camp-1",
-    title: "Pengadaan Matras Tanding Standar WKF/PERSILAT & Body Protector",
-    category: "Sarana Padepokan",
-    targetAmount: 35000000,
-    collectedAmount: 26750000,
-    deadline: "30 November 2026",
-    description: "Pembaruan 2 gelanggang matras tebal 3cm dengan sertifikasi benturan aman demi melindungi atlet saat latihan bantingan intensif.",
-    donorsCount: 64,
-    recentDonations: [
-      { id: "d-1", donorName: "Ahmad Fauzi (Anggota)", amount: 150000, date: "13 Nov 2026", message: "Semoga berkah untuk padepokan kita tercinta!" },
-      { id: "d-2", donorName: "Hamba Allah", amount: 500000, date: "12 Nov 2026", message: "Maju terus pesilat Trident!" },
-      { id: "d-3", donorName: "Alumni Angkatan 2018", amount: 2000000, date: "11 Nov 2026", message: "Salam persaudaraan dari cabang Bandung." },
-    ],
-  },
-  {
-    id: "camp-2",
-    title: "Dana Beasiswa Pelatnas & Nutrisi Atlet Berprestasi Dhuafa",
-    category: "Pemberdayaan Atlet",
-    targetAmount: 20000000,
-    collectedAmount: 14200000,
-    deadline: "15 Desember 2026",
-    description: "Bantuan suplemen nutrisi, perlengkapan seragam tanding, serta uang saku pembinaan bagi atlet potensial yang kurang mampu secara ekonomi.",
-    donorsCount: 42,
-    recentDonations: [
-      { id: "d-4", donorName: "Master Bambang Wijaya", amount: 1000000, date: "10 Nov 2026", message: "Torehkan prestasi demi martabat perguruan." },
-      { id: "d-5", donorName: "Keluarga Besar Cab. Surabaya", amount: 1500000, date: "09 Nov 2026", message: "Semangat adik-adik atlet!" },
-    ],
-  },
-];

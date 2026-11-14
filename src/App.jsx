@@ -8,12 +8,13 @@ import BeritaSection from './components/BeritaSection';
 import PrestasiSection from './components/PrestasiSection';
 import AgendaSection from './components/AgendaSection';
 import DonasiSection from './components/DonasiSection';
+import DonasiVerifikasi from './components/DonasiVerifikasi';
 import UktSection from './components/UktSection';
 import Footer from './components/Footer';
 import { CheckCircle, Info, AlertCircle } from 'lucide-react';
 
 function MainContent() {
-  const { activeTab, toast } = useApp();
+  const { activeTab, toast, isAdmin } = useApp();
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950">
@@ -51,6 +52,7 @@ function MainContent() {
         {activeTab === 'agenda' && <AgendaSection />}
         {activeTab === 'donasi' && <DonasiSection />}
         {activeTab === 'ukt' && <UktSection />}
+        {activeTab === 'verifikasi' && isAdmin && <DonasiVerifikasi />}
       </main>
 
       {/* Martial Arts Academy Footer */}

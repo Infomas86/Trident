@@ -5,6 +5,9 @@ const ok = ({ data, error }) => {
   return data;
 };
 
+// Errors whose Indonesian message is safe to show the user as-is.
+export class UserError extends Error {}
+
 export const NOT_ALLOWED = 'Tidak diizinkan atau data tidak ditemukan';
 // RLS-blocked update/delete returns no error and 0 rows; surface that as an error.
 const hit = async (query) => {
@@ -229,3 +232,110 @@ export async function upsertCandidates(rows) {
 }
 
 export const deleteCandidate = async (id) => hit(supabase.from('ukt_candidates').delete().eq('id', id));
+
+// --- Donasi ---
+const CAMPAIGN_MAP = { title: 'title', category: 'category', targetAmount: 'target_amount', deadline: 'deadline', description: 'description' };
+export const PROOF_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+export const MAX_PROOF_BYTES = 5 * 1024 * 1024;
+export const MIN_DONATION = 1000;
+export const DELETE_CAMPAIGN_BLOCKED = 'Program tidak bisa dihapus karena sudah ada donasi';
+
+export async function listCampaigns() {
+  const [camps, totals, recent] = await Promise.all([
+    supabase.from('campaigns').select('id,title,category,target_amount,deadline,description').order('created_at', { ascending: false }).then(ok),
+    supabase.from('campaign_totals').select('campaign_id,collected_amount,donors_count').then(ok),
+    supabase.from('public_donations').select('id,campaign_id,donor_name,amount,message,created_at').order('created_at', { ascending: false }).then(ok),
+  ]);
+  return camps.map((c) => {
+    const t = totals.find((x) => x.campaign_id === c.id);
+    return {
+      id: c.id,
+      title: c.title,
+      category: c.category,
+      targetAmount: Number(c.target_amount),
+      deadlineDate: c.deadline ?? '',
+      deadline: c.deadline ? fmtDate(c.deadline) : '-',
+      description: c.description,
+      collectedAmount: Number(t?.collected_amount ?? 0),
+      donorsCount: t?.donors_count ?? 0,
+      recentDonations: recent
+        .filter((d) => d.campaign_id === c.id)
+        .slice(0, 5)
+        .map((d) => ({ id: d.id, donorName: d.donor_name, amount: Number(d.amount), message: d.message, date: fmtDate(d.created_at) })),
+    };
+  });
+}
+export const addCampaign = async (input) => ok(await supabase.from('campaigns').insert(toRow(input, CAMPAIGN_MAP)));
+export const updateCampaign = async (id, patch) => hit(supabase.from('campaigns').update(toRow(patch, CAMPAIGN_MAP)).eq('id', id));
+export async function deleteCampaign(id) {
+  const { data, error } = await supabase.from('campaigns').delete().eq('id', id).select('id');
+  if (error) throw error.code === '23503' ? new UserError(DELETE_CAMPAIGN_BLOCKED) : error;
+  if (!data.length) throw new Error(NOT_ALLOWED);
+}
+
+const fromDonationRow = (r) => ({
+  id: r.id,
+  refNumber: r.ref_number,
+  campaignId: r.campaign_id,
+  campaignTitle: r.campaigns?.title ?? '',
+  donorName: r.donor_name,
+  amount: Number(r.amount),
+  message: r.message,
+  paymentMethod: r.payment_method,
+  status: r.status,
+  proofPath: r.proof_path,
+  timestamp: new Date(r.created_at).toLocaleString('id-ID'),
+});
+const DONATION_COLS = '*,campaigns(title)';
+
+export async function submitDonation({ campaignId, amount, donorName, message, paymentMethod, proofFile }) {
+  const n = Number(amount);
+  if (!Number.isInteger(n) || n < MIN_DONATION) throw new UserError('Nominal minimal Rp 1.000 dan harus bilangan bulat');
+  const ext = PROOF_TYPES[proofFile?.type];
+  if (!ext) throw new UserError('Bukti transfer harus berupa foto JPEG, PNG, atau WebP');
+  if (proofFile.size > MAX_PROOF_BYTES) throw new UserError('Ukuran bukti transfer maksimal 5 MB');
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess.session?.user?.id;
+  if (!uid) throw new UserError('Silakan masuk terlebih dahulu');
+  const path = `${uid}/${crypto.randomUUID()}.${ext}`;
+  const up = await supabase.storage.from('donation-proofs').upload(path, proofFile, { contentType: proofFile.type });
+  if (up.error) throw up.error;
+  // status is never sent: the force_pending trigger sets it.
+  const ins = await supabase
+    .from('donations')
+    .insert({ campaign_id: campaignId, amount: n, donor_name: donorName, message, payment_method: paymentMethod, proof_path: path })
+    .select(DONATION_COLS)
+    .single();
+  if (ins.error) {
+    await supabase.storage.from('donation-proofs').remove([path]);
+    throw ins.error;
+  }
+  return fromDonationRow(ins.data);
+}
+
+export async function listMyDonations() {
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess.session?.user?.id;
+  if (!uid) return [];
+  return ok(await supabase.from('donations').select(DONATION_COLS).eq('user_id', uid).order('created_at', { ascending: false })).map(fromDonationRow);
+}
+
+export async function listPendingDonations() {
+  const rows = ok(await supabase.from('donations').select(DONATION_COLS).eq('status', 'pending').order('created_at')).map(fromDonationRow);
+  return Promise.all(
+    rows.map(async (d) => {
+      const { data } = await supabase.storage.from('donation-proofs').createSignedUrl(d.proofPath, 600);
+      return { ...d, signedProofUrl: data?.signedUrl ?? null };
+    }),
+  );
+}
+
+export async function setDonationStatus(id, status) {
+  const { data: sess } = await supabase.auth.getSession();
+  return hit(
+    supabase
+      .from('donations')
+      .update({ status, verified_by: sess.session?.user?.id, verified_at: new Date().toISOString() })
+      .eq('id', id),
+  );
+}
