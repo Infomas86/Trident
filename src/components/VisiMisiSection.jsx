@@ -365,7 +365,7 @@ export default function VisiMisiSection() {
                         </button>
                         {pillars.length > 1 && (
                           <button
-                            onClick={() => handleDeletePillar(pillar.id)}
+                            onClick={() => confirm(`Hapus pilar "${pillar.title}"?`) && handleDeletePillar(pillar.id)}
                             className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-400 transition-colors"
                             title="Hapus Pilar"
                           >
@@ -385,7 +385,7 @@ export default function VisiMisiSection() {
                 </div>
 
                 <div className="mt-5 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
-                  <span>Pilar #{pillar.id}</span>
+                  <span>Pilar #{pillars.indexOf(pillar) + 1}</span>
                   <span className="text-blue-400 font-semibold group-hover:translate-x-1 transition-transform">Trident Doctrine</span>
                 </div>
               </div>
@@ -545,6 +545,9 @@ export default function VisiMisiSection() {
         </div>
 
         {/* Training Grounds Grid */}
+        {trainingGrounds.length === 0 && (
+          <p className="text-center text-sm font-semibold text-slate-400 py-10">Belum ada tempat latihan</p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {trainingGrounds.map((ground) => {
             const cleanPhone = waNumber(ground.trainerPhone);
@@ -582,7 +585,7 @@ export default function VisiMisiSection() {
                         </button>
                         {trainingGrounds.length > 1 && (
                           <button
-                            onClick={() => handleDeleteTrainingGround(ground.id)}
+                            onClick={() => confirm(`Hapus ${ground.name}?`) && handleDeleteTrainingGround(ground.id)}
                             className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-400 transition-colors"
                             title="Hapus Tempat Latihan"
                           >

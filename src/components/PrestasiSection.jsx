@@ -11,10 +11,11 @@ import {
   User,
   Star,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 
 export default function PrestasiSection() {
-  const { achievementsList, handleAddAchievement, isStaff } = useApp();
+  const { achievementsList, handleAddAchievement, handleDeleteAchievement, isStaff } = useApp();
   const [selectedScope, setSelectedScope] = useState('Semua');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -139,6 +140,12 @@ export default function PrestasiSection() {
       </div>
 
       {/* Achievements Cards Grid */}
+      {achievementsList.length === 0 && (
+        <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-dashed border-slate-800">
+          <Trophy className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-slate-300">Belum ada prestasi</p>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredAchievements.map((item) => {
           const badgeStyle = getMedalBadge(item.medal);
@@ -155,6 +162,18 @@ export default function PrestasiSection() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 
+                {isStaff && (
+                  <button
+                    onClick={() => {
+                      if (confirm(`Hapus prestasi ${item.athleteName}?`)) handleDeleteAchievement(item.id);
+                    }}
+                    className="absolute top-3 left-3 p-1.5 rounded-lg bg-slate-950/80 hover:bg-rose-950 text-slate-300 hover:text-rose-400 backdrop-blur-md transition-colors"
+                    title="Hapus Prestasi"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+
                 {/* Medal Badge */}
                 <div className="absolute top-3 right-3">
                   <div className={`px-3 py-1 rounded-lg text-[11px] border ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.glow} flex items-center gap-1.5`}>

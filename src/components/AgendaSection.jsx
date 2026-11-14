@@ -10,12 +10,14 @@ import {
   X,
   User,
   KeyRound,
+  Trash2,
 } from 'lucide-react';
 
 export default function AgendaSection() {
   const {
     agendaList,
     handleAddAgenda,
+    handleDeleteAgenda,
     role,
     ROLES,
     isStaff,
@@ -27,7 +29,7 @@ export default function AgendaSection() {
   // Form state for Examiner
   const [newAgendaForm, setNewAgendaForm] = useState({
     title: '',
-    date: '25 November 2026',
+    date: new Date().toISOString().slice(0, 10),
     time: '16:00 - 18:30 WIB',
     location: 'Padepokan Pusat - Dojo Cakra Bhakti',
     speaker: 'Dewan Pelatih Utama',
@@ -74,7 +76,7 @@ export default function AgendaSection() {
     });
     setNewAgendaForm({
       title: '',
-      date: '25 November 2026',
+      date: new Date().toISOString().slice(0, 10),
       time: '16:00 - 18:30 WIB',
       location: 'Padepokan Pusat - Dojo Cakra Bhakti',
       speaker: 'Dewan Pelatih Utama',
@@ -114,6 +116,12 @@ export default function AgendaSection() {
 
       {/* Agenda Cards List (Pure event share, no RSVP) */}
       <div className="space-y-5">
+        {agendaList.length === 0 && (
+          <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-dashed border-slate-800">
+            <Calendar className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+            <p className="text-sm font-semibold text-slate-300">Belum ada agenda</p>
+          </div>
+        )}
         {agendaList.map((agenda) => (
           <div
             key={agenda.id}
@@ -124,7 +132,9 @@ export default function AgendaSection() {
               <div className="flex flex-wrap items-center gap-2.5">
                 <span className="text-xs font-bold px-3 py-1 rounded-lg bg-blue-950 text-blue-300 border border-blue-700/40 flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5" />
-                  {agenda.date}
+                  {agenda.date
+                    ? new Date(agenda.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                    : '-'}
                 </span>
                 <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-900 text-slate-300 flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-amber-400" />
@@ -136,9 +146,22 @@ export default function AgendaSection() {
                 </span>
               </div>
 
-              <h3 className="text-lg sm:text-xl font-bold text-white font-['Cinzel']">
-                {agenda.title}
-              </h3>
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-lg sm:text-xl font-bold text-white font-['Cinzel']">
+                  {agenda.title}
+                </h3>
+                {isStaff && (
+                  <button
+                    onClick={() => {
+                      if (confirm(`Hapus agenda "${agenda.title}"?`)) handleDeleteAgenda(agenda.id);
+                    }}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-400 transition-colors shrink-0"
+                    title="Hapus Agenda"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
 
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-3xl">
                 {agenda.description}
@@ -204,8 +227,7 @@ export default function AgendaSection() {
                     Tanggal Pelaksanaan
                   </label>
                   <input
-                    type="text"
-                    placeholder="Contoh: 28 November 2026"
+                    type="date"
                     value={newAgendaForm.date}
                     onChange={(e) => setNewAgendaForm({ ...newAgendaForm, date: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"

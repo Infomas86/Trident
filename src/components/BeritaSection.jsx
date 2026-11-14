@@ -10,11 +10,11 @@ import {
   Tag,
   ArrowRight,
   X,
-  Share2,
+  Trash2,
 } from 'lucide-react';
 
 export default function BeritaSection() {
-  const { newsList, handleAddNews, isStaff } = useApp();
+  const { newsList, handleAddNews, handleDeleteNews, isStaff } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [activeArticle, setActiveArticle] = useState(null);
@@ -50,7 +50,7 @@ export default function BeritaSection() {
       summary: newNewsForm.summary,
       content: newNewsForm.content,
       image: newNewsForm.image,
-      tags: newNewsForm.tags.split(',').map((t) => t.trim()),
+      tags: newNewsForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
     });
     setNewNewsForm({
       title: '',
@@ -137,8 +137,14 @@ export default function BeritaSection() {
       {filteredNews.length === 0 ? (
         <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-dashed border-slate-800">
           <Newspaper className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-slate-300">Tidak ada warta yang sesuai pencarian</p>
-          <p className="text-xs text-slate-500 mt-1">Coba gunakan kata kunci lain atau pilih kategori "Semua".</p>
+          {newsList.length === 0 ? (
+            <p className="text-sm font-semibold text-slate-300">Belum ada berita</p>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-slate-300">Tidak ada warta yang sesuai pencarian</p>
+              <p className="text-xs text-slate-500 mt-1">Coba gunakan kata kunci lain atau pilih kategori "Semua".</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -155,6 +161,18 @@ export default function BeritaSection() {
                   alt={item.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
+                {isStaff && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(`Hapus berita "${item.title}"?`)) handleDeleteNews(item.id);
+                    }}
+                    className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-950/80 hover:bg-rose-950 text-slate-300 hover:text-rose-400 backdrop-blur-md transition-colors"
+                    title="Hapus Berita"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
                 <div className="absolute top-3 left-3">
                   <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider backdrop-blur-md shadow-md ${
                     item.category === 'Pengumuman'

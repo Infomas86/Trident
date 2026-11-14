@@ -1,18 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import {
-  INITIAL_STATS,
-  INITIAL_PILLARS,
-  INITIAL_NEWS,
-  INITIAL_ACHIEVEMENTS,
-  INITIAL_AGENDAS,
-  INITIAL_CAMPAIGNS,
-  INITIAL_CANDIDATES,
-  INITIAL_HERO_DATA,
-  INITIAL_TRAINING_GROUNDS,
-} from '../data/mockData';
+import { INITIAL_CAMPAIGNS, INITIAL_CANDIDATES } from '../data/mockData';
 import { INITIAL_TIMELINE } from '../data/static';
 import { supabase } from '../lib/supabase';
-import { getProfile } from '../lib/api';
+import * as api from '../lib/api';
 
 const AppContext = createContext();
 
@@ -33,20 +23,15 @@ export function AppProvider({ children }) {
   const [lockedModal, setLockedModal] = useState({ open: false, featureName: '' });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // Data states (still mock until Tasks 7-9)
-  const [stats, setStats] = useState(INITIAL_STATS);
-
-  const [heroData, setHeroData] = useState(INITIAL_HERO_DATA);
-
-  const [trainingGrounds, setTrainingGrounds] = useState(INITIAL_TRAINING_GROUNDS);
-
+  // Data states: stats/hero/pillars/grounds/news/achievements/agendas come from Supabase; campaigns & candidates stay mock until Tasks 8-9
+  const [stats, setStats] = useState({ activeMembers: 0, medalsCount: 0, padepokanBranches: 0, uktPassRate: 0, masterCouncil: 0 });
+  const [heroData, setHeroData] = useState({});
+  const [trainingGrounds, setTrainingGrounds] = useState([]);
   const timeline = INITIAL_TIMELINE;
-
-  const [pillars, setPillars] = useState(INITIAL_PILLARS);
-
-  const [newsList, setNewsList] = useState(INITIAL_NEWS);
-  const [achievementsList, setAchievementsList] = useState(INITIAL_ACHIEVEMENTS);
-  const [agendaList, setAgendaList] = useState(INITIAL_AGENDAS);
+  const [pillars, setPillars] = useState([]);
+  const [newsList, setNewsList] = useState([]);
+  const [achievementsList, setAchievementsList] = useState([]);
+  const [agendaList, setAgendaList] = useState([]);
   const [campaignList, setCampaignList] = useState(INITIAL_CAMPAIGNS);
 
   const [candidatesList, setCandidatesList] = useState(INITIAL_CANDIDATES);
@@ -78,7 +63,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-    getProfile(userId)
+    api.getProfile(userId)
       .then((p) => !cancelled && setProfile(p))
       .catch(() => {
         if (cancelled) return;
@@ -131,8 +116,42 @@ export function AppProvider({ children }) {
     showToast('Anda telah keluar dari akun.', 'info');
   };
 
-  // Lists are still local mock data; Tasks 7-9 reload them from Supabase here.
-  const refresh = async () => {};
+  const loaders = {
+    news: () => api.listNews().then(setNewsList),
+    achievements: () => api.listAchievements().then(setAchievementsList),
+    agendas: () => (userId ? api.listAgendas().then(setAgendaList) : setAgendaList([])),
+    stats: () => api.getSiteStats().then(setStats),
+    content: () => api.getSiteContent().then((c) => setHeroData(c.heroData)),
+    pillars: () => api.listPillars().then(setPillars),
+    grounds: () => api.listTrainingGrounds().then(setTrainingGrounds),
+  };
+  const refresh = async () => {
+    const results = await Promise.allSettled(Object.values(loaders).map((load) => load()));
+    if (results.some((r) => r.status === 'rejected')) showToast('Sebagian data gagal dimuat', 'error');
+  };
+
+  // Load on mount and whenever the signed-in user changes (agendas need a session).
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  // Run an api call, toast the outcome, then reload the affected list.
+  const mutate = async (call, list, okMsg, failMsg, okType = 'success') => {
+    try {
+      await call();
+    } catch {
+      showToast(failMsg, 'error');
+      return false;
+    }
+    showToast(okMsg, okType);
+    try {
+      await loaders[list]();
+    } catch {
+      showToast('Gagal menyegarkan data', 'error');
+    }
+    return true;
+  };
 
   // Switch tab with access check
   const navigateToTab = (tabName) => {
@@ -150,49 +169,11 @@ export function AppProvider({ children }) {
       setIsLoginModalOpen(true);
       return;
     }
-
-    setAgendaList((prev) =>
-      prev.map((agenda) => {
-        if (agenda.id !== agendaId) return agenda;
-
-        const currentAttendees = agenda.attendees || [];
-        const existingIdx = currentAttendees.findIndex((a) => a.id === currentUser?.id);
-
-        let updatedAttendees;
-        if (existingIdx >= 0) {
-          updatedAttendees = [...currentAttendees];
-          updatedAttendees[existingIdx] = {
-            ...updatedAttendees[existingIdx],
-            name: currentUser?.name,
-            role: currentUser?.role === ROLES.MEMBER ? 'Anggota' : 'Penguji',
-            status,
-            reason: status === 'izin' ? reason : undefined,
-          };
-        } else {
-          updatedAttendees = [
-            ...currentAttendees,
-            {
-              id: currentUser?.id,
-              name: currentUser?.name,
-              role: currentUser?.role === ROLES.MEMBER ? 'Anggota' : 'Penguji',
-              status,
-              reason: status === 'izin' ? reason : undefined,
-            },
-          ];
-        }
-
-        return {
-          ...agenda,
-          attendees: updatedAttendees,
-        };
-      })
-    );
-
-    showToast(
-      status === 'hadir'
-        ? 'Konfirmasi HADIR berhasil dicatat pada agenda!'
-        : 'Konfirmasi IZIN berhasil dikirim beserta keterangan.',
-      'success'
+    return mutate(
+      () => api.upsertRsvp(agendaId, status, reason, currentUser?.name),
+      'agendas',
+      status === 'hadir' ? 'Konfirmasi HADIR berhasil dicatat pada agenda!' : 'Konfirmasi IZIN berhasil dikirim beserta keterangan.',
+      'Gagal menyimpan konfirmasi kehadiran',
     );
   };
 
@@ -275,42 +256,18 @@ export function AppProvider({ children }) {
   };
 
   // Examiner additions
-  const handleAddNews = (newNews) => {
-    setNewsList((prev) => [
-      {
-        id: `news-${Date.now()}`,
-        date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
-        author: currentUser?.name,
-        ...newNews,
-      },
-      ...prev,
-    ]);
-    showToast('Berita perguruan baru berhasil dipublikasikan!', 'success');
-  };
+  const handleAddNews = (n) =>
+    mutate(() => api.addNews({ ...n, author: currentUser?.name }), 'news', 'Berita perguruan baru berhasil dipublikasikan!', 'Gagal menerbitkan berita');
+  const handleDeleteNews = (id) => mutate(() => api.deleteNews(id), 'news', 'Berita berhasil dihapus.', 'Gagal menghapus berita', 'info');
 
-  const handleAddAchievement = (newAch) => {
-    setAchievementsList((prev) => [
-      {
-        id: `ach-${Date.now()}`,
-        year: '2026',
-        ...newAch,
-      },
-      ...prev,
-    ]);
-    showToast('Prestasi atlet berhasil ditambahkan ke etalase!', 'success');
-  };
+  const handleAddAchievement = (a) =>
+    mutate(() => api.addAchievement(a), 'achievements', 'Prestasi atlet berhasil ditambahkan ke etalase!', 'Gagal menambahkan prestasi');
+  const handleDeleteAchievement = (id) =>
+    mutate(() => api.deleteAchievement(id), 'achievements', 'Prestasi berhasil dihapus.', 'Gagal menghapus prestasi', 'info');
 
-  const handleAddAgenda = (newAgenda) => {
-    setAgendaList((prev) => [
-      {
-        id: `agenda-${Date.now()}`,
-        attendees: [{ id: currentUser?.id, name: currentUser?.name, role: 'Penguji', status: 'hadir' }],
-        ...newAgenda,
-      },
-      ...prev,
-    ]);
-    showToast('Agenda kegiatan baru berhasil dijadwalkan!', 'success');
-  };
+  const handleAddAgenda = (a) =>
+    mutate(() => api.addAgenda(a), 'agendas', 'Agenda kegiatan baru berhasil dijadwalkan!', 'Gagal menjadwalkan agenda');
+  const handleDeleteAgenda = (id) => mutate(() => api.deleteAgenda(id), 'agendas', 'Agenda berhasil dihapus.', 'Gagal menghapus agenda', 'info');
 
   const handleAddCampaign = (newCamp) => {
     setCampaignList((prev) => [
@@ -326,66 +283,26 @@ export function AppProvider({ children }) {
     showToast('Program donasi padepokan baru berhasil diluncurkan!', 'success');
   };
 
-  const handleUpdateStats = (newStats) => {
-    setStats(newStats);
-    showToast('Statistik perguruan berhasil diperbarui!', 'success');
-  };
+  const handleUpdateStats = (n) =>
+    mutate(() => api.updateSiteStats(n), 'stats', 'Statistik perguruan berhasil diperbarui!', 'Gagal memperbarui statistik');
 
-  // ADMIN CMS MUTATORS (Mengubah isi aplikasi: Pilar Visi Misi, Hero, Info Tempat Latihan, Timeline)
-  const handleUpdatePillar = (id, updatedPillar) => {
-    setPillars((prev) => {
-      const updated = prev.map((p) => (p.id === id ? { ...p, ...updatedPillar } : p));
-      return updated;
-    });
-    showToast('Pilar Visi & Misi berhasil diperbarui oleh Administrator!', 'success');
-  };
+  // ADMIN CMS MUTATORS (Pilar Visi Misi, Hero, Info Tempat Latihan)
+  const handleUpdatePillar = (id, p) =>
+    mutate(() => api.updatePillar(id, p), 'pillars', 'Pilar Visi & Misi berhasil diperbarui oleh Administrator!', 'Gagal memperbarui pilar');
+  const handleAddPillar = (p) =>
+    mutate(() => api.addPillar(p), 'pillars', 'Pilar Visi & Misi baru berhasil ditambahkan!', 'Gagal menambahkan pilar');
+  const handleDeletePillar = (id) =>
+    mutate(() => api.deletePillar(id), 'pillars', 'Pilar Visi & Misi berhasil dihapus!', 'Gagal menghapus pilar', 'info');
 
-  const handleAddPillar = (newPillar) => {
-    setPillars((prev) => {
-      const id = Date.now();
-      const updated = [...prev, { ...newPillar, id }];
-      return updated;
-    });
-    showToast('Pilar Visi & Misi baru berhasil ditambahkan!', 'success');
-  };
+  const handleUpdateTrainingGround = (id, g) =>
+    mutate(() => api.updateTrainingGround(id, g), 'grounds', 'Info Tempat Latihan & Kontak Pelatih berhasil diperbarui!', 'Gagal memperbarui tempat latihan');
+  const handleAddTrainingGround = (g) =>
+    mutate(() => api.addTrainingGround(g), 'grounds', 'Tempat Latihan (PAR) baru berhasil didaftarkan!', 'Gagal menambahkan tempat latihan');
+  const handleDeleteTrainingGround = (id) =>
+    mutate(() => api.deleteTrainingGround(id), 'grounds', 'Tempat Latihan berhasil dihapus dari daftar!', 'Gagal menghapus tempat latihan', 'info');
 
-  const handleDeletePillar = (id) => {
-    setPillars((prev) => {
-      const updated = prev.filter((p) => p.id !== id);
-      return updated;
-    });
-    showToast('Pilar Visi & Misi berhasil dihapus!', 'info');
-  };
-
-  const handleUpdateTrainingGround = (id, updatedGround) => {
-    setTrainingGrounds((prev) => {
-      const updated = prev.map((g) => (g.id === id ? { ...g, ...updatedGround } : g));
-      return updated;
-    });
-    showToast('Info Tempat Latihan & Kontak Pelatih berhasil diperbarui!', 'success');
-  };
-
-  const handleAddTrainingGround = (newGround) => {
-    setTrainingGrounds((prev) => {
-      const id = `par-${Date.now()}`;
-      const updated = [{ ...newGround, id }, ...prev];
-      return updated;
-    });
-    showToast('Tempat Latihan (PAR) baru berhasil didaftarkan!', 'success');
-  };
-
-  const handleDeleteTrainingGround = (id) => {
-    setTrainingGrounds((prev) => {
-      const updated = prev.filter((g) => g.id !== id);
-      return updated;
-    });
-    showToast('Tempat Latihan berhasil dihapus dari daftar!', 'info');
-  };
-
-  const handleUpdateHero = (newHero) => {
-    setHeroData(newHero);
-    showToast('Slogan & Teks Hero Padepokan berhasil diperbarui!', 'success');
-  };
+  const handleUpdateHero = (h) =>
+    mutate(() => api.updateSiteContent({ heroData: h }), 'content', 'Slogan & Teks Hero Padepokan berhasil diperbarui!', 'Gagal memperbarui teks hero');
 
   return (
     <AppContext.Provider
@@ -421,10 +338,13 @@ export function AppProvider({ children }) {
         handleDeletePillar,
         newsList,
         handleAddNews,
+        handleDeleteNews,
         achievementsList,
         handleAddAchievement,
+        handleDeleteAchievement,
         agendaList,
         handleAddAgenda,
+        handleDeleteAgenda,
         handleRsvp,
         campaignList,
         handleAddCampaign,
