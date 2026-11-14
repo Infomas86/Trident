@@ -80,7 +80,7 @@ export default function DonasiSection() {
             Program Donasi & Gotong Royong Perguruan
           </h2>
           <p className="text-sm text-slate-400 max-w-md mx-auto">
-            Fitur kontribusi sarana padepokan dan beasiswa atlet bersifat eksklusif bagi anggota terdaftar dan pengurus perguruan.
+            Fitur kontribusi sarana padepokan bersifat eksklusif bagi anggota terdaftar dan pengurus perguruan.
           </p>
         </div>
         <div className="pt-2 flex items-center justify-center">
@@ -181,7 +181,7 @@ export default function DonasiSection() {
             <span>Kemandirian Finansial & Gotong Royong</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
-            Program Donasi Sarana & Beasiswa Perguruan
+            Program Donasi Sarana
           </h2>
           <p className="text-xs sm:text-sm text-slate-400">
             Wujudkan fasilitas padepokan yang representatif dan dukung atlet berprestasi secara transparan.

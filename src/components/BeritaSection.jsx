@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ImageField from './ImageField';
 import { useApp } from '../context/AppContext';
 import {
   Newspaper,
@@ -303,7 +304,7 @@ export default function BeritaSection() {
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
               <h3 className="text-lg font-bold text-white font-['Cinzel'] flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-amber-400" />
-                Publikasikan Warta Perguruan Baru
+                Publikasikan Warta Perguruan
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
@@ -357,18 +358,17 @@ export default function BeritaSection() {
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
-                  URL Gambar Pendukung
-                </label>
-                <input
-                  type="url"
-                  value={newNewsForm.image}
-                  onChange={(e) => setNewNewsForm({ ...newNewsForm, image: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
-                  required
-                />
-              </div>
+              <ImageField
+
+                label="Gambar Pendukung"
+
+                value={newNewsForm.image}
+
+                onChange={(url) => setNewNewsForm({ ...newNewsForm, image: url })}
+
+                folder="berita"
+
+              />
 
               <div>
                 <label className="text-xs text-slate-300 font-semibold block mb-1">

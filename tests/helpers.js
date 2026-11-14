@@ -13,7 +13,7 @@ export async function createTestUser(role, extra = {}) {
   const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
   if (error) throw error;
   const id = data.user.id;
-  const { error: pe } = await admin.from('profiles').insert({ id, full_name: 'Uji ' + role, role, ...extra });
+  const { error: pe } = await admin.from('profiles').upsert({ id, full_name: 'Uji ' + role, role, ...extra }, { onConflict: 'id' });
   if (pe) throw pe;
   const client = anonClient();
   const { error: se } = await client.auth.signInWithPassword({ email, password });
@@ -33,6 +33,7 @@ export async function cleanup() {
   check(await admin.from('pillars').delete().like('title', like)); // hanya ada bila policy bocor
   check(await admin.from('training_grounds').delete().like('name', like));
   check(await admin.from('ukt_candidates').delete().like('reg_number', like));
+  check(await admin.from('examiner_codes').delete().like('code', `T${RUN}%`));
   const ids = []; // kumpulkan dulu, supaya hapus tidak menggeser halaman
   for (let page = 1; ; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });

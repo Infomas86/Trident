@@ -100,7 +100,7 @@ export default function ReceiptModal() {
               BUKTI RESI GOTONG ROYONG DIGITAL
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Tanda Terima Donasi Sarana & Beasiswa Atlet Perguruan
+              Tanda Terima Donasi Sarana Perguruan
             </p>
           </div>
 

@@ -228,13 +228,6 @@ export default function VisiMisiSection() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-            <button
-              onClick={() => navigateToTab('ukt')}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm tracking-wide shadow-lg shadow-amber-950/50 flex items-center gap-2 transition-all hover:scale-105"
-            >
-              <GraduationCap className="w-4 h-4" />
-              <span>Ujian Kenaikan Tingkat</span>
-            </button>
 
             <button
               onClick={() => navigateToTab('berita')}
@@ -274,7 +267,7 @@ export default function VisiMisiSection() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="trident-card rounded-2xl p-5 border border-blue-900/40 shadow-lg relative overflow-hidden group">
             <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
               <Users className="w-5 h-5" />
@@ -308,6 +301,18 @@ export default function VisiMisiSection() {
             </div>
             <div className="text-xs font-medium text-slate-400 mt-1">
               Dojo & Padepokan Daerah
+            </div>
+          </div>
+
+          <div className="trident-card rounded-2xl p-5 border border-emerald-900/40 shadow-lg relative overflow-hidden group">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <MapPin className="w-5 h-5" />
+            </div>
+            <div className="text-3xl font-extrabold text-emerald-300 font-['Cinzel'] tracking-tight">
+              {trainingGrounds.length}
+            </div>
+            <div className="text-xs font-medium text-slate-400 mt-1">
+              Tempat Latihan Aktif
             </div>
           </div>
 

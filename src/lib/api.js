@@ -27,6 +27,33 @@ export async function getProfile(userId) {
   return data;
 }
 
+// --- Daftar mandiri & kode penguji ---
+// Self sign-up always creates an 'anggota' profile (DB trigger); the name travels as metadata.
+export async function signUp(email, password, fullName) {
+  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+  if (error) {
+    if (/registered|exists/i.test(error.message)) throw new UserError('Email sudah terdaftar, silakan masuk');
+    if (/password/i.test(error.message)) throw new UserError('Kata sandi terlalu lemah (minimal 8 karakter)');
+    throw error;
+  }
+  return data;
+}
+export async function redeemExaminerCode(code) {
+  const { error } = await supabase.rpc('redeem_examiner_code', { p_code: code });
+  if (error) throw new UserError(error.message.includes('tidak valid') ? 'Kode penguji tidak valid atau sudah dipakai' : error.message);
+}
+export const listExaminerCodes = async () =>
+  ok(await supabase.from('examiner_codes').select('code,created_at,used_at,used_by').order('created_at', { ascending: false }));
+export async function createExaminerCode() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid misreading
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  const code = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('');
+  ok(await supabase.from('examiner_codes').insert({ code }));
+  return code;
+}
+export const deleteExaminerCode = async (code) =>
+  hit(supabase.from('examiner_codes').delete().eq('code', code).is('used_by', null));
+
 // --- Berita ---
 const NEWS_MAP = { title: 'title', category: 'category', summary: 'summary', content: 'content', image: 'image_url', tags: 'tags', author: 'author_name' };
 
@@ -262,6 +289,17 @@ export const deleteCandidate = async (id) => hit(supabase.from('ukt_candidates')
 const CAMPAIGN_MAP = { title: 'title', category: 'category', targetAmount: 'target_amount', deadline: 'deadline', description: 'description' };
 export const PROOF_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 export const MAX_PROOF_BYTES = 5 * 1024 * 1024;
+
+// Upload a news/achievement photo to the public bucket and return its public URL (staff only by RLS).
+export async function uploadPublicImage(file, folder) {
+  const ext = PROOF_TYPES[file?.type];
+  if (!ext) throw new UserError('Foto harus berupa gambar JPG, PNG, atau WEBP');
+  if (file.size > MAX_PROOF_BYTES) throw new UserError('Ukuran foto maksimal 5 MB');
+  const path = `${folder}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from('public-images').upload(path, file, { contentType: file.type });
+  if (error) throw error;
+  return supabase.storage.from('public-images').getPublicUrl(path).data.publicUrl;
+}
 export const MIN_DONATION = 1000;
 export const MAX_DONATION = 1_000_000_000_000;
 export const AMOUNT_ERROR = 'Nominal donasi harus bilangan bulat antara Rp 1.000 dan Rp 1.000.000.000.000';

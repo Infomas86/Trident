@@ -95,7 +95,7 @@ export default function Footer() {
                   onClick={() => navigateToTab('donasi')}
                   className="hover:text-amber-400 transition-colors"
                 >
-                  Donasi Sarana & Beasiswa
+                  Donasi Sarana
                 </button>
               </li>
               <li>

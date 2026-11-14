@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ImageField from './ImageField';
 import { useApp } from '../context/AppContext';
 import {
   Trophy,
@@ -237,7 +238,7 @@ export default function PrestasiSection() {
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
               <h3 className="text-lg font-bold text-white font-['Cinzel'] flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-amber-400" />
-                Catat Prestasi Atlet Perguruan Baru
+                Catat Prestasi Atlet Perguruan
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
@@ -322,18 +323,17 @@ export default function PrestasiSection() {
                 />
               </div>
 
-              <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
-                  URL Foto Atlet / Dokumentasi
-                </label>
-                <input
-                  type="url"
-                  value={newAchForm.photo}
-                  onChange={(e) => setNewAchForm({ ...newAchForm, photo: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
-                  required
-                />
-              </div>
+              <ImageField
+
+                label="Foto Atlet / Dokumentasi"
+
+                value={newAchForm.photo}
+
+                onChange={(url) => setNewAchForm({ ...newAchForm, photo: url })}
+
+                folder="prestasi"
+
+              />
 
               <div>
                 <label className="text-xs text-slate-300 font-semibold block mb-1">

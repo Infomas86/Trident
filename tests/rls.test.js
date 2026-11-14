@@ -361,3 +361,27 @@ test('manage-user: update_profile dan list; admin tak bisa nonaktif/turun diri',
   assert.equal(status(await call(adminU, { action: 'update_profile', user_id: adminU.id, role: 'anggota' })), 400);
   assert.equal(status(await call(adminU, { action: 'update_profile', user_id: u.id, role: 'dewa' })), 400);
 });
+
+test('akun baru otomatis dapat profil anggota (daftar mandiri)', async () => {
+  const email = `u${RUN}-self@test.trident.local`;
+  const { data, error } = await admin.auth.admin.createUser({ email, password: 'Sandi-Mandiri-1', email_confirm: true, user_metadata: { full_name: 'Pendaftar Mandiri' } });
+  assert.ifError(error);
+  const { data: p } = await admin.from('profiles').select('full_name, role, reg_number').eq('id', data.user.id).single();
+  assert.deepEqual(p, { full_name: 'Pendaftar Mandiri', role: 'anggota', reg_number: null });
+});
+
+test('kode penguji: sekali pakai, mengubah anggota jadi penguji; anggota tak bisa lihat kode', async () => {
+  const code = `T${RUN}A`.toUpperCase();
+  assert.ifError((await adminU.client.from('examiner_codes').insert({ code })).error);
+  const a = await createTestUser('anggota');
+  const b = await createTestUser('anggota');
+  const seen = await a.client.from('examiner_codes').select('code');
+  assert.equal(seen.data.length, 0);
+  assert.ifError((await a.client.rpc('redeem_examiner_code', { p_code: code.toLowerCase() })).error);
+  const { data: pa } = await admin.from('profiles').select('role').eq('id', a.id).single();
+  assert.equal(pa.role, 'penguji');
+  assert.ok((await b.client.rpc('redeem_examiner_code', { p_code: code })).error);
+  const { data: pb } = await admin.from('profiles').select('role').eq('id', b.id).single();
+  assert.equal(pb.role, 'anggota');
+  assert.ok((await a.client.from('examiner_codes').insert({ code: `T${RUN}B` })).error);
+});

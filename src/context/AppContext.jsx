@@ -21,6 +21,7 @@ export function AppProvider({ children }) {
   const [loadedProfile, setProfile] = useState(null);
   const [initializing, setInitializing] = useState(true);
   const [failedId, setFailedId] = useState(null);
+  const [profileVersion, setProfileVersion] = useState(0); // bump to re-fetch the profile (e.g. after role change)
 
   const [activeTab, setActiveTab] = useState('visi');
   const [lockedModal, setLockedModal] = useState({ open: false, featureName: '' });
@@ -158,7 +159,7 @@ export function AppProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, profileVersion]);
 
   // Only trust a profile that belongs to the current session (avoids showing a previous account's role).
   const profile = loadedProfile && loadedProfile.id === userId ? loadedProfile : null;
@@ -194,6 +195,34 @@ export function AppProvider({ children }) {
     setIsLoginModalOpen(false);
     showToast('Berhasil masuk. Selamat datang!', 'success');
     return true;
+  };
+
+  // Self sign-up as anggota; an optional admin-issued code upgrades the new account to penguji.
+  const signUp = async ({ fullName, email, password, examinerCode }) => {
+    try {
+      const { session: s } = await api.signUp(email, password, fullName);
+      if (!s) {
+        showToast('Pendaftaran berhasil. Silakan masuk dengan akun Anda.', 'success');
+        return true;
+      }
+      if (examinerCode?.trim()) {
+        try {
+          await api.redeemExaminerCode(examinerCode);
+          setProfileVersion((v) => v + 1);
+          showToast('Akun dibuat dan terdaftar sebagai Penguji. Selamat datang!', 'success');
+        } catch (e) {
+          showToast(`Akun dibuat sebagai Anggota. ${e.message}`, 'error');
+        }
+      } else {
+        showToast('Akun berhasil dibuat. Selamat datang!', 'success');
+      }
+      setIsLoginModalOpen(false);
+      return true;
+    } catch (e) {
+      console.error(e);
+      showToast(e instanceof api.UserError ? e.message : 'Gagal mendaftar, periksa koneksi', 'error');
+      return false;
+    }
   };
 
   const signOut = async () => {
@@ -514,6 +543,7 @@ export function AppProvider({ children }) {
         isAdmin,
         authLoading,
         signIn,
+        signUp,
         signOut,
         refresh,
         isLoginModalOpen,

@@ -38,7 +38,7 @@ async function handle(req: Request) {
       if (!ROLES.includes(b.role)) throw bad('role tidak valid');
       const { data, error } = await db.auth.admin.createUser({ email, password: b.password, email_confirm: true });
       if (error) throw bad(error.message);
-      const { error: pe } = await db.from('profiles').insert({ id: data.user.id, ...pick(b) });
+      const { error: pe } = await db.from('profiles').upsert({ id: data.user.id, ...pick(b) }, { onConflict: 'id' });
       if (pe) {
         await db.auth.admin.deleteUser(data.user.id);
         throw bad(pe.message);
