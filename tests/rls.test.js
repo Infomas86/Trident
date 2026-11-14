@@ -93,6 +93,18 @@ test('anggota tanpa peserta melihat 0 baris', async () => {
   assert.equal(data.length, 0);
 });
 
+test('upsert dua kali dengan reg_number sama → 1 baris, nilai terbaru', async () => {
+  const reg = `T-8-${RUN}`;
+  const row = (pos1) => ({ reg_number: reg, name: 'Uji', pos1 });
+  for (const v of [60, 90]) {
+    assert.ifError((await penguji.client.from('ukt_candidates').upsert(row(v), { onConflict: 'reg_number' })).error);
+  }
+  const { data, error } = await admin.from('ukt_candidates').select('pos1').eq('reg_number', reg);
+  assert.ifError(error);
+  assert.equal(data.length, 1);
+  assert.equal(Number(data[0].pos1), 90);
+});
+
 test('anggota tidak bisa menerima donasi sendiri', async () => {
   const { data, error } = await anggota.client.from('donations')
     .insert({ campaign_id: campaignId, donor_name: `T-own-${RUN}`, amount: 5000, proof_path: `${anggota.id}/x.png`, status: 'accepted' })

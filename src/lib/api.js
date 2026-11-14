@@ -157,3 +157,75 @@ export const listTrainingGrounds = async () =>
 export const addTrainingGround = async (input) => ok(await supabase.from('training_grounds').insert(toRow(input, GROUND_MAP)));
 export const updateTrainingGround = async (id, patch) => hit(supabase.from('training_grounds').update(toRow(patch, GROUND_MAP)).eq('id', id));
 export const deleteTrainingGround = async (id) => hit(supabase.from('training_grounds').delete().eq('id', id));
+
+// --- UKT ---
+const POS_KEYS = ['pos1', 'pos2', 'pos3', 'pos4'];
+const SUB_KEYS = {
+  pos1: ['stamina', 'physicalEndurance', 'agility'],
+  pos2: ['jurusPrecision', 'strikeAccuracy', 'stancesStability'],
+  pos3: ['theory', 'history', 'ethicsRespect'],
+  pos4: ['fightingCourage', 'techniqueApplication', 'emotionalControl'],
+};
+const STRUCT_KEYS = ['pp', 'pw', 'pc', 'pac', 'pr', 'par'];
+const DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80';
+
+const fromCandidateRow = (r) => ({
+  id: r.id,
+  regNumber: r.reg_number,
+  name: r.name,
+  branch: r.branch ?? '',
+  currentBelt: r.current_belt ?? '',
+  targetBelt: r.target_belt ?? '',
+  photo: r.photo_url || DEFAULT_PHOTO,
+  userId: r.user_id,
+  posScores: Object.fromEntries(POS_KEYS.map((k) => [k, { score: Number(r[k]), sub: r.sub_scores?.[k] ?? {} }])),
+  finalScore: Number(r.final_score),
+  examinerNotes: r.examiner_notes ?? '',
+  examinerName: r.examiner_name,
+  dateExam: r.exam_date ? fmtDate(r.exam_date) : null,
+  structure: Object.fromEntries(STRUCT_KEYS.map((k) => [k, r[`struct_${k}`] ?? ''])),
+  updatedAt: r.updated_at,
+});
+
+export async function listCandidates() {
+  return ok(await supabase.from('ukt_candidates').select('*').order('name')).map(fromCandidateRow);
+}
+
+const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); // YYYY-MM-DD
+
+// Returns 'conflict' when the row changed since baseUpdatedAt (unless force); network/other errors throw.
+export async function saveCandidateScores(id, posScores, notes, { baseUpdatedAt, force = false } = {}) {
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess.session?.user?.id;
+  const { data: prof } = await supabase.from('profiles').select('full_name').eq('id', uid).single();
+  const patch = {
+    ...Object.fromEntries(POS_KEYS.map((k) => [k, posScores[k].score])),
+    sub_scores: Object.fromEntries(POS_KEYS.map((k) => [k, posScores[k].sub])),
+    examiner_notes: notes,
+    examiner_id: uid,
+    examiner_name: prof?.full_name ?? null,
+    exam_date: today(),
+  };
+  let q = supabase.from('ukt_candidates').update(patch).eq('id', id);
+  if (!force) q = q.eq('updated_at', baseUpdatedAt);
+  const rows = ok(await q.select('id'));
+  return rows.length ? 'ok' : 'conflict';
+}
+
+export async function upsertCandidates(rows) {
+  const payload = rows.map((r) => ({
+    reg_number: r.regNumber,
+    name: r.name,
+    branch: r.branch,
+    current_belt: r.currentBelt,
+    target_belt: r.targetBelt,
+    ...Object.fromEntries(POS_KEYS.map((k) => [k, r[k]])),
+    sub_scores: Object.fromEntries(POS_KEYS.map((k) => [k, Object.fromEntries(SUB_KEYS[k].map((s) => [s, r[k]]))])),
+    examiner_notes: r.examinerNotes,
+    ...Object.fromEntries(STRUCT_KEYS.map((k) => [`struct_${k}`, r.structure?.[k] ?? ''])),
+  }));
+  ok(await supabase.from('ukt_candidates').upsert(payload, { onConflict: 'reg_number' }));
+  return payload.length;
+}
+
+export const deleteCandidate = async (id) => hit(supabase.from('ukt_candidates').delete().eq('id', id));

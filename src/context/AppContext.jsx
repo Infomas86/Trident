@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { INITIAL_CAMPAIGNS, INITIAL_CANDIDATES } from '../data/mockData';
+import { INITIAL_CAMPAIGNS } from '../data/mockData';
 import { INITIAL_TIMELINE } from '../data/static';
 import { supabase } from '../lib/supabase';
 import * as api from '../lib/api';
@@ -23,7 +23,7 @@ export function AppProvider({ children }) {
   const [lockedModal, setLockedModal] = useState({ open: false, featureName: '' });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // Data states: stats/hero/pillars/grounds/news/achievements/agendas come from Supabase; campaigns & candidates stay mock until Tasks 8-9
+  // Data states: stats/hero/pillars/grounds/news/achievements/agendas come from Supabase; campaigns stay mock until Task 9
   const [stats, setStats] = useState({ activeMembers: 0, medalsCount: 0, padepokanBranches: 0, uktPassRate: 0, masterCouncil: 0 });
   const [heroData, setHeroData] = useState({});
   const [trainingGrounds, setTrainingGrounds] = useState([]);
@@ -34,7 +34,7 @@ export function AppProvider({ children }) {
   const [agendaList, setAgendaList] = useState([]);
   const [campaignList, setCampaignList] = useState(INITIAL_CAMPAIGNS);
 
-  const [candidatesList, setCandidatesList] = useState(INITIAL_CANDIDATES);
+  const [candidatesList, setCandidatesList] = useState([]);
 
   // Modal for donation receipt printing
   const [selectedReceipt, setSelectedReceipt] = useState(null);
@@ -124,6 +124,7 @@ export function AppProvider({ children }) {
     content: () => api.getSiteContent().then((c) => setHeroData(c.heroData)),
     pillars: () => api.listPillars().then(setPillars),
     grounds: () => api.listTrainingGrounds().then(setTrainingGrounds),
+    candidates: () => (userId ? api.listCandidates().then(setCandidatesList) : setCandidatesList([])),
   };
   const refresh = async () => {
     const results = await Promise.allSettled(Object.values(loaders).map((load) => load()));
@@ -220,41 +221,44 @@ export function AppProvider({ children }) {
     showToast(`Donasi sebesar Rp ${numAmount.toLocaleString('id-ID')} berhasil diproses! Bukti resi telah diterbitkan.`, 'success');
   };
 
-  // UKT Candidate Score Update
-  const handleUpdateCandidateScores = (candidateId, newPosScores, notes) => {
-    const dateExam = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-
-    // 1. Always update candidate in local state immediately so UI and progress are NEVER lost!
-    setCandidatesList((prev) => {
-      const updated = prev.map((c) => {
-        if (c.id !== candidateId) return c;
-        return {
-          ...c,
-          posScores: newPosScores,
-          examinerNotes: notes,
-          examinerName: currentUser?.name,
-          dateExam,
-        };
-      });
-      return updated;
-    });
-
-    const targetCandidate = candidatesList.find((c) => c.id === candidateId);
-    const candidateName = targetCandidate ? targetCandidate.name : 'Peserta UKT';
-
-    showToast(`Nilai UKT ${candidateName} berhasil dikalkulasi!`, 'success');
+  // UKT Candidate Score Update. Resolves true when saved; false keeps the caller's modal open.
+  const handleUpdateCandidateScores = async (candidateId, newPosScores, notes) => {
+    const target = candidatesList.find((c) => c.id === candidateId);
+    let result;
+    try {
+      result = await api.saveCandidateScores(candidateId, newPosScores, notes, { baseUpdatedAt: target?.updatedAt });
+    } catch (e) {
+      console.error(e);
+      showToast('Gagal menyimpan, periksa koneksi', 'error');
+      return false;
+    }
+    if (result === 'conflict') {
+      showToast('Nilai sudah diubah penguji lain, muat ulang', 'error');
+      loaders.candidates().catch(() => {});
+      return false;
+    }
+    showToast(`Nilai UKT ${target?.name ?? 'Peserta UKT'} berhasil disimpan!`, 'success');
+    loaders.candidates().catch(() => showToast('Gagal menyegarkan data', 'error'));
+    return true;
   };
 
-  // Import Candidates
-  const handleImportCandidates = (newCandidates) => {
-    setCandidatesList((prev) => {
-      const existingIds = new Set(prev.map((c) => c.id));
-      const filteredNew = newCandidates.filter((c) => !existingIds.has(c.id));
-      const updated = [...filteredNew, ...prev];
-      return updated;
-    });
-    showToast(`Berhasil mengimpor ${newCandidates.length} peserta Ujian Kenaikan Tingkat!`, 'success');
+  // Import Candidates (rows = CandidateInput[] from parseCandidatesCsv)
+  const handleImportCandidates = async (rows) => {
+    let count;
+    try {
+      count = await api.upsertCandidates(rows);
+    } catch (e) {
+      console.error(e);
+      showToast(e.message === api.NOT_ALLOWED ? e.message : 'Gagal mengimpor peserta', 'error');
+      return false;
+    }
+    showToast(`Berhasil mengimpor ${count} peserta Ujian Kenaikan Tingkat!`, 'success');
+    loaders.candidates().catch(() => showToast('Gagal menyegarkan data', 'error'));
+    return true;
   };
+
+  const handleDeleteCandidate = (id) =>
+    mutate(() => api.deleteCandidate(id), 'candidates', 'Peserta berhasil dihapus.', 'Gagal menghapus peserta', 'info');
 
   // Examiner additions
   const handleAddNews = (n) =>
@@ -353,6 +357,8 @@ export function AppProvider({ children }) {
         candidatesList,
         handleUpdateCandidateScores,
         handleImportCandidates,
+        handleDeleteCandidate,
+        myCandidate: candidatesList.find((c) => c.userId === currentUser?.id) ?? null,
         selectedReceipt,
         setSelectedReceipt,
         toast,

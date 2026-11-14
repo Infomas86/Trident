@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp, ROLES } from '../context/AppContext';
-import { calculateUktScore, parseCandidatesCsv, buildCandidatesCsv } from '../lib/ukt';
+import { calculateUktScore, statusFromScore, parseCandidatesCsv, buildCandidatesCsv } from '../lib/ukt';
 import {
   GraduationCap,
   Shield,
@@ -32,10 +32,11 @@ export default function UktSection() {
     candidatesList,
     handleUpdateCandidateScores,
     handleImportCandidates,
+    handleDeleteCandidate,
+    myCandidate,
     role,
     ROLES,
     isStaff,
-    currentUser,
     setIsLoginModalOpen,
     showToast,
   } = useApp();
@@ -127,7 +128,7 @@ export default function UktSection() {
   const liveP4 = evalScores ? getSubAverage(evalScores.pos4) : 0;
   const liveResult = calculateUktScore(liveP1, liveP2, liveP3, liveP4);
 
-  const handleSaveEvaluation = () => {
+  const handleSaveEvaluation = async () => {
     if (!selectedCandidateForEval || !evalScores) return;
 
     const newPosScores = {
@@ -137,12 +138,13 @@ export default function UktSection() {
       pos4: { score: liveP4, sub: evalScores.pos4 },
     };
 
-    handleUpdateCandidateScores(selectedCandidateForEval.id, newPosScores, examinerNotesInput);
-    setSelectedCandidateForEval(null);
+    if (await handleUpdateCandidateScores(selectedCandidateForEval.id, newPosScores, examinerNotesInput)) {
+      setSelectedCandidateForEval(null);
+    }
   };
 
   // Quick Pos scoring submit
-  const handleSaveQuickPos = (candidateId, posKey, updatedSub) => {
+  const handleSaveQuickPos = async (candidateId, posKey, updatedSub) => {
     const candidate = candidatesList.find((c) => c.id === candidateId);
     if (!candidate) return;
 
@@ -155,8 +157,9 @@ export default function UktSection() {
       },
     };
 
-    handleUpdateCandidateScores(candidateId, newPosScores, candidate.examinerNotes || '');
-    setQuickPosModal(null);
+    if (await handleUpdateCandidateScores(candidateId, newPosScores, candidate.examinerNotes || '')) {
+      setQuickPosModal(null);
+    }
   };
 
   // Filter candidates with Multi-Tenant Ranting & Structural search
@@ -168,36 +171,18 @@ export default function UktSection() {
       (c.structure?.pr && c.structure.pr.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (c.structure?.par && c.structure.par.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesRanting =
-      selectedRantingFilter === 'all' ||
-      c.branch.toLowerCase().includes(selectedRantingFilter.toLowerCase()) ||
-      (c.structure?.pr && c.structure.pr.toLowerCase().includes(selectedRantingFilter.toLowerCase())) ||
-      (c.structure?.par && c.structure.par.toLowerCase().includes(selectedRantingFilter.toLowerCase()));
+    const matchesRanting = selectedRantingFilter === 'all' || c.structure?.pr === selectedRantingFilter;
 
     return matchesSearch && matchesRanting;
   });
 
-  // Calculate summary counts for Examiner
-  const cumlaudeCount = candidatesList.filter(
-    (c) => calculateUktScore(c.posScores.pos1.score, c.posScores.pos2.score, c.posScores.pos3.score, c.posScores.pos4.score).score >= 85.0
-  ).length;
-
-  const passCount = candidatesList.filter((c) => {
-    const sc = calculateUktScore(c.posScores.pos1.score, c.posScores.pos2.score, c.posScores.pos3.score, c.posScores.pos4.score).score;
-    return sc >= 70.0 && sc < 85.0;
-  }).length;
-
-  const herCount = candidatesList.filter(
-    (c) => calculateUktScore(c.posScores.pos1.score, c.posScores.pos2.score, c.posScores.pos3.score, c.posScores.pos4.score).score < 70.0
-  ).length;
-
-  // Member View Data (Ahmad Fauzi)
-  const myCandidateData = candidatesList.find((c) => c.name.toLowerCase().includes('ahmad fauzi')) || candidatesList[0];
-  const myP1 = myCandidateData.posScores.pos1.score;
-  const myP2 = myCandidateData.posScores.pos2.score;
-  const myP3 = myCandidateData.posScores.pos3.score;
-  const myP4 = myCandidateData.posScores.pos4.score;
-  const myResult = calculateUktScore(myP1, myP2, myP3, myP4);
+  // Summary counts: one pass, one status per participant
+  const counts = { cumlaude: 0, pass: 0, her: 0 };
+  for (const c of candidatesList) counts[statusFromScore(c.finalScore).badgeVariant]++;
+  const cumlaudeCount = counts.cumlaude;
+  const passCount = counts.pass;
+  const herCount = counts.her;
+  const rantingOptions = [...new Set(candidatesList.map((c) => c.structure?.pr).filter(Boolean))].sort();
 
   // EXPORT TO CSV
   const handleExportCSV = () => {
@@ -223,7 +208,7 @@ export default function UktSection() {
   };
 
   // IMPORT CSV PROCESSOR
-  const handleProcessImportCsv = () => {
+  const handleProcessImportCsv = async () => {
     if (!importCsvText.trim()) {
       showToast('Harap tempel atau unggah isi data CSV terlebih dahulu!', 'error');
       return;
@@ -236,30 +221,11 @@ export default function UktSection() {
         return;
       }
 
-      const imported = rows.map((r, i) => ({
-        id: `cand-${Date.now()}-${i}`,
-        regNumber: r.regNumber,
-        name: r.name,
-        currentBelt: r.currentBelt,
-        targetBelt: r.targetBelt,
-        branch: r.branch,
-        structure: r.structure,
-        photo: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
-        posScores: {
-          pos1: { score: r.pos1, sub: { stamina: r.pos1, physicalEndurance: r.pos1, agility: r.pos1 } },
-          pos2: { score: r.pos2, sub: { jurusPrecision: r.pos2, strikeAccuracy: r.pos2, stancesStability: r.pos2 } },
-          pos3: { score: r.pos3, sub: { theory: r.pos3, history: r.pos3, ethicsRespect: r.pos3 } },
-          pos4: { score: r.pos4, sub: { fightingCourage: r.pos4, techniqueApplication: r.pos4, emotionalControl: r.pos4 } },
-        },
-        examinerNotes: r.examinerNotes,
-        dateExam: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-        examinerName: currentUser?.name,
-      }));
-
-      if (imported.length > 0) {
-        handleImportCandidates(imported);
-        setIsImportModalOpen(false);
-        setImportCsvText('');
+      if (rows.length > 0) {
+        if (await handleImportCandidates(rows)) {
+          setIsImportModalOpen(false);
+          setImportCsvText('');
+        }
       } else {
         showToast('Tidak ada data valid yang dapat diimpor.', 'error');
       }
@@ -450,7 +416,12 @@ export default function UktSection() {
       {/* ========================================================================= */}
       {/* CASE 1: MEMBER VIEW (Read Hasil Pribadi)                                      */}
       {/* ========================================================================= */}
-      {role === ROLES.MEMBER && (
+      {role === ROLES.MEMBER && !myCandidate && (
+        <div className="trident-card rounded-2xl p-6 border border-slate-800 text-sm text-slate-300">
+          Anda belum terdaftar sebagai peserta UKT. Hubungi penguji.
+        </div>
+      )}
+      {role === ROLES.MEMBER && myCandidate && (
         <div className="space-y-6">
           
           {/* KARTU INFORMASI PRIBADI PENDAFTARAN PESERTA UKT */}
@@ -460,24 +431,27 @@ export default function UktSection() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
               <div className="flex items-center gap-4">
                 <img
-                  src={myCandidateData.photo}
-                  alt={myCandidateData.name}
+                  src={myCandidate.photo}
+                  alt={myCandidate.name}
                   className="w-20 h-20 rounded-2xl object-cover border-2 border-amber-500/50 shadow-md"
                 />
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-xl sm:text-2xl font-bold text-white font-['Cinzel']">
-                      {myCandidateData.name}
+                      {myCandidate.name}
                     </h3>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-amber-400 border border-slate-700">
-                      {myCandidateData.regNumber}
+                      {myCandidate.regNumber}
                     </span>
                   </div>
                   <p className="text-xs text-slate-300 mt-1">
-                    Kenaikan Tingkat: <strong className="text-amber-400">{myCandidateData.currentBelt} ➔ {myCandidateData.targetBelt}</strong>
+                    Kenaikan Tingkat: <strong className="text-amber-400">{myCandidate.currentBelt} ➔ {myCandidate.targetBelt}</strong>
+                  </p>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    Skor Akhir: <strong className="text-amber-400">{myCandidate.finalScore.toFixed(1)}</strong> • {statusFromScore(myCandidate.finalScore).status}
                   </p>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Ranting / Cabang: <strong className="text-slate-200">{myCandidateData.branch}</strong>
+                    Ranting / Cabang: <strong className="text-slate-200">{myCandidate.branch}</strong>
                   </p>
                 </div>
               </div>
@@ -512,31 +486,31 @@ export default function UktSection() {
               
               <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
                 <span className="text-[11px] text-slate-400 block">Nama Lengkap Pesilat</span>
-                <p className="text-sm font-bold text-white">{myCandidateData.name}</p>
+                <p className="text-sm font-bold text-white">{myCandidate.name}</p>
                 <p className="text-[10px] text-slate-500">Sesuai KTP / Akta Kelahiran</p>
               </div>
 
               <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
                 <span className="text-[11px] text-slate-400 block">Nomor Registrasi / No. Anggota</span>
-                <p className="text-sm font-mono font-bold text-amber-400">{myCandidateData.regNumber}</p>
+                <p className="text-sm font-mono font-bold text-amber-400">{myCandidate.regNumber}</p>
                 <p className="text-[10px] text-slate-500">Terdaftar di Buku Induk Padepokan</p>
               </div>
 
               <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
                 <span className="text-[11px] text-slate-400 block">Ranting / Asal Cabang</span>
-                <p className="text-sm font-bold text-white">{myCandidateData.branch}</p>
+                <p className="text-sm font-bold text-white">{myCandidate.branch}</p>
                 <p className="text-[10px] text-slate-500">Wilayah Pembinaan Silat</p>
               </div>
 
               <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
                 <span className="text-[11px] text-slate-400 block">Tingkatan Sabuk Saat Ini</span>
-                <p className="text-sm font-bold text-emerald-400">{myCandidateData.currentBelt}</p>
+                <p className="text-sm font-bold text-emerald-400">{myCandidate.currentBelt}</p>
                 <p className="text-[10px] text-slate-500">Tingkat Kemahiran Aktif</p>
               </div>
 
               <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
                 <span className="text-[11px] text-slate-400 block">Target Kenaikan Jenjang</span>
-                <p className="text-sm font-bold text-amber-400">{myCandidateData.targetBelt}</p>
+                <p className="text-sm font-bold text-amber-400">{myCandidate.targetBelt}</p>
                 <p className="text-[10px] text-slate-500">Tingkat Ujian yang Ditempuh</p>
               </div>
 
@@ -582,37 +556,37 @@ export default function UktSection() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-1">
                 <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
                   <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">1. Pimpinan Pusat</span>
-                  <p className="text-xs font-bold text-white mt-1">{myCandidateData.structure?.pp || 'PP Trident'}</p>
+                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pp || 'PP Trident'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Nasional</span>
                 </div>
 
                 <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
                   <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">2. Pimpinan Wilayah</span>
-                  <p className="text-xs font-bold text-white mt-1">{myCandidateData.structure?.pw || 'PW Kepulauan Riau'}</p>
+                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pw || 'PW Kepulauan Riau'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Provinsi</span>
                 </div>
 
                 <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
                   <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">3. Pimpinan Cabang</span>
-                  <p className="text-xs font-bold text-white mt-1">{myCandidateData.structure?.pc || 'PC Kota Batam'}</p>
+                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pc || 'PC Kota Batam'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Kab / Kota</span>
                 </div>
 
                 <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
                   <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">4. Pimpinan Anak Cabang</span>
-                  <p className="text-xs font-bold text-white mt-1">{myCandidateData.structure?.pac || 'PAC Sungai Beduk'}</p>
+                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pac || 'PAC Sungai Beduk'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Kecamatan</span>
                 </div>
 
                 <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
                   <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">5. Pimpinan Ranting</span>
-                  <p className="text-xs font-bold text-white mt-1">{myCandidateData.structure?.pr || 'PR Tanjung Piayu'}</p>
+                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pr || 'PR Tanjung Piayu'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Kelurahan / Desa</span>
                 </div>
 
                 <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between ring-1 ring-amber-500/40">
                   <span className="text-[9px] text-emerald-400 font-bold uppercase block tracking-wider">6. Tempat Latihan (PAR)</span>
-                  <p className="text-xs font-bold text-amber-300 mt-1">{myCandidateData.structure?.par || 'PAR Buana Garden'}</p>
+                  <p className="text-xs font-bold text-amber-300 mt-1">{myCandidate.structure?.par || 'PAR Buana Garden'}</p>
                   <span className="text-[9px] text-emerald-400/80 mt-1 block">Tempat Latihan</span>
                 </div>
               </div>
@@ -624,7 +598,7 @@ export default function UktSection() {
                 Catatan Perlengkapan Saat Mengikuti Ujian:
               </span>
               <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside leading-relaxed">
-                <li>Mengenakan seragam sakral resmi perguruan lengkap dengan sabuk saat ini ({myCandidateData.currentBelt}).</li>
+                <li>Mengenakan seragam sakral resmi perguruan lengkap dengan sabuk saat ini ({myCandidate.currentBelt}).</li>
                 <li>Membawa perlengkapan pelindung pribadi: gumshield, pelindung tulang kering, dan body protector.</li>
                 <li>Wajib hadir di lokasi padepokan minimal 30 menit sebelum apel pembukaan ujian dimulai.</li>
               </ul>
@@ -694,10 +668,9 @@ export default function UktSection() {
                   className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer"
                 >
                   <option value="all">Semua Ranting & Tempat Latihan (Multi-Tenant)</option>
-                  <option value="Tanjung Piayu">PR Tanjung Piayu (PAR Buana Garden)</option>
-                  <option value="Mangsang">PR Mangsang (PAR Puri Agung)</option>
-                  <option value="Belian">PR Belian (PAR Duta Mas)</option>
-                  <option value="Duriangkang">PR Duriangkang (PAR Bida Asri)</option>
+                  {rantingOptions.map((pr) => (
+                    <option key={pr} value={pr}>{pr}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -763,7 +736,7 @@ export default function UktSection() {
                       const p2 = c.posScores.pos2.score;
                       const p3 = c.posScores.pos3.score;
                       const p4 = c.posScores.pos4.score;
-                      const res = calculateUktScore(p1, p2, p3, p4);
+                      const res = { score: c.finalScore, ...statusFromScore(c.finalScore) };
 
                       return (
                         <tr key={c.id} className="hover:bg-slate-900/60 transition-colors">
@@ -818,6 +791,12 @@ export default function UktSection() {
                             >
                               <Sliders className="w-3.5 h-3.5" />
                               <span>Evaluasi Nilai</span>
+                            </button>
+                            <button
+                              onClick={() => confirm(`Hapus peserta ${c.name}?`) && handleDeleteCandidate(c.id)}
+                              className="mt-1.5 text-[10px] text-rose-400 hover:text-rose-300 underline"
+                            >
+                              Hapus
                             </button>
                           </td>
                         </tr>
