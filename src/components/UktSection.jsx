@@ -11,7 +11,6 @@ import {
   CheckCircle,
   AlertTriangle,
   Sliders,
-  UserCheck,
   Lock,
   Search,
   Download,
@@ -22,13 +21,10 @@ import {
   FileSpreadsheet,
   FileText,
   Plus,
-  RefreshCw,
   Filter,
   Network,
   ShieldCheck,
   MapPin,
-  Wifi,
-  WifiOff,
 } from 'lucide-react';
 
 export default function UktSection() {
@@ -38,15 +34,10 @@ export default function UktSection() {
     handleImportCandidates,
     role,
     ROLES,
+    isStaff,
     currentUser,
-    handleRoleChange,
-    requestExaminerAccess,
+    setIsLoginModalOpen,
     showToast,
-    isOnline,
-    isSimulatingOffline,
-    toggleOfflineSimulation,
-    offlineQueue,
-    syncOfflineQueue,
   } = useApp();
 
   // Active Pos Sub-Tab: 'all' | 'pos1' | 'pos2' | 'pos3' | 'pos4'
@@ -80,20 +71,13 @@ export default function UktSection() {
             Sesuai spesifikasi RBAC, sistem penilaian dan lembar evaluasi Ujian Kenaikan Tingkat hanya dapat diakses oleh Anggota (melihat hasil pribadi) dan Penguji (hak penuh penilaian Pos 1 - 4).
           </p>
         </div>
-        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="pt-2 flex items-center justify-center">
           <button
-            onClick={() => handleRoleChange(ROLES.MEMBER)}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-900/50 flex items-center justify-center gap-2 transition-all"
+            onClick={() => setIsLoginModalOpen(true)}
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 transition-all"
           >
-            <UserCheck className="w-4 h-4" />
-            <span>Masuk sebagai Anggota (Ahmad Fauzi)</span>
-          </button>
-          <button
-            onClick={() => handleRoleChange(ROLES.EXAMINER)}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 transition-all"
-          >
-            <Sword className="w-4 h-4" />
-            <span>Masuk sebagai Penguji UKT (Master Bambang)</span>
+            <KeyRound className="w-4 h-4" />
+            <span>Masuk</span>
           </button>
         </div>
       </div>
@@ -269,7 +253,7 @@ export default function UktSection() {
         },
         examinerNotes: r.examinerNotes,
         dateExam: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-        examinerName: currentUser.name,
+        examinerName: currentUser?.name,
       }));
 
       if (imported.length > 0) {
@@ -377,7 +361,7 @@ export default function UktSection() {
         </div>
 
         {/* Action Buttons for Examiner & Admin: Import & Export */}
-        {(role === ROLES.EXAMINER || role === ROLES.ADMIN) && (
+        {isStaff && (
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setIsImportModalOpen(true)}
@@ -399,7 +383,7 @@ export default function UktSection() {
       </div>
 
       {/* POS SELECTOR TABS (Pos 1, Pos 2, Pos 3, Pos 4, Semua Pos) - Khusus Penguji & Admin */}
-      {(role === ROLES.EXAMINER || role === ROLES.ADMIN) && (
+      {isStaff && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1 bg-slate-900/70 p-2 rounded-2xl border border-slate-800">
           <button
             onClick={() => setActivePosTab('all')}
@@ -464,36 +448,11 @@ export default function UktSection() {
       )}
 
       {/* ========================================================================= */}
-      {/* CASE 1: MEMBER VIEW (Read Hasil Pribadi & Otorisasi Kode Admin)           */}
+      {/* CASE 1: MEMBER VIEW (Read Hasil Pribadi)                                      */}
       {/* ========================================================================= */}
       {role === ROLES.MEMBER && (
         <div className="space-y-6">
           
-          {/* Banner Otorisasi Penguji bagi Anggota */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-blue-950/40 border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
-                <KeyRound className="w-6 h-6 animate-pulse" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white font-['Cinzel']">
-                  Mau Melakukan Tes Ujian Kenaikan Tingkat Sebagai Penguji?
-                </h4>
-                <p className="text-xs text-slate-300 mt-0.5">
-                  Sebagai Anggota, Anda wajib memasukkan <span className="text-amber-400 font-semibold">Kode Otorisasi Admin</span> untuk membuka Meja Pengujian Pos 1 s/d Pos 4.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={requestExaminerAccess}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 transition-all shrink-0 hover:scale-105"
-            >
-              <KeyRound className="w-4 h-4" />
-              <span>Input Kode Admin Penguji</span>
-            </button>
-          </div>
-
           {/* KARTU INFORMASI PRIBADI PENDAFTARAN PESERTA UKT */}
           <div className="trident-card rounded-2xl p-6 sm:p-8 border border-blue-900/40 relative overflow-hidden space-y-6 shadow-2xl">
             
@@ -676,90 +635,10 @@ export default function UktSection() {
       )}
 
       {/* ========================================================================= */}
-      {/* CASE 2: EXAMINER & ADMIN VIEW (Hak Pengujian, Mode Offline & Auto-Sync)   */}
+      {/* CASE 2: EXAMINER & ADMIN VIEW (Hak Pengujian)                            */}
       {/* ========================================================================= */}
-      {(role === ROLES.EXAMINER || role === ROLES.ADMIN) && (
+      {isStaff && (
         <div className="space-y-6">
-          
-          {/* OFFLINE RESILIENCE & AUTO-SYNC NETWORK STATUS BAR */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border border-slate-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border transition-all ${
-                isOnline && !isSimulatingOffline
-                  ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-400 shadow-lg shadow-emerald-950/50'
-                  : 'bg-rose-950/70 border-rose-500/50 text-rose-400 animate-pulse shadow-lg shadow-rose-950/50'
-              }`}>
-                {isOnline && !isSimulatingOffline ? <Wifi className="w-6 h-6" /> : <WifiOff className="w-6 h-6" />}
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="text-sm font-bold text-white font-['Cinzel']">
-                    Status Koneksi Lapangan:
-                  </h4>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-sans font-black ${
-                    isOnline && !isSimulatingOffline
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                      : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                  }`}>
-                    {isOnline && !isSimulatingOffline ? '🟢 ONLINE (TERKONEKSI SERVER)' : '🔴 MODE OFFLINE (SINYAL LAPANGAN TERPUTUS)'}
-                  </span>
-                </div>
-
-                <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-                  {isOnline && !isSimulatingOffline ? (
-                    <span>Setiap skor dan evaluasi yang Anda input langsung tersinkronisasi *real-time* ke server pusat.</span>
-                  ) : (
-                    <span className="text-amber-300 font-semibold">
-                      ⚠️ Sinyal internet hilang di lokasi. Progres penilaian tetap tersimpan aman di memori lokal HP dan otomatis tersinkronisasi saat sinyal pulih kembali.
-                    </span>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {/* Action buttons: Offline simulation & Manual sync */}
-            <div className="flex items-center gap-2 flex-wrap self-stretch sm:self-auto justify-end">
-              {offlineQueue.length > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-950/60 border border-amber-600/50 text-amber-300 text-xs font-bold animate-pulse">
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>{offlineQueue.length} Nilai Menunggu Sinyal</span>
-                </div>
-              )}
-
-              {offlineQueue.length > 0 && isOnline && !isSimulatingOffline && (
-                <button
-                  onClick={() => syncOfflineQueue()}
-                  className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Sinkronkan Sekarang</span>
-                </button>
-              )}
-
-              <button
-                onClick={toggleOfflineSimulation}
-                className={`px-3.5 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 shadow-md ${
-                  isSimulatingOffline
-                    ? 'bg-rose-600 hover:bg-rose-500 text-white border-rose-500 shadow-rose-950'
-                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
-                }`}
-                title="Klik untuk mensimulasikan kondisi hilang sinyal di tempat latihan"
-              >
-                {isSimulatingOffline ? (
-                  <>
-                    <WifiOff className="w-3.5 h-3.5" />
-                    <span>Matikan Uji Offline (Pulihkan Sinyal)</span>
-                  </>
-                ) : (
-                  <>
-                    <Wifi className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Uji Lapangan: Simulasikan Hilang Sinyal</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
           
           {/* Overview Metrics Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -898,11 +777,6 @@ export default function UktSection() {
                               <div>
                                 <div className="flex items-center gap-1.5">
                                   <p className="font-bold text-white text-xs">{c.name}</p>
-                                  {offlineQueue.some((item) => item.candidateId === c.id) && (
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono font-bold animate-pulse">
-                                      ⏱️ Offline (Tersimpan Lokal)
-                                    </span>
-                                  )}
                                 </div>
                                 <p className="text-[10px] text-amber-400 font-mono">{c.regNumber}</p>
                                 <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">

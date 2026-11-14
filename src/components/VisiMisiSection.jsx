@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp, ROLES } from '../context/AppContext';
+import { useApp } from '../context/AppContext';
 import { ORGANIZATIONAL_HIERARCHY } from '../data/mockData';
 import { waNumber } from '../lib/phone';
 import {
@@ -46,8 +46,8 @@ export default function VisiMisiSection() {
     handleUpdatePillar,
     handleAddPillar,
     handleDeletePillar,
-    role,
-    ROLES,
+    isStaff,
+    isAdmin,
     navigateToTab,
   } = useApp();
 
@@ -189,7 +189,7 @@ export default function VisiMisiSection() {
               <span>{heroData?.badge || 'Padepokan Agung Seni Bela Diri Kesatria'}</span>
             </div>
 
-            {role === ROLES.ADMIN && (
+            {isAdmin && (
               <button
                 onClick={() => {
                   setHeroForm({ ...heroData });
@@ -248,7 +248,7 @@ export default function VisiMisiSection() {
             </p>
           </div>
 
-          {(role === ROLES.EXAMINER || role === ROLES.ADMIN) && (
+          {isStaff && (
             <button
               onClick={() => {
                 setStatsForm({ ...stats });
@@ -257,7 +257,7 @@ export default function VisiMisiSection() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-900/40 hover:bg-blue-800/60 border border-blue-500/40 text-blue-300 text-xs font-semibold transition-colors"
             >
               <Edit3 className="w-3.5 h-3.5" />
-              <span>Edit Statistik ({role === ROLES.ADMIN ? 'Admin' : 'Penguji'})</span>
+              <span>Edit Statistik ({isAdmin ? 'Admin' : 'Penguji'})</span>
             </button>
           )}
         </div>
@@ -329,7 +329,7 @@ export default function VisiMisiSection() {
             </p>
           </div>
 
-          {role === ROLES.ADMIN && (
+          {isAdmin && (
             <button
               onClick={() => setIsAddPillarOpen(true)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all shrink-0"
@@ -354,7 +354,7 @@ export default function VisiMisiSection() {
                       <Icon className="w-6 h-6" />
                     </div>
 
-                    {role === ROLES.ADMIN && (
+                    {isAdmin && (
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => setEditingPillar({ ...pillar })}
@@ -533,7 +533,7 @@ export default function VisiMisiSection() {
             </p>
           </div>
 
-          {role === ROLES.ADMIN && (
+          {isAdmin && (
             <button
               onClick={() => setIsAddGroundOpen(true)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all shrink-0"
@@ -571,7 +571,7 @@ export default function VisiMisiSection() {
                       </p>
                     </div>
 
-                    {role === ROLES.ADMIN && (
+                    {isAdmin && (
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => handleOpenGroundEdit(ground)}

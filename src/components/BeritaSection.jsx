@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp, ROLES } from '../context/AppContext';
+import { useApp } from '../context/AppContext';
 import {
   Newspaper,
   Search,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export default function BeritaSection() {
-  const { newsList, handleAddNews, role, ROLES } = useApp();
+  const { newsList, handleAddNews, isStaff } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [activeArticle, setActiveArticle] = useState(null);
@@ -81,7 +81,7 @@ export default function BeritaSection() {
           </p>
         </div>
 
-        {role === ROLES.EXAMINER && (
+        {isStaff && (
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="self-start md:self-auto flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-950/50 transition-all hover:scale-105"

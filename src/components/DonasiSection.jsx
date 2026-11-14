@@ -9,11 +9,11 @@ import {
   PlusCircle,
   Sparkles,
   Lock,
-  UserCheck,
   TrendingUp,
   X,
   CreditCard,
   ShieldCheck,
+  KeyRound,
 } from 'lucide-react';
 import ReceiptModal from './ReceiptModal';
 
@@ -25,7 +25,8 @@ export default function DonasiSection() {
     role,
     ROLES,
     currentUser,
-    handleRoleChange,
+    isAdmin,
+    setIsLoginModalOpen,
     showToast,
   } = useApp();
 
@@ -35,7 +36,7 @@ export default function DonasiSection() {
   // Donation form state
   const [selectedPreset, setSelectedPreset] = useState(50000);
   const [customAmount, setCustomAmount] = useState('');
-  const [donorName, setDonorName] = useState(currentUser.name || 'Ahmad Fauzi');
+  const [donorName, setDonorName] = useState(currentUser?.name || '');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [message, setMessage] = useState('Semoga padepokan semakin jaya dan berkah!');
   const [paymentMethod, setPaymentMethod] = useState('qris'); // 'qris' or 'bank'
@@ -67,19 +68,13 @@ export default function DonasiSection() {
             Fitur kontribusi sarana padepokan dan beasiswa atlet bersifat eksklusif bagi anggota terdaftar dan pengurus perguruan.
           </p>
         </div>
-        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="pt-2 flex items-center justify-center">
           <button
-            onClick={() => handleRoleChange(ROLES.MEMBER)}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-900/50 flex items-center justify-center gap-2 transition-all"
+            onClick={() => setIsLoginModalOpen(true)}
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 transition-all"
           >
-            <UserCheck className="w-4 h-4" />
-            <span>Masuk sebagai Anggota (Ahmad Fauzi)</span>
-          </button>
-          <button
-            onClick={() => handleRoleChange(ROLES.EXAMINER)}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-500/30 flex items-center justify-center gap-2 transition-all"
-          >
-            <span>Masuk sebagai Penguji / Admin</span>
+            <KeyRound className="w-4 h-4" />
+            <span>Masuk</span>
           </button>
         </div>
       </div>
@@ -90,7 +85,7 @@ export default function DonasiSection() {
     setActiveCampaign(campaign);
     setSelectedPreset(50000);
     setCustomAmount('');
-    setDonorName(currentUser.name);
+    setDonorName(currentUser?.name || '');
     setIsAnonymous(false);
   };
 
@@ -161,7 +156,7 @@ export default function DonasiSection() {
           </p>
         </div>
 
-        {role === ROLES.EXAMINER && (
+        {isAdmin && (
           <button
             onClick={() => setIsAddCampaignOpen(true)}
             className="self-start md:self-auto flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-950/50 transition-all hover:scale-105"

@@ -1,9 +1,7 @@
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
-import RoleBanner from './components/RoleBanner';
 import LockedFeatureModal from './components/LockedFeatureModal';
-import AdminCodeModal from './components/AdminCodeModal';
 import LoginPage from './components/LoginPage';
 import VisiMisiSection from './components/VisiMisiSection';
 import BeritaSection from './components/BeritaSection';
@@ -23,14 +21,8 @@ function MainContent() {
       {/* Navbar with Role Indicator */}
       <Navbar />
 
-      {/* RBAC Simulation Control Banner */}
-      <RoleBanner />
-
       {/* Access Denied Modal for Locked Features */}
       <LockedFeatureModal />
-
-      {/* Admin Code Verification Modal */}
-      <AdminCodeModal />
 
       {/* User Login Portal Modal */}
       <LoginPage />
