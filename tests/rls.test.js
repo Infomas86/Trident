@@ -47,8 +47,8 @@ test('peserta terhubung ke akun lewat reg_number, dua arah', async () => {
 test('campaign_totals hanya menghitung donasi accepted', async () => {
   const { data: camp, error } = await admin.from('campaigns').insert({ title: `T-camp-${RUN}`, target_amount: 1000000 }).select('id').single();
   assert.ifError(error);
-  const base = { campaign_id: camp.id, donor_name: `T-donor-${RUN}`, proof_path: 'dummy/path.jpg' };
-  const r = await admin.from('donations').insert([{ ...base, amount: 100000 }, { ...base, amount: 50000 }]).select('id');
+  const base = { campaign_id: camp.id, donor_name: `T-donor-${RUN}` };
+  const r = await admin.from('donations').insert([{ ...base, amount: 100000, proof_path: `dummy/${RUN}-a.jpg` }, { ...base, amount: 50000, proof_path: `dummy/${RUN}-b.jpg` }]).select('id');
   assert.ifError(r.error);
   // trigger memaksa pending; terima satu lewat update
   await admin.from('donations').update({ status: 'accepted' }).eq('id', r.data[0].id);
@@ -139,6 +139,29 @@ test('anggota tidak bisa menerima donasi sendiri', async () => {
   assert.equal(d.status, 'pending');
 });
 
+test('anggota tidak bisa merujuk bukti di folder orang lain', async () => {
+  const { error } = await anggota.client.from('donations')
+    .insert({ campaign_id: campaignId, donor_name: `T-foreign-${RUN}`, amount: 1000, proof_path: `${penguji.id}/x-${RUN}.png` });
+  assert.ok(error, 'proof_path folder lain harus ditolak');
+});
+
+test('ref_number dan created_at dari anggota diabaikan', async () => {
+  const { data, error } = await anggota.client.from('donations')
+    .insert({ campaign_id: campaignId, donor_name: `T-ref-${RUN}`, amount: 1000, proof_path: `${anggota.id}/ref-${RUN}.png`,
+      ref_number: `TRD-FAKE-${RUN}`, created_at: '2000-01-01T00:00:00Z' })
+    .select('ref_number, created_at').single();
+  assert.ifError(error);
+  assert.match(data.ref_number, /^TRD-DON-\d{8}-[0-9A-F]{6}$/);
+  assert.ok(Date.now() - new Date(data.created_at).getTime() < 10 * 60 * 1000, 'created_at diisi now()');
+});
+
+test('proof_path yang sudah dipakai ditolak', async () => {
+  const row = { campaign_id: campaignId, donor_name: `T-dup-${RUN}`, amount: 1000, proof_path: `${anggota.id}/dup-${RUN}.png` };
+  assert.ifError((await anggota.client.from('donations').insert(row)).error);
+  const { error } = await anggota.client.from('donations').insert(row);
+  assert.ok(error, 'proof_path ganda harus ditolak');
+});
+
 test('anggota tidak bisa mengubah perannya', async () => {
   const { data, error } = await anggota.client.from('profiles').update({ role: 'admin' }).eq('id', anggota.id).select();
   assert.ifError(error);
@@ -188,7 +211,7 @@ test('view hanya bisa dibaca anggota login', async () => {
 });
 
 test('penguji tidak bisa verifikasi donasi', async () => {
-  const r = await admin.from('donations').insert({ campaign_id: campaignId, donor_name: `T-pj-${RUN}`, amount: 1000, proof_path: 'x/y.png' }).select('id').single();
+  const r = await admin.from('donations').insert({ campaign_id: campaignId, donor_name: `T-pj-${RUN}`, amount: 1000, proof_path: `x/${RUN}-pj.png` }).select('id').single();
   assert.ifError(r.error);
   const { data, error } = await penguji.client.from('donations').update({ status: 'accepted' }).eq('id', r.data.id).select();
   assert.ifError(error);
@@ -255,7 +278,7 @@ test('anggota bisa hapus unggahan yang belum dipakai, bukan bukti yang sudah dir
 });
 
 test('admin tidak bisa memutuskan ulang donasi yang sudah diputuskan', async () => {
-  const r = await admin.from('donations').insert({ campaign_id: campaignId, donor_name: `T-re-${RUN}`, amount: 1000, proof_path: 'x/y.png' }).select('id').single();
+  const r = await admin.from('donations').insert({ campaign_id: campaignId, donor_name: `T-re-${RUN}`, amount: 1000, proof_path: `x/${RUN}-re.png` }).select('id').single();
   assert.ifError(r.error);
   const decide = (st) => adminU.client.from('donations').update({ status: st }).eq('id', r.data.id).eq('status', 'pending').select('id');
   assert.equal((await decide('rejected')).data.length, 1);
@@ -270,7 +293,7 @@ test('admin bisa ubah site_content, terima donasi, baca bukti orang lain', async
   const sc = await adminU.client.from('site_content').update({ hero_title_main: 'TRIDENT' }).eq('id', 1).select();
   assert.ifError(sc.error);
   assert.equal(sc.data.length, 1);
-  const r = await admin.from('donations').insert({ campaign_id: campaignId, donor_name: `T-adm-${RUN}`, amount: 1000, proof_path: 'x/y.png' }).select('id').single();
+  const r = await admin.from('donations').insert({ campaign_id: campaignId, donor_name: `T-adm-${RUN}`, amount: 1000, proof_path: `x/${RUN}-adm.png` }).select('id').single();
   assert.ifError(r.error);
   const up = await adminU.client.from('donations').update({ status: 'accepted' }).eq('id', r.data.id).select();
   assert.ifError(up.error);
