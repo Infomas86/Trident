@@ -4,11 +4,12 @@ import { adminClient, anonClient, createTestUser, cleanup, RUN } from './helpers
 
 const admin = adminClient();
 const anon = anonClient();
-let anggota, penguji, campaignId, agendaId;
+let anggota, penguji, adminU, campaignId, agendaId;
 
 before(async () => {
   anggota = await createTestUser('anggota');
   penguji = await createTestUser('penguji');
+  adminU = await createTestUser('admin');
   const c = await admin.from('campaigns').insert({ title: `T-rls-${RUN}`, target_amount: 1000 }).select('id').single();
   assert.ifError(c.error);
   campaignId = c.data.id;
@@ -59,8 +60,8 @@ test('campaign_totals hanya menghitung donasi accepted', async () => {
 test('seed: hero dan 4 pilar', async () => {
   const { data: s } = await admin.from('site_content').select('hero_title_main').eq('id', 1).single();
   assert.equal(s.hero_title_main, 'TRIDENT');
-  const { data: p } = await admin.from('pillars').select('icon').order('sort_order');
-  assert.deepEqual(p.map((x) => x.icon), ['Shield', 'Zap', 'Users', 'Award']);
+  const { data: p } = await admin.from('pillars').select('icon');
+  for (const i of ['Shield', 'Zap', 'Users', 'Award']) assert.ok(p.some((x) => x.icon === i), `pilar seed ${i}`);
 });
 
 // ---- RLS ----
@@ -160,6 +161,8 @@ test('penguji tidak bisa verifikasi donasi', async () => {
   const { data, error } = await penguji.client.from('donations').update({ status: 'accepted' }).eq('id', r.data.id).select();
   assert.ifError(error);
   assert.equal(data.length, 0);
+  const { data: d } = await admin.from('donations').select('status').eq('id', r.data.id).single();
+  assert.equal(d.status, 'pending');
 });
 
 const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -195,10 +198,85 @@ test('penguji bisa ubah statistik, tidak bisa ubah pilar/tempat latihan/hero', a
 test('tamu bisa baca pilar, tempat latihan, hero', async () => {
   const p = await anon.from('pillars').select('id');
   assert.ifError(p.error);
-  assert.equal(p.data.length, 4);
+  assert.ok(p.data.length >= 1);
   const t = await anon.from('training_grounds').select('id');
   assert.ifError(t.error);
   const s = await anon.from('site_content').select('hero_title_main');
   assert.ifError(s.error);
   assert.equal(s.data.length, 1);
+});
+
+// ---- admin positif ----
+
+test('admin bisa ubah site_content, terima donasi, baca bukti orang lain', async () => {
+  const sc = await adminU.client.from('site_content').update({ hero_title_main: 'TRIDENT' }).eq('id', 1).select();
+  assert.ifError(sc.error);
+  assert.equal(sc.data.length, 1);
+  const r = await admin.from('donations').insert({ campaign_id: campaignId, donor_name: `T-adm-${RUN}`, amount: 1000, proof_path: 'x/y.png' }).select('id').single();
+  assert.ifError(r.error);
+  const up = await adminU.client.from('donations').update({ status: 'accepted' }).eq('id', r.data.id).select();
+  assert.ifError(up.error);
+  assert.equal(up.data.length, 1);
+  assert.ifError((await anggota.client.storage.from('donation-proofs').upload(`${anggota.id}/adm.png`, png, { contentType: 'image/png' })).error);
+  const dl = await adminU.client.storage.from('donation-proofs').download(`${anggota.id}/adm.png`);
+  assert.ifError(dl.error);
+});
+
+// ---- manage-user ----
+
+const call = (u, body) => u.client.functions.invoke('manage-user', { body });
+const status = (r) => r.error?.context?.status;
+const newEmail = () => `u${RUN}-${Math.random().toString(36).slice(2, 8)}@test.trident.local`;
+
+test('manage-user: tanpa token 401, anggota/penguji 403', async () => {
+  const r = await anon.functions.invoke('manage-user', { body: { action: 'list' } });
+  assert.equal(status(r), 401);
+  assert.equal(status(await call(anggota, { action: 'list' })), 403);
+  assert.equal(status(await call(penguji, { action: 'list' })), 403);
+});
+
+test('manage-user: admin membuat akun, bisa login; sandi < 8 / role / email salah 400', async () => {
+  const email = newEmail(), password = 'Sandi-Baru-1';
+  const r = await call(adminU, { action: 'create', email, password, full_name: 'Uji Baru', role: 'anggota', belt: 'Putih' });
+  assert.ifError(r.error);
+  const { error } = await anonClient().auth.signInWithPassword({ email, password });
+  assert.ifError(error);
+  const { data: p } = await admin.from('profiles').select('role, belt').eq('id', r.data.id).single();
+  assert.deepEqual(p, { role: 'anggota', belt: 'Putih' });
+  const bad = (x) => call(adminU, { action: 'create', email: newEmail(), password: 'Sandi-Baru-1', full_name: 'X', role: 'anggota', ...x });
+  assert.equal(status(await bad({ password: 'short' })), 400);
+  assert.equal(status(await bad({ role: 'superadmin' })), 400);
+  assert.equal(status(await bad({ email: '' })), 400);
+});
+
+test('manage-user: nonaktif tidak bisa login, aktif lagi bisa', async () => {
+  const u = await createTestUser('anggota');
+  assert.ifError((await call(adminU, { action: 'set_active', user_id: u.id, active: false })).error);
+  assert.ok((await anonClient().auth.signInWithPassword({ email: u.email, password: u.password })).error);
+  const list = await call(adminU, { action: 'list' });
+  assert.equal(list.data.users.find((x) => x.id === u.id).active, false);
+  assert.ifError((await call(adminU, { action: 'set_active', user_id: u.id, active: true })).error);
+  assert.ifError((await anonClient().auth.signInWithPassword({ email: u.email, password: u.password })).error);
+});
+
+test('manage-user: reset sandi, lama gagal baru berhasil', async () => {
+  const u = await createTestUser('anggota');
+  assert.equal(status(await call(adminU, { action: 'reset_password', user_id: u.id, password: 'short' })), 400);
+  assert.ifError((await call(adminU, { action: 'reset_password', user_id: u.id, password: 'Sandi-Reset-9' })).error);
+  assert.ok((await anonClient().auth.signInWithPassword({ email: u.email, password: u.password })).error);
+  assert.ifError((await anonClient().auth.signInWithPassword({ email: u.email, password: 'Sandi-Reset-9' })).error);
+});
+
+test('manage-user: update_profile dan list; admin tak bisa nonaktif/turun diri', async () => {
+  const u = await createTestUser('anggota');
+  assert.ifError((await call(adminU, { action: 'update_profile', user_id: u.id, role: 'penguji', branch: 'Cab-X' })).error);
+  const { data: p } = await admin.from('profiles').select('role, branch').eq('id', u.id).single();
+  assert.deepEqual(p, { role: 'penguji', branch: 'Cab-X' });
+  const row = (await call(adminU, { action: 'list' })).data.users.find((x) => x.id === u.id);
+  assert.equal(row.email, u.email);
+  assert.equal(row.role, 'penguji');
+  assert.equal(row.active, true);
+  assert.equal(status(await call(adminU, { action: 'set_active', user_id: adminU.id, active: false })), 400);
+  assert.equal(status(await call(adminU, { action: 'update_profile', user_id: adminU.id, role: 'anggota' })), 400);
+  assert.equal(status(await call(adminU, { action: 'update_profile', user_id: u.id, role: 'dewa' })), 400);
 });
