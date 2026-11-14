@@ -117,8 +117,8 @@ export default function DonasiSection() {
     if (!activeCampaign || submitting) return;
 
     const amount = customAmount ? Number(customAmount) : selectedPreset;
-    if (!Number.isInteger(amount) || amount < 1000) {
-      showToast('Nominal donasi minimal Rp 1.000 (bilangan bulat)', 'error');
+    if (!Number.isInteger(amount) || amount < 1000 || amount > 1_000_000_000_000) {
+      showToast('Nominal donasi harus bilangan bulat antara Rp 1.000 dan Rp 1.000.000.000.000', 'error');
       return;
     }
     if (!proofFile) {
@@ -393,6 +393,7 @@ export default function DonasiSection() {
                 <input
                   type="number"
                   min={1000}
+                  max={1000000000000}
                   step={1}
                   placeholder="Contoh: 750000"
                   value={customAmount}

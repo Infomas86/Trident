@@ -234,6 +234,11 @@ export function AppProvider({ children }) {
     return true;
   };
 
+  // Leave the admin-only tab when admin rights go away (logout, role change).
+  useEffect(() => {
+    if (activeTab === 'verifikasi' && !isAdmin) setActiveTab('visi');
+  }, [activeTab, isAdmin]);
+
   // Switch tab with access check
   const navigateToTab = (tabName) => {
     if (['agenda', 'donasi', 'ukt'].includes(tabName) && role === ROLES.PUBLIC) {

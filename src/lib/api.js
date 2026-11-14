@@ -238,6 +238,8 @@ const CAMPAIGN_MAP = { title: 'title', category: 'category', targetAmount: 'targ
 export const PROOF_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 export const MAX_PROOF_BYTES = 5 * 1024 * 1024;
 export const MIN_DONATION = 1000;
+export const MAX_DONATION = 1_000_000_000_000;
+export const AMOUNT_ERROR = 'Nominal donasi harus bilangan bulat antara Rp 1.000 dan Rp 1.000.000.000.000';
 export const DELETE_CAMPAIGN_BLOCKED = 'Program tidak bisa dihapus karena sudah ada donasi';
 
 export async function listCampaigns() {
@@ -290,7 +292,7 @@ const DONATION_COLS = '*,campaigns(title)';
 
 export async function submitDonation({ campaignId, amount, donorName, message, paymentMethod, proofFile }) {
   const n = Number(amount);
-  if (!Number.isInteger(n) || n < MIN_DONATION) throw new UserError('Nominal minimal Rp 1.000 dan harus bilangan bulat');
+  if (!Number.isInteger(n) || n < MIN_DONATION || n > MAX_DONATION) throw new UserError(AMOUNT_ERROR);
   const ext = PROOF_TYPES[proofFile?.type];
   if (!ext) throw new UserError('Bukti transfer harus berupa foto JPEG, PNG, atau WebP');
   if (proofFile.size > MAX_PROOF_BYTES) throw new UserError('Ukuran bukti transfer maksimal 5 MB');
@@ -307,7 +309,8 @@ export async function submitDonation({ campaignId, amount, donorName, message, p
     .select(DONATION_COLS)
     .single();
   if (ins.error) {
-    await supabase.storage.from('donation-proofs').remove([path]);
+    const rm = await supabase.storage.from('donation-proofs').remove([path]);
+    if (rm.error || !rm.data?.length) console.error('Gagal membersihkan bukti yatim', path, rm.error);
     throw ins.error;
   }
   return fromDonationRow(ins.data);
@@ -336,6 +339,7 @@ export async function setDonationStatus(id, status) {
     supabase
       .from('donations')
       .update({ status, verified_by: sess.session?.user?.id, verified_at: new Date().toISOString() })
-      .eq('id', id),
+      .eq('id', id)
+      .eq('status', 'pending'),
   );
 }

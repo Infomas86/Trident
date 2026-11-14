@@ -237,6 +237,32 @@ test('tamu bisa baca pilar, tempat latihan, hero', async () => {
   assert.ifError(s.error);
   assert.equal(s.data.length, 1);
 });
+test('anggota bisa hapus unggahan yang belum dipakai, bukan bukti yang sudah dirujuk donasi', async () => {
+  const bucket = anggota.client.storage.from('donation-proofs');
+  const free = `${anggota.id}/free-${RUN}.png`;
+  assert.ifError((await bucket.upload(free, png, { contentType: 'image/png' })).error);
+  const r1 = await bucket.remove([free]);
+  assert.ifError(r1.error);
+  assert.equal(r1.data.length, 1, 'unggahan sendiri yang yatim terhapus');
+
+  const used = `${anggota.id}/used-${RUN}.png`;
+  assert.ifError((await bucket.upload(used, png, { contentType: 'image/png' })).error);
+  const d = await anggota.client.from('donations').insert({ campaign_id: campaignId, donor_name: `T-del-${RUN}`, amount: 1000, proof_path: used }).select('id').single();
+  assert.ifError(d.error);
+  const r2 = await bucket.remove([used]);
+  assert.equal(r2.data?.length ?? 0, 0, 'bukti yang sudah dirujuk tidak boleh terhapus');
+  assert.ifError((await bucket.download(used)).error);
+});
+
+test('admin tidak bisa memutuskan ulang donasi yang sudah diputuskan', async () => {
+  const r = await admin.from('donations').insert({ campaign_id: campaignId, donor_name: `T-re-${RUN}`, amount: 1000, proof_path: 'x/y.png' }).select('id').single();
+  assert.ifError(r.error);
+  const decide = (st) => adminU.client.from('donations').update({ status: st }).eq('id', r.data.id).eq('status', 'pending').select('id');
+  assert.equal((await decide('rejected')).data.length, 1);
+  assert.equal((await decide('accepted')).data.length, 0);
+  const { data } = await admin.from('donations').select('status').eq('id', r.data.id).single();
+  assert.equal(data.status, 'rejected');
+});
 
 // ---- admin positif ----
 
