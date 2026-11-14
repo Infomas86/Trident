@@ -112,6 +112,14 @@ npx supabase db push --remote --yes
 npx supabase functions deploy manage-user --project-ref <ref>
 ```
 
+Fungsi ini hanya menerima permintaan dari origin yang diizinkan: `capacitor://localhost`, `https://localhost` (APK), `http://localhost:5173` dan `http://127.0.0.1:5173` (dev). Bila aplikasi web dipasang di domain sendiri, tambahkan origin-nya (pisahkan dengan koma bila lebih dari satu), tanpa perlu deploy ulang:
+
+```bash
+npx supabase secrets set ALLOWED_ORIGINS=https://<domain> --project-ref <ref>
+```
+
+Tanpa itu halaman Akun akan gagal (galat CORS) di domain tersebut.
+
 ### 4. Membuat admin pertama
 
 1. Dashboard Supabase -> Authentication -> Add user (isi email dan password).
@@ -122,6 +130,8 @@ insert into profiles (id, full_name, role) values ('<id>', '<nama>', 'admin');
 ```
 
 Admin berikutnya dikelola lewat halaman Akun di aplikasi.
+
+Catatan: menonaktifkan akun **tidak langsung** mengeluarkan pengguna; token login yang sedang dipakai tetap berlaku hingga 1 jam. Untuk mencabut hak seketika, ubah dulu perannya menjadi `anggota`, baru nonaktifkan.
 
 ### 5. Backup bulanan
 
