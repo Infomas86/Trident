@@ -637,7 +637,7 @@ export default function UktSection() {
                 </div>
 
                 <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
-                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">5. Pimpinan Ranting</span>
+                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">5. Ranting</span>
                   <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pr || 'PR Tanjung Piayu'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Kelurahan / Desa</span>
                 </div>

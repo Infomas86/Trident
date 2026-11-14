@@ -7,35 +7,8 @@ export const TRIDENT_BELT_LEVELS = [
   "Sabuk Hijau Strip Hitam",
 ];
 
-export const INITIAL_TIMELINE = [
-  {
-    year: "1984",
-    title: "Pendirian Padepokan Utama",
-    desc: "Didirikan oleh Guru Besar Raden Mas Hardjo dengan 15 murid perdana, berfokus pada pelestarian jurus asli dan olah batin kesatria.",
-    badge: "Akar Tradisi",
-  },
-  {
-    year: "1998",
-    title: "Ekspansi & Standarisasi Kurikulum",
-    desc: "Penyusunan kurikulum resmi 4 Pos Evaluasi dan penggabungan teknik beladiri praktis dengan pembinaan fisik terukur.",
-    badge: "Kurikulum Modern",
-  },
-  {
-    year: "2012",
-    title: "Kejuaraan Dunia & Prestasi Emas",
-    desc: "Meraih juara umum pada Kejuaraan Seni Bela Diri Internasional di Chiang Mai dan pengakuan federasi dunia.",
-    badge: "Prestasi Internasional",
-  },
-  {
-    year: "2026",
-    title: "Digitalisasi Sistem Trident UKT",
-    desc: "Peluncuran sistem manajemen modern terintegrasi, transparansi evaluasi 4 Pos, dan penguatan kemandirian perguruan.",
-    badge: "Transformasi Digital",
-  },
-];
-
 // Hierarki Struktural Resmi Organisasi Perguruan:
-// Pimpinan Pusat ➔ Pimpinan Wilayah ➔ Pimpinan Cabang ➔ Pimpinan Anak Cabang ➔ Pimpinan Ranting ➔ Pimpinan Anak Ranting (Tempat Latihan)
+// Pimpinan Pusat ➔ Pimpinan Wilayah ➔ Pimpinan Cabang ➔ Pimpinan Anak Cabang ➔ Ranting ➔ Anak Ranting (Tempat Latihan)
 export const ORGANIZATIONAL_HIERARCHY = [
   {
     level: 1,
@@ -75,7 +48,7 @@ export const ORGANIZATIONAL_HIERARCHY = [
   },
   {
     level: 5,
-    tier: "Pimpinan Ranting (PR)",
+    tier: "Ranting (PR)",
     short: "PR",
     scope: "Tingkat Kelurahan / Desa",
     desc: "Kaderisasi langsung santri/pesilat di lingkungan desa/kelurahan, bimbingan akhlak moral kesatria, dan pengawasan rayon.",
@@ -84,7 +57,7 @@ export const ORGANIZATIONAL_HIERARCHY = [
   },
   {
     level: 6,
-    tier: "Pimpinan Anak Ranting (PAR)",
+    tier: "Anak Ranting (PAR)",
     short: "PAR",
     scope: "Tempat Latihan / Rayon / RW",
     desc: "Ujung tombak latihan fisik, teknik jurus dasar, latihan pernafasan, dan penggemblengan rutin berkala setiap minggu.",

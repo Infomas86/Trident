@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { INITIAL_TIMELINE } from '../data/static';
 import { supabase } from '../lib/supabase';
 import * as api from '../lib/api';
 import { enqueueForUser, withoutUser, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearCaches, overlayQueued, mineScores, mergeKeys, storedAuthUserId } from '../lib/offline';
@@ -31,7 +30,7 @@ export function AppProvider({ children }) {
   const [stats, setStats] = useState({ activeMembers: 0, medalsCount: 0, padepokanBranches: 0, uktPassRate: 0, masterCouncil: 0 });
   const [heroData, setHeroData] = useState({});
   const [trainingGrounds, setTrainingGrounds] = useState([]);
-  const timeline = INITIAL_TIMELINE;
+  const [timeline, setTimeline] = useState([]);
   const [pillars, setPillars] = useState([]);
   const [newsList, setNewsList] = useState([]);
   const [achievementsList, setAchievementsList] = useState([]);
@@ -227,6 +226,7 @@ export function AppProvider({ children }) {
     myDonations: () => (userId ? api.listMyDonations().then(setMyDonations) : setMyDonations([])),
     pendingDonations: () => (isAdmin ? api.listPendingDonations().then(setPendingDonations) : setPendingDonations([])),
     pillars: () => api.listPillars().then(setPillars),
+    timeline: () => api.listTimeline().then(setTimeline),
     grounds: () => api.listTrainingGrounds().then(setTrainingGrounds),
     candidates: async () => {
       if (!userId) return setCandidatesList([]);
@@ -486,6 +486,12 @@ export function AppProvider({ children }) {
     mutate(() => api.addPillar(p), 'pillars', 'Pilar Visi & Misi baru berhasil ditambahkan!', 'Gagal menambahkan pilar');
   const handleDeletePillar = (id) =>
     mutate(() => api.deletePillar(id), 'pillars', 'Pilar Visi & Misi berhasil dihapus!', 'Gagal menghapus pilar', 'info');
+  const handleAddTimeline = (t) =>
+    mutate(() => api.addTimelineEvent(t), 'timeline', 'Sejarah perjalanan berhasil ditambahkan!', 'Gagal menambahkan sejarah');
+  const handleUpdateTimeline = (id, t) =>
+    mutate(() => api.updateTimelineEvent(id, t), 'timeline', 'Sejarah perjalanan berhasil diperbarui!', 'Gagal memperbarui sejarah');
+  const handleDeleteTimeline = (id) =>
+    mutate(() => api.deleteTimelineEvent(id), 'timeline', 'Sejarah perjalanan berhasil dihapus!', 'Gagal menghapus sejarah', 'info');
 
   const handleUpdateTrainingGround = (id, g) =>
     mutate(() => api.updateTrainingGround(id, g), 'grounds', 'Info Tempat Latihan & Kontak Pelatih berhasil diperbarui!', 'Gagal memperbarui tempat latihan');
@@ -527,6 +533,9 @@ export function AppProvider({ children }) {
         handleAddTrainingGround,
         handleDeleteTrainingGround,
         timeline,
+        handleAddTimeline,
+        handleUpdateTimeline,
+        handleDeleteTimeline,
         pillars,
         handleUpdatePillar,
         handleAddPillar,

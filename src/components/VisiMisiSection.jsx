@@ -42,6 +42,9 @@ export default function VisiMisiSection() {
     handleAddTrainingGround,
     handleDeleteTrainingGround,
     timeline,
+    handleAddTimeline,
+    handleUpdateTimeline,
+    handleDeleteTimeline,
     pillars,
     handleUpdatePillar,
     handleAddPillar,
@@ -62,6 +65,16 @@ export default function VisiMisiSection() {
   const [isEditingHero, setIsEditingHero] = useState(false);
   const [heroForm, setHeroForm] = useState({ ...heroData });
 
+  // Admin CMS: Edit / Add Timeline (Sejarah) Modal — form null = closed, form.id = editing
+  const EMPTY_TIMELINE = { year: '', title: '', desc: '', badge: '' };
+  const [timelineForm, setTimelineForm] = useState(null);
+  const handleSaveTimeline = async (e) => {
+    e.preventDefault();
+    const { id, ...fields } = timelineForm;
+    const saved = id ? await handleUpdateTimeline(id, fields) : await handleAddTimeline(fields);
+    if (saved !== false) setTimelineForm(null);
+  };
+
   // Admin CMS: Edit / Add Pillar Modal
   const [editingPillar, setEditingPillar] = useState(null); // null or pillar object
   const [isAddPillarOpen, setIsAddPillarOpen] = useState(false);
@@ -76,7 +89,7 @@ export default function VisiMisiSection() {
   const [isAddGroundOpen, setIsAddGroundOpen] = useState(false);
   const [groundForm, setGroundForm] = useState({
     name: '',
-    tier: 'Pimpinan Anak Ranting (PAR)',
+    tier: 'Anak Ranting (PAR)',
     parentPR: '',
     address: '',
     trainerName: '',
@@ -95,7 +108,6 @@ export default function VisiMisiSection() {
       activeMembers: Number(statsForm.activeMembers),
       medalsCount: Number(statsForm.medalsCount),
       padepokanBranches: Number(statsForm.padepokanBranches),
-      uktPassRate: Number(statsForm.uktPassRate),
       masterCouncil: Number(statsForm.masterCouncil),
     });
     setIsEditingStats(false);
@@ -151,7 +163,7 @@ export default function VisiMisiSection() {
     setIsAddGroundOpen(false);
     setGroundForm({
       name: '',
-      tier: 'Pimpinan Anak Ranting (PAR)',
+      tier: 'Anak Ranting (PAR)',
       parentPR: '',
       address: '',
       trainerName: '',
@@ -262,7 +274,7 @@ export default function VisiMisiSection() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="trident-card rounded-2xl p-5 border border-blue-900/40 shadow-lg relative overflow-hidden group">
             <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
               <Users className="w-5 h-5" />
@@ -299,17 +311,6 @@ export default function VisiMisiSection() {
             </div>
           </div>
 
-          <div className="trident-card rounded-2xl p-5 border border-emerald-900/40 shadow-lg relative overflow-hidden group">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <GraduationCap className="w-5 h-5" />
-            </div>
-            <div className="text-3xl font-extrabold text-emerald-300 font-['Cinzel'] tracking-tight">
-              {stats.uktPassRate}%
-            </div>
-            <div className="text-xs font-medium text-slate-400 mt-1">
-              Tingkat Kelulusan UKT 4 Pos
-            </div>
-          </div>
         </div>
       </section>
 
@@ -523,7 +524,7 @@ export default function VisiMisiSection() {
           <div>
             <div className="inline-flex items-center gap-1.5 text-amber-400 text-xs font-bold uppercase tracking-widest mb-1">
               <MapPin className="w-3.5 h-3.5" />
-              <span>Pimpinan Anak Ranting (PAR) / Rayon</span>
+              <span>Anak Ranting (PAR) / Rayon</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
               Info Tempat Latihan & Kontak Pelatih Resmi
@@ -678,11 +679,23 @@ export default function VisiMisiSection() {
           <p className="text-xs sm:text-sm text-slate-400">
             Dari padepokan sederhana di pelosok desa hingga transformasi digital modern berstandar internasional.
           </p>
+          {isAdmin && (
+            <button
+              onClick={() => setTimelineForm({ ...EMPTY_TIMELINE })}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 mt-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Tambah Sejarah (Admin)</span>
+            </button>
+          )}
         </div>
+        {timeline.length === 0 && (
+          <p className="text-center text-xs text-slate-500">Belum ada sejarah perjalanan.</p>
+        )}
 
         <div className="relative border-l-2 border-blue-900/60 ml-4 md:ml-32 space-y-10 pl-6 md:pl-10">
           {timeline.map((item, idx) => (
-            <div key={idx} className="relative group">
+            <div key={item.id ?? idx} className="relative group">
               <div className="absolute -left-[31px] md:-left-[47px] top-1.5 w-6 h-6 rounded-full bg-slate-950 border-4 border-amber-400 group-hover:scale-125 transition-transform shadow-lg shadow-amber-500/30" />
 
               <div className="trident-card rounded-2xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all duration-300">
@@ -695,9 +708,31 @@ export default function VisiMisiSection() {
                       {item.badge}
                     </span>
                   </div>
-                  <span className="text-xs text-slate-500">
-                    Fase Perjalanan #{idx + 1}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">
+                      Fase Perjalanan #{idx + 1}
+                    </span>
+                    {isAdmin && (
+                      <>
+                        <button
+                          onClick={() => setTimelineForm({ ...item })}
+                          className="p-1.5 rounded-lg bg-blue-900/40 hover:bg-blue-800/60 text-blue-300"
+                          title="Edit sejarah"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Hapus sejarah "${item.title}"?`)) handleDeleteTimeline(item.id);
+                          }}
+                          className="p-1.5 rounded-lg bg-rose-950/50 hover:bg-rose-900/60 text-rose-300"
+                          title="Hapus sejarah"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <h3 className="text-lg font-bold text-white mb-2">
@@ -755,18 +790,6 @@ export default function VisiMisiSection() {
                   type="number"
                   value={statsForm.padepokanBranches}
                   onChange={(e) => setStatsForm({ ...statsForm, padepokanBranches: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm focus:border-amber-500 outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-300 font-medium block mb-1">Tingkat Kelulusan UKT (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={statsForm.uktPassRate}
-                  onChange={(e) => setStatsForm({ ...statsForm, uktPassRate: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm focus:border-amber-500 outline-none"
                   required
                 />
@@ -860,6 +883,56 @@ export default function VisiMisiSection() {
                   className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all shadow-md"
                 >
                   Simpan Slogan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edit / Tambah Sejarah Perjalanan */}
+      {timelineForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md bg-slate-900 border border-amber-500/40 rounded-2xl p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-white font-['Cinzel'] mb-4 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-amber-400" />
+              {timelineForm.id ? 'Edit Sejarah Perjalanan' : 'Tambah Sejarah Perjalanan'}
+            </h3>
+            <form onSubmit={handleSaveTimeline} className="space-y-4">
+              {[
+                ['year', 'Tahun', 'Contoh: 1984'],
+                ['title', 'Judul', 'Contoh: Pendirian Padepokan Utama'],
+                ['badge', 'Label', 'Contoh: Akar Tradisi'],
+              ].map(([key, label, ph]) => (
+                <div key={key}>
+                  <label className="text-xs text-slate-300 font-medium block mb-1">{label}</label>
+                  <input
+                    type="text"
+                    value={timelineForm[key] ?? ''}
+                    onChange={(e) => setTimelineForm({ ...timelineForm, [key]: e.target.value })}
+                    placeholder={ph}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                    required={key !== 'badge'}
+                  />
+                </div>
+              ))}
+              <div>
+                <label className="text-xs text-slate-300 font-medium block mb-1">Keterangan</label>
+                <textarea
+                  rows="3"
+                  value={timelineForm.desc ?? ''}
+                  onChange={(e) => setTimelineForm({ ...timelineForm, desc: e.target.value })}
+                  placeholder="Uraian singkat peristiwa..."
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setTimelineForm(null)} className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
+                  Batal
+                </button>
+                <button type="submit" className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold">
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Simpan</span>
                 </button>
               </div>
             </form>
@@ -974,7 +1047,7 @@ export default function VisiMisiSection() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-300 font-medium block mb-1">Pimpinan Ranting / PAC</label>
+                  <label className="text-xs text-slate-300 font-medium block mb-1">Ranting / PAC</label>
                   <input
                     type="text"
                     value={groundForm.parentPR}

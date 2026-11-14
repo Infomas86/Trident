@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import TridentIcon from './TridentIcon';
 import { useApp, ROLES } from '../context/AppContext';
 
 import {
@@ -11,7 +12,6 @@ import {
   Lock,
   Menu,
   X,
-  Sword,
   KeyRound,
   LogOut,
   BadgeCheck,
@@ -50,16 +50,13 @@ export default function Navbar() {
           >
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-700 via-blue-900 to-amber-600 p-[2px] shadow-lg shadow-blue-950/50 group-hover:scale-105 transition-transform">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <Sword className="w-6 h-6 text-amber-400 transform -rotate-45 group-hover:rotate-0 transition-transform duration-300" />
+                <TridentIcon className="w-7 h-7 text-amber-400" />
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 font-['Cinzel']">
                   TRIDENT
-                </span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-900/60 text-blue-300 border border-blue-700/50 uppercase tracking-widest">
-                  v1.0
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium tracking-tight">

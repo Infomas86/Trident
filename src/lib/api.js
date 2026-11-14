@@ -111,7 +111,11 @@ export async function getSiteStats() {
 export const updateSiteStats = async (patch) => hit(supabase.from('site_stats').update(toRow(patch, STATS_MAP)).eq('id', 1));
 
 // --- Konten situs (hero; rekening/QRIS dipakai Task 9) ---
-const CONTENT_MAP = { bankName: 'bank_name', bankAccount: 'bank_account', bankHolder: 'bank_holder', qrisImageUrl: 'qris_image_url' };
+const CONTENT_MAP = {
+  bankName: 'bank_name', bankAccount: 'bank_account', bankHolder: 'bank_holder', qrisImageUrl: 'qris_image_url',
+  secretariatName: 'secretariat_name', secretariatAddress: 'secretariat_address',
+  secretariatPhone: 'secretariat_phone', secretariatEmail: 'secretariat_email',
+};
 const HERO_MAP = { badge: 'hero_badge', titleMain: 'hero_title_main', titleHighlight: 'hero_title_highlight', subtitle: 'hero_subtitle' };
 
 export async function getSiteContent() {
@@ -122,6 +126,10 @@ export async function getSiteContent() {
     bankAccount: r.bank_account,
     bankHolder: r.bank_holder,
     qrisImageUrl: r.qris_image_url,
+    secretariatName: r.secretariat_name,
+    secretariatAddress: r.secretariat_address,
+    secretariatPhone: r.secretariat_phone,
+    secretariatEmail: r.secretariat_email,
   };
 }
 export const updateSiteContent = async (patch) =>
@@ -142,6 +150,18 @@ export async function addPillar(input) {
 }
 export const updatePillar = async (id, patch) => hit(supabase.from('pillars').update(toRow(patch, PILLAR_MAP)).eq('id', id));
 export const deletePillar = async (id) => hit(supabase.from('pillars').delete().eq('id', id));
+
+// --- Sejarah perjalanan (timeline) ---
+const TIMELINE_MAP = { year: 'year', title: 'title', desc: 'desc', badge: 'badge' };
+export const listTimeline = async () =>
+  ok(await supabase.from('timeline_events').select('id,year,title,desc,badge').order('sort_order'));
+export async function addTimelineEvent(input) {
+  const last = ok(await supabase.from('timeline_events').select('sort_order').order('sort_order', { ascending: false }).limit(1));
+  return ok(await supabase.from('timeline_events').insert({ ...toRow(input, TIMELINE_MAP), sort_order: (last[0]?.sort_order ?? 0) + 1 }));
+}
+export const updateTimelineEvent = async (id, patch) =>
+  hit(supabase.from('timeline_events').update(toRow(patch, TIMELINE_MAP)).eq('id', id));
+export const deleteTimelineEvent = async (id) => hit(supabase.from('timeline_events').delete().eq('id', id));
 
 // --- Tempat latihan ---
 const GROUND_MAP = {

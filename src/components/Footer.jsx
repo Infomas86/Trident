@@ -1,9 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
+import TridentIcon from './TridentIcon';
 import { useApp } from '../context/AppContext';
-import { Shield, Sword, Heart, MapPin, Phone, Mail, Award } from 'lucide-react';
+import { Shield, Heart, MapPin, Phone, Mail, Award, Edit3, Save } from 'lucide-react';
 
 export default function Footer() {
-  const { navigateToTab } = useApp();
+  const { navigateToTab, siteContent, isAdmin, handleUpdateSiteContent } = useApp();
+  const [secForm, setSecForm] = useState(null); // null = closed
+  const sec = {
+    name: siteContent.secretariatName || 'Sekretariat Padepokan',
+    address: siteContent.secretariatAddress || '',
+    phone: siteContent.secretariatPhone || '',
+    email: siteContent.secretariatEmail || '',
+  };
+  const openSecEdit = () =>
+    setSecForm({
+      secretariatName: sec.name,
+      secretariatAddress: sec.address,
+      secretariatPhone: sec.phone,
+      secretariatEmail: sec.email,
+    });
+  const saveSec = async (e) => {
+    e.preventDefault();
+    const saved = await handleUpdateSiteContent(secForm, 'Info sekretariat berhasil diperbarui!');
+    if (saved !== false) setSecForm(null);
+  };
 
   return (
     <footer className="mt-20 border-t border-blue-900/40 bg-slate-950 text-slate-400 no-print">
@@ -15,7 +35,7 @@ export default function Footer() {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-700 to-amber-600 p-[2px]">
                 <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                  <Sword className="w-5 h-5 text-amber-400 transform -rotate-45" />
+                  <TridentIcon className="w-6 h-6 text-amber-400" />
                 </div>
               </div>
               <span className="font-extrabold text-xl tracking-wider text-amber-400 font-['Cinzel']">
@@ -28,7 +48,7 @@ export default function Footer() {
             </p>
 
             <div className="text-[11px] text-slate-500 font-mono">
-              Sistem Manajemen Perguruan & Evaluasi UKT • PRD v1.0 Approved
+              Sistem Manajemen Perguruan & Evaluasi UKT
             </div>
           </div>
 
@@ -91,21 +111,28 @@ export default function Footer() {
 
           {/* Contact & Secretariate */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider font-['Cinzel']">
-              Sekretariat Padepokan
-            </h4>
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider font-['Cinzel']">
+                {sec.name}
+              </h4>
+              {isAdmin && (
+                <button onClick={openSecEdit} className="p-1.5 rounded-lg bg-blue-900/40 hover:bg-blue-800/60 text-blue-300" title="Edit sekretariat">
+                  <Edit3 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
             <div className="space-y-2 text-xs text-slate-400">
               <p className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>Gedung Mandala Krida, Jl. Ksatria Padepokan Agung No. 128, Indonesia</span>
+                <span>{sec.address || '-'}</span>
               </p>
               <p className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-blue-400 shrink-0" />
-                <span>+62 (021) 884-TRIDENT</span>
+                <span>{sec.phone || '-'}</span>
               </p>
               <p className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>sekretariat@trident-martialarts.org</span>
+                <span>{sec.email || '-'}</span>
               </p>
             </div>
           </div>
@@ -120,6 +147,41 @@ export default function Footer() {
           </p>
         </div>
       </div>
+      {secForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-slate-900 border border-amber-500/40 rounded-2xl p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-white font-['Cinzel'] mb-4">Edit Sekretariat</h3>
+            <form onSubmit={saveSec} className="space-y-4">
+              {[
+                ['secretariatName', 'Nama Sekretariat'],
+                ['secretariatAddress', 'Alamat'],
+                ['secretariatPhone', 'Telepon'],
+                ['secretariatEmail', 'Email'],
+              ].map(([key, label]) => (
+                <div key={key}>
+                  <label className="text-xs text-slate-300 font-medium block mb-1">{label}</label>
+                  <input
+                    type="text"
+                    value={secForm[key]}
+                    onChange={(e) => setSecForm({ ...secForm, [key]: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                    required={key === 'secretariatName'}
+                  />
+                </div>
+              ))}
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setSecForm(null)} className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
+                  Batal
+                </button>
+                <button type="submit" className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold">
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Simpan</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </footer>
   );
 }

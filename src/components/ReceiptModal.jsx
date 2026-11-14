@@ -147,7 +147,7 @@ export default function ReceiptModal() {
                 Bendahara Kas Padepokan Trident
               </p>
               <p className="text-slate-500">
-                Dicetak secara otomatis & sah melalui Sistem Trident v1.0
+                Dicetak secara otomatis & sah melalui Sistem Trident
               </p>
             </div>
 
