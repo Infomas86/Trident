@@ -10,8 +10,8 @@ import {
   INITIAL_CANDIDATES,
   INITIAL_HERO_DATA,
   INITIAL_TRAINING_GROUNDS,
-  calculateUktScore,
 } from '../data/mockData';
+import { calculateUktScore } from '../lib/ukt';
 
 const AppContext = createContext();
 

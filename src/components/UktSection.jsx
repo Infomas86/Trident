@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp, ROLES } from '../context/AppContext';
-import { calculateUktScore } from '../data/mockData';
+import { calculateUktScore, parseCandidatesCsv, buildCandidatesCsv } from '../lib/ukt';
 import {
   GraduationCap,
   Shield,
@@ -217,52 +217,24 @@ export default function UktSection() {
 
   // EXPORT TO CSV
   const handleExportCSV = () => {
-    const headers = [
-      'No Registrasi',
-      'Nama Peserta',
-      'Cabang Padepokan',
-      'Sabuk Saat Ini',
-      'Sabuk Target',
-      'Pos 1 Fisik (25%)',
-      'Pos 2 Jurus (30%)',
-      'Pos 3 Etika (20%)',
-      'Pos 4 Sabung (25%)',
-      'Skor Akhir',
-      'Status Kelulusan',
-      'Catatan Penguji',
-    ];
-
-    const rows = candidatesList.map((c) => {
-      const res = calculateUktScore(
-        c.posScores.pos1.score,
-        c.posScores.pos2.score,
-        c.posScores.pos3.score,
-        c.posScores.pos4.score
-      );
-      return [
-        `"${c.regNumber}"`,
-        `"${c.name}"`,
-        `"${c.branch}"`,
-        `"${c.currentBelt}"`,
-        `"${c.targetBelt}"`,
-        c.posScores.pos1.score,
-        c.posScores.pos2.score,
-        c.posScores.pos3.score,
-        c.posScores.pos4.score,
-        res.score.toFixed(1),
-        `"${res.status}"`,
-        `"${(c.examinerNotes || '').replace(/"/g, '""')}"`,
-      ].join(',');
-    });
-
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csv = buildCandidatesCsv(
+      candidatesList.map((c) => ({
+        ...c,
+        pos1: c.posScores.pos1.score,
+        pos2: c.posScores.pos2.score,
+        pos3: c.posScores.pos3.score,
+        pos4: c.posScores.pos4.score,
+      }))
+    );
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', url);
     link.setAttribute('download', `peserta-ujian-kenaikan-tingkat-${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     showToast('Data peserta berhasil diekspor ke file CSV!', 'success');
   };
 
@@ -274,53 +246,31 @@ export default function UktSection() {
     }
 
     try {
-      const lines = importCsvText.trim().split(/\r?\n/);
-      if (lines.length < 2) {
-        showToast('Format CSV minimal memiliki 1 baris header dan 1 baris data peserta.', 'error');
+      const { rows, errors } = parseCandidatesCsv(importCsvText);
+      if (errors.length > 0) {
+        showToast(errors.join('; '), 'error');
         return;
       }
 
-      // Check header or parse lines
-      const imported = [];
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-
-        // Parse CSV columns respecting quotes
-        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((v) => v.replace(/^"|"$/g, '').trim());
-
-        if (cols.length >= 2) {
-          const regNumber = cols[0] || `TRD-UKT-${Date.now().toString().slice(-4)}`;
-          const name = cols[1] || 'Pesilat Baru';
-          const branch = cols[2] || 'Padepokan Pusat';
-          const currentBelt = cols[3] || 'Sabuk Putih (Tingkat 1)';
-          const targetBelt = cols[4] || 'Sabuk Hijau (Tingkat 2)';
-          const p1 = Number(cols[5]) || 75;
-          const p2 = Number(cols[6]) || 75;
-          const p3 = Number(cols[7]) || 75;
-          const p4 = Number(cols[8]) || 75;
-          const notes = cols[11] || 'Peserta diimpor via file CSV';
-
-          imported.push({
-            id: `cand-${Date.now()}-${i}`,
-            regNumber,
-            name,
-            currentBelt,
-            targetBelt,
-            branch,
-            photo: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
-            posScores: {
-              pos1: { score: p1, sub: { stamina: p1, physicalEndurance: p1, agility: p1 } },
-              pos2: { score: p2, sub: { jurusPrecision: p2, strikeAccuracy: p2, stancesStability: p2 } },
-              pos3: { score: p3, sub: { theory: p3, history: p3, ethicsRespect: p3 } },
-              pos4: { score: p4, sub: { fightingCourage: p4, techniqueApplication: p4, emotionalControl: p4 } },
-            },
-            examinerNotes: notes,
-            dateExam: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-            examinerName: currentUser.name,
-          });
-        }
-      }
+      const imported = rows.map((r, i) => ({
+        id: `cand-${Date.now()}-${i}`,
+        regNumber: r.regNumber,
+        name: r.name,
+        currentBelt: r.currentBelt,
+        targetBelt: r.targetBelt,
+        branch: r.branch,
+        structure: r.structure,
+        photo: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
+        posScores: {
+          pos1: { score: r.pos1, sub: { stamina: r.pos1, physicalEndurance: r.pos1, agility: r.pos1 } },
+          pos2: { score: r.pos2, sub: { jurusPrecision: r.pos2, strikeAccuracy: r.pos2, stancesStability: r.pos2 } },
+          pos3: { score: r.pos3, sub: { theory: r.pos3, history: r.pos3, ethicsRespect: r.pos3 } },
+          pos4: { score: r.pos4, sub: { fightingCourage: r.pos4, techniqueApplication: r.pos4, emotionalControl: r.pos4 } },
+        },
+        examinerNotes: r.examinerNotes,
+        dateExam: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+        examinerName: currentUser.name,
+      }));
 
       if (imported.length > 0) {
         handleImportCandidates(imported);

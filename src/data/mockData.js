@@ -528,36 +528,3 @@ export const INITIAL_CANDIDATES = [
     examinerName: "Master Bambang Wijaya (Penguji Utama)",
   },
 ];
-
-// Helper to calculate UKT Score precisely as defined in PRD Section 3 Module 6
-// Formula: Skor Akhir = (Pos1 * 0.25) + (Pos2 * 0.30) + (Pos3 * 0.20) + (Pos4 * 0.25)
-export function calculateUktScore(pos1, pos2, pos3, pos4) {
-  const p1 = Number(pos1) || 0;
-  const p2 = Number(pos2) || 0;
-  const p3 = Number(pos3) || 0;
-  const p4 = Number(pos4) || 0;
-
-  const total = (p1 * 0.25) + (p2 * 0.30) + (p3 * 0.20) + (p4 * 0.25);
-  const rounded = Math.round(total * 10) / 10;
-
-  let status = "PERLU HER / TUNDA";
-  let statusColor = "text-rose-400 bg-rose-950/40 border-rose-700/50";
-  let badgeVariant = "her";
-
-  if (rounded >= 85.0) {
-    status = "LULUS DENGAN PUJIAN";
-    statusColor = "text-amber-400 bg-amber-950/40 border-amber-500/50";
-    badgeVariant = "cumlaude";
-  } else if (rounded >= 70.0) {
-    status = "LULUS";
-    statusColor = "text-emerald-400 bg-emerald-950/40 border-emerald-600/50";
-    badgeVariant = "pass";
-  }
-
-  return {
-    score: rounded,
-    status,
-    statusColor,
-    badgeVariant,
-  };
-}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp, ROLES } from '../context/AppContext';
 import { ORGANIZATIONAL_HIERARCHY } from '../data/mockData';
+import { waNumber } from '../lib/phone';
 import {
   Shield,
   Zap,
@@ -546,7 +547,7 @@ export default function VisiMisiSection() {
         {/* Training Grounds Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {trainingGrounds.map((ground) => {
-            const cleanPhone = (ground.trainerPhone || '').replace(/[^0-9]/g, '');
+            const cleanPhone = waNumber(ground.trainerPhone);
             const waLink = `https://wa.me/${cleanPhone}?text=Salam%20Persaudaraan%20Pelatih%20${encodeURIComponent(ground.trainerName)},%20saya%20ingin%20menanyakan%20informasi%20pendaftaran%20di%20${encodeURIComponent(ground.name)}.`;
 
             return (

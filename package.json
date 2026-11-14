@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "test": "node --test tests/ukt.test.js tests/phone.test.js",
     "android": "vite build && cap sync android"
   },
   "dependencies": {
