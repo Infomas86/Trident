@@ -63,11 +63,12 @@ test('campaign_totals hanya menghitung donasi accepted', async () => {
   assert.equal(Number(data.donors_count), 1);
 });
 
-test('seed: hero dan 4 pilar', async () => {
+test('seed: hero dan pilar tersedia', async () => {
+  // Isi hero & pilar bisa diedit admin, jadi cek keberadaannya, bukan teks mereknya.
   const { data: s } = await admin.from('site_content').select('hero_title_main').eq('id', 1).single();
-  assert.equal(s.hero_title_main, 'TRIDENT');
-  const { data: p } = await admin.from('pillars').select('icon');
-  for (const i of ['Shield', 'Zap', 'Users', 'Award']) assert.ok(p.some((x) => x.icon === i), `pilar seed ${i}`);
+  assert.ok(s.hero_title_main?.length, 'hero title terisi');
+  const { data: p } = await admin.from('pillars').select('id');
+  assert.ok(p.length >= 1, 'minimal satu pilar');
 });
 
 // ---- RLS ----
@@ -250,8 +251,9 @@ test('penguji bisa ubah statistik, tidak bisa ubah pilar/tempat latihan/hero', a
   assert.equal(st.data.length, 1);
   assert.ok((await penguji.client.from('pillars').insert({ title: `T-p-${RUN}` })).error);
   assert.ok((await penguji.client.from('training_grounds').insert({ name: `T-tg-${RUN}` })).error);
-  // tulis nilai yang sama, supaya bila policy bocor data produksi tetap utuh
-  const sc = await penguji.client.from('site_content').update({ hero_title_main: 'TRIDENT' }).eq('id', 1).select();
+  // tulis nilai yang SAMA (dibaca dulu), supaya bila policy bocor data produksi tetap utuh
+  const { data: cur2 } = await admin.from('site_content').select('hero_title_main').eq('id', 1).single();
+  const sc = await penguji.client.from('site_content').update({ hero_title_main: cur2.hero_title_main }).eq('id', 1).select();
   assert.ifError(sc.error);
   assert.equal(sc.data.length, 0);
 });
@@ -296,7 +298,9 @@ test('admin tidak bisa memutuskan ulang donasi yang sudah diputuskan', async () 
 // ---- admin positif ----
 
 test('admin bisa ubah site_content, terima donasi, baca bukti orang lain', async () => {
-  const sc = await adminU.client.from('site_content').update({ hero_title_main: 'TRIDENT' }).eq('id', 1).select();
+  // baca nilai sekarang lalu tulis kembali nilai yang sama: menguji hak tulis admin tanpa mengubah konten produksi
+  const { data: cur3 } = await admin.from('site_content').select('hero_title_main').eq('id', 1).single();
+  const sc = await adminU.client.from('site_content').update({ hero_title_main: cur3.hero_title_main }).eq('id', 1).select();
   assert.ifError(sc.error);
   assert.equal(sc.data.length, 1);
   const r = await admin.from('donations').insert({ campaign_id: campaignId, donor_name: `T-adm-${RUN}`, amount: 1000, proof_path: `x/${RUN}-adm.png` }).select('id').single();
