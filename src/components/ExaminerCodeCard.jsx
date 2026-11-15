@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { KeyRound } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-// For a signed-in anggota: enter the one-time code from admin to become penguji for a UKT.
+// Enter a UKT's examiner code (from that PAC's admin) to score that one UKT.
 export default function ExaminerCodeCard() {
-  const { redeemExaminerCode } = useApp();
+  const { joinUktByCode } = useApp();
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -12,7 +12,7 @@ export default function ExaminerCodeCard() {
     e.preventDefault();
     setBusy(true);
     try {
-      if (await redeemExaminerCode(code)) setCode('');
+      if (await joinUktByCode(code)) setCode('');
     } finally {
       setBusy(false);
     }
@@ -25,7 +25,7 @@ export default function ExaminerCodeCard() {
         <h3 className="text-sm font-bold text-white">Bertugas sebagai Penguji UKT?</h3>
       </div>
       <p className="text-xs text-slate-400">
-        Masukkan kode penguji yang diberikan admin untuk membuka meja penilaian. Setiap kode hanya bisa dipakai sekali.
+        Masukkan kode UKT dari admin PAC penyelenggara untuk membuka meja penilaian UKT tersebut.
       </p>
       <div className="flex gap-2">
         <input

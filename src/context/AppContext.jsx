@@ -42,6 +42,10 @@ export function AppProvider({ children }) {
   const [siteContent, setSiteContent] = useState({});
 
   const [candidatesList, setCandidatesList] = useState([]);
+  // UKT events visible to this user (own-PAC admin, pusat admin, or joined examiner) and the one being worked on.
+  const [uktEvents, setUktEvents] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [myResult, setMyResult] = useState(null); // the signed-in member's own UKT row, if any
 
   // Modal for donation receipt printing
   const [selectedReceipt, setSelectedReceipt] = useState(null);
@@ -176,6 +180,7 @@ export function AppProvider({ children }) {
         belt: profile.belt,
         branch: profile.branch,
         regNumber: profile.reg_number,
+        pac: profile.pac,
         avatar: profile.photo_url,
       }
     : null;
@@ -211,19 +216,39 @@ export function AppProvider({ children }) {
     }
   };
 
-  // A signed-in anggota enters an admin-issued one-time code to become penguji.
-  const redeemExaminerCode = async (code) => {
+  // A signed-in user joins one UKT as examiner with that event's code from its PAC admin.
+  const joinUktByCode = async (code) => {
+    let eventId;
     try {
-      await api.redeemExaminerCode(code);
+      eventId = await api.joinUktByCode(code);
     } catch (e) {
       console.error(e);
       showToast(e instanceof api.UserError ? e.message : 'Gagal memverifikasi kode, periksa koneksi', 'error');
       return false;
     }
-    setProfileVersion((v) => v + 1);
-    showToast('Kode valid. Anda sekarang Penguji UKT.', 'success');
+    await loaders.events().catch(() => {});
+    setSelectedEventId(eventId);
+    showToast('Kode valid. Anda menjadi penguji untuk UKT ini.', 'success');
     return true;
   };
+
+  const handleCreateUktEvent = async (input) => {
+    try {
+      const { id } = await api.createUktEvent({ ...input, pac: profile?.pac });
+      await loaders.events();
+      setSelectedEventId(id);
+      showToast('UKT baru berhasil dibuat. Bagikan kode ke para penguji.', 'success');
+      return true;
+    } catch (e) {
+      console.error(e);
+      showToast('Gagal membuat UKT', 'error');
+      return false;
+    }
+  };
+  const handleRegenerateEventCode = (id) =>
+    mutate(() => api.regenerateEventCode(id), 'events', 'Kode baru dibuat. Kode lama tidak berlaku lagi.', 'Gagal membuat kode baru');
+  const handleDeleteUktEvent = (id) =>
+    mutate(() => api.deleteUktEvent(id), 'events', 'UKT dihapus beserta seluruh pesertanya.', 'Gagal menghapus UKT', 'info');
 
   const signOut = async () => {
     const pending = queueRef.current.filter((i) => i.userId === userId).length + conflictsRef.current.filter((i) => i.userId === userId).length;
@@ -257,19 +282,48 @@ export function AppProvider({ children }) {
     pillars: () => api.listPillars().then(setPillars),
     timeline: () => api.listTimeline().then(setTimeline),
     grounds: () => api.listTrainingGrounds().then(setTrainingGrounds),
-    candidates: async () => {
-      if (!userId) return setCandidatesList([]);
+    events: async () => {
+      if (!userId) return setUktEvents([]);
       try {
-        const list = await api.listCandidates();
-        if (isStaff) saveCache('trident_cache_candidates', list);
-        setCandidatesList(list);
+        setUktEvents(await api.listUktEvents());
       } catch (e) {
-        const cached = isStaff ? loadCache('trident_cache_candidates') : null;
-        if (!cached) throw e;
-        setCandidatesList(cached);
+        const cached = loadCache('trident_cache_candidates');
+        if (!cached?.events) throw e;
+        setUktEvents(cached.events);
       }
     },
+    candidates: async () => {
+      const eventId = selectedEventIdRef.current;
+      if (!userId || !eventId) return setCandidatesList([]);
+      try {
+        const list = await api.listCandidates(eventId);
+        saveCache('trident_cache_candidates', { events: uktEventsRef.current, eventId, list });
+        setCandidatesList(list);
+      } catch (e) {
+        const cached = loadCache('trident_cache_candidates');
+        if (cached?.eventId !== eventId) throw e;
+        setCandidatesList(cached.list);
+      }
+    },
+    myResult: async () => {
+      if (!userId) return setMyResult(null);
+      const own = (await api.listCandidates()).filter((c) => c.userId === userId);
+      setMyResult(own[0] ?? null);
+    },
   };
+  // Refs so loaders always read the latest selection without re-creating them.
+  const selectedEventIdRef = useRef(selectedEventId);
+  selectedEventIdRef.current = selectedEventId;
+  const uktEventsRef = useRef(uktEvents);
+  uktEventsRef.current = uktEvents;
+  // Keep a valid selection: the newest event this user can see.
+  useEffect(() => {
+    if (!uktEvents.some((e) => e.id === selectedEventId)) setSelectedEventId(uktEvents[0]?.id ?? null);
+  }, [uktEvents]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    loaders.candidates().catch(() => showToast('Gagal memuat peserta UKT', 'error'));
+  }, [selectedEventId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const refresh = async () => {
     const results = await Promise.allSettled(Object.values(loaders).map((load) => load()));
     if (results.some((r) => r.status === 'rejected')) showToast('Sebagian data gagal dimuat', 'error');
@@ -470,10 +524,11 @@ export function AppProvider({ children }) {
   const handleImportCandidates = async (rows) => {
     let count;
     try {
-      count = await api.upsertCandidates(rows);
+      if (!selectedEventId) throw new api.UserError('Pilih atau buat UKT terlebih dahulu');
+      count = await api.upsertCandidates(rows, selectedEventId);
     } catch (e) {
       console.error(e);
-      showToast(e.message === api.NOT_ALLOWED ? e.message : 'Gagal mengimpor peserta', 'error');
+      showToast(e.message === api.NOT_ALLOWED || e instanceof api.UserError ? e.message : 'Gagal mengimpor peserta', 'error');
       return false;
     }
     showToast(`Berhasil mengimpor ${count} peserta Ujian Kenaikan Tingkat!`, 'success');
@@ -544,7 +599,15 @@ export function AppProvider({ children }) {
         authLoading,
         signIn,
         signUp,
-        redeemExaminerCode,
+        joinUktByCode,
+        uktEvents,
+        selectedEventId,
+        setSelectedEventId,
+        selectedEvent: uktEvents.find((e) => e.id === selectedEventId) ?? null,
+        canManageEvents: isAdmin,
+        handleCreateUktEvent,
+        handleRegenerateEventCode,
+        handleDeleteUktEvent,
         signOut,
         refresh,
         isLoginModalOpen,
@@ -602,7 +665,7 @@ export function AppProvider({ children }) {
         resolveConflict,
         handleImportCandidates,
         handleDeleteCandidate,
-        myCandidate: candidatesList.find((c) => c.userId === currentUser?.id) ?? null,
+        myCandidate: myResult,
         selectedReceipt,
         setSelectedReceipt,
         toast,

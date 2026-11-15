@@ -9,7 +9,7 @@ const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SE
 class HttpError extends Error { constructor(public status: number, msg: string) { super(msg); } }
 const bad = (msg: string) => new HttpError(400, msg);
 
-const PROFILE_FIELDS = ['full_name', 'role', 'belt', 'branch', 'reg_number'] as const;
+const PROFILE_FIELDS = ['full_name', 'role', 'belt', 'branch', 'reg_number', 'pac'] as const;
 const pick = (b: Record<string, unknown>) =>
   Object.fromEntries(PROFILE_FIELDS.filter((k) => b[k] !== undefined).map((k) => [k, b[k]]));
 const checkRole = (r: unknown) => { if (r !== undefined && !ROLES.includes(r as string)) throw bad('role tidak valid'); };
@@ -79,6 +79,7 @@ async function handle(req: Request) {
           return {
             id: a.id, email: a.email, full_name: p?.full_name ?? null, role: p?.role ?? null,
             belt: p?.belt ?? null, branch: p?.branch ?? null, reg_number: p?.reg_number ?? null,
+            pac: p?.pac ?? null,
             active: !(a.banned_until && new Date(a.banned_until) > new Date()),
           };
         }),

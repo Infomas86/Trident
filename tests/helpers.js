@@ -33,7 +33,7 @@ export async function cleanup() {
   check(await admin.from('pillars').delete().like('title', like)); // hanya ada bila policy bocor
   check(await admin.from('training_grounds').delete().like('name', like));
   check(await admin.from('ukt_candidates').delete().like('reg_number', like));
-  check(await admin.from('examiner_codes').delete().like('code', `T${RUN}%`));
+  check(await admin.from('ukt_events').delete().like('name', like)); // cascades to candidates/examiners
   const ids = []; // kumpulkan dulu, supaya hapus tidak menggeser halaman
   for (let page = 1; ; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });

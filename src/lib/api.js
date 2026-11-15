@@ -27,7 +27,7 @@ export async function getProfile(userId) {
   return data;
 }
 
-// --- Daftar mandiri & kode penguji ---
+// --- Daftar mandiri ---
 // Self sign-up always creates an 'anggota' profile (DB trigger); the name travels as metadata.
 export async function signUp(email, password, fullName) {
   const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
@@ -38,21 +38,6 @@ export async function signUp(email, password, fullName) {
   }
   return data;
 }
-export async function redeemExaminerCode(code) {
-  const { error } = await supabase.rpc('redeem_examiner_code', { p_code: code });
-  if (error) throw new UserError(error.message.includes('tidak valid') ? 'Kode penguji tidak valid atau sudah dipakai' : error.message);
-}
-export const listExaminerCodes = async () =>
-  ok(await supabase.from('examiner_codes').select('code,created_at,used_at,used_by').order('created_at', { ascending: false }));
-export async function createExaminerCode() {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid misreading
-  const bytes = crypto.getRandomValues(new Uint8Array(8));
-  const code = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('');
-  ok(await supabase.from('examiner_codes').insert({ code }));
-  return code;
-}
-export const deleteExaminerCode = async (code) =>
-  hit(supabase.from('examiner_codes').delete().eq('code', code).is('used_by', null));
 
 // --- Berita ---
 const NEWS_MAP = { title: 'title', category: 'category', summary: 'summary', content: 'content', image: 'image_url', tags: 'tags', author: 'author_name' };
@@ -237,8 +222,35 @@ const fromCandidateRow = (r) => ({
   updatedAt: r.updated_at,
 });
 
-export async function listCandidates() {
-  return ok(await supabase.from('ukt_candidates').select('*').order('name')).map(fromCandidateRow);
+// eventId given → that UKT's participants (examiners/admins); none → whatever RLS allows (a member's own rows).
+export async function listCandidates(eventId) {
+  let q = supabase.from('ukt_candidates').select('*').order('name');
+  if (eventId) q = q.eq('event_id', eventId);
+  return ok(await q).map(fromCandidateRow);
+}
+
+// --- Acara UKT per PAC ---
+const genCode = () => {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid misreading
+  return Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => alphabet[b % alphabet.length]).join('');
+};
+export const listUktEvents = async () =>
+  ok(await supabase.from('ukt_events').select('id,pac,name,exam_date,location,examiner_code').order('exam_date', { ascending: false })).map(
+    (e) => ({ id: e.id, pac: e.pac, name: e.name, examDate: e.exam_date, location: e.location, examinerCode: e.examiner_code }),
+  );
+export const createUktEvent = async ({ name, examDate, location, pac }) =>
+  ok(await supabase.from('ukt_events').insert({ name, exam_date: examDate, location, pac: pac || null, examiner_code: genCode() }).select('id').single());
+// New code replaces the old one immediately; examiners who already joined keep access.
+export async function regenerateEventCode(id) {
+  const code = genCode();
+  await hit(supabase.from('ukt_events').update({ examiner_code: code }).eq('id', id));
+  return code;
+}
+export const deleteUktEvent = async (id) => hit(supabase.from('ukt_events').delete().eq('id', id));
+export async function joinUktByCode(code) {
+  const { data, error } = await supabase.rpc('join_ukt_by_code', { p_code: code });
+  if (error) throw new UserError(error.message.includes('tidak valid') ? 'Kode penguji tidak valid atau UKT sudah berakhir' : error.message);
+  return data;
 }
 
 export async function getCandidate(id) {
@@ -267,8 +279,9 @@ export async function saveCandidateScores(id, posScores, notes, { baseUpdatedAt,
   return rows.length ? 'ok' : 'conflict';
 }
 
-export async function upsertCandidates(rows) {
+export async function upsertCandidates(rows, eventId) {
   const payload = rows.map((r) => ({
+    event_id: eventId,
     reg_number: r.regNumber,
     name: r.name,
     branch: r.branch,
@@ -279,7 +292,7 @@ export async function upsertCandidates(rows) {
     examiner_notes: r.examinerNotes,
     ...Object.fromEntries(STRUCT_KEYS.map((k) => [`struct_${k}`, r.structure?.[k] ?? ''])),
   }));
-  ok(await supabase.from('ukt_candidates').upsert(payload, { onConflict: 'reg_number' }));
+  ok(await supabase.from('ukt_candidates').upsert(payload, { onConflict: 'event_id,reg_number' }));
   return payload.length;
 }
 

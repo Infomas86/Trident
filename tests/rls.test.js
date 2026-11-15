@@ -4,7 +4,7 @@ import { adminClient, anonClient, createTestUser, cleanup, RUN } from './helpers
 
 const admin = adminClient();
 const anon = anonClient();
-let anggota, penguji, adminU, campaignId, agendaId;
+let anggota, penguji, adminU, campaignId, agendaId, eventId;
 
 before(async () => {
   anggota = await createTestUser('anggota');
@@ -16,24 +16,30 @@ before(async () => {
   const a = await admin.from('agendas').insert({ title: `T-agenda-${RUN}` }).select('id').single();
   assert.ifError(a.error);
   agendaId = a.data.id;
+  // UKT event for this run; the test penguji joins it as examiner.
+  const today = new Date().toISOString().slice(0, 10);
+  const e = await admin.from('ukt_events').insert({ name: `T-event-${RUN}`, exam_date: today, pac: `PAC-T-${RUN}`, examiner_code: `TE${RUN}` }).select('id').single();
+  assert.ifError(e.error);
+  eventId = e.data.id;
+  assert.ifError((await admin.from('ukt_examiners').insert({ event_id: eventId, user_id: penguji.id })).error);
 });
 after(cleanup);
 
 test('final_score dihitung database', async () => {
-  const { data, error } = await admin.from('ukt_candidates').insert({ reg_number: `T-1-${RUN}`, name: 'Uji', pos1: 88, pos2: 86, pos3: 92, pos4: 84 }).select('final_score').single();
+  const { data, error } = await admin.from('ukt_candidates').insert({ event_id: eventId, reg_number: `T-1-${RUN}`, name: 'Uji', pos1: 88, pos2: 86, pos3: 92, pos4: 84 }).select('final_score').single();
   assert.ifError(error);
   assert.equal(Number(data.final_score), 87.2);
 });
 
 test('nilai 150 ditolak database', async () => {
-  const { error } = await admin.from('ukt_candidates').insert({ reg_number: `T-2-${RUN}`, name: 'Uji', pos1: 150 });
+  const { error } = await admin.from('ukt_candidates').insert({ event_id: eventId, reg_number: `T-2-${RUN}`, name: 'Uji', pos1: 150 });
   assert.ok(error);
 });
 
 test('peserta terhubung ke akun lewat reg_number, dua arah', async () => {
   const reg = `T-3-${RUN}`;
   const a = await createTestUser('anggota', { reg_number: reg });
-  const { data } = await admin.from('ukt_candidates').insert({ reg_number: reg, name: 'Uji' }).select('user_id').single();
+  const { data } = await admin.from('ukt_candidates').insert({ event_id: eventId, reg_number: reg, name: 'Uji' }).select('user_id').single();
   assert.equal(data.user_id, a.id);
   const b = await createTestUser('anggota');
   assert.ifError((await admin.from('profiles').update({ reg_number: null }).eq('id', a.id)).error);
@@ -69,7 +75,7 @@ test('seed: hero dan 4 pilar', async () => {
 test('anggota tidak bisa mengubah nilai', async () => {
   const reg = `T-4-${RUN}`;
   const m = await createTestUser('anggota', { reg_number: reg });
-  assert.ifError((await admin.from('ukt_candidates').insert({ reg_number: reg, name: 'Uji' })).error);
+  assert.ifError((await admin.from('ukt_candidates').insert({ event_id: eventId, reg_number: reg, name: 'Uji' })).error);
   const { data, error } = await m.client.from('ukt_candidates').update({ pos1: 100 }).eq('reg_number', reg).select();
   assert.ifError(error);
   assert.equal(data.length, 0);
@@ -80,14 +86,14 @@ test('anggota tidak bisa mengubah nilai', async () => {
 test('anggota hanya melihat peserta miliknya', async () => {
   const reg = `T-5-${RUN}`;
   const m = await createTestUser('anggota', { reg_number: reg });
-  assert.ifError((await admin.from('ukt_candidates').insert([{ reg_number: reg, name: 'Uji' }, { reg_number: `T-6-${RUN}`, name: 'Lain' }])).error);
+  assert.ifError((await admin.from('ukt_candidates').insert([{ event_id: eventId, reg_number: reg, name: 'Uji' }, { event_id: eventId, reg_number: `T-6-${RUN}`, name: 'Lain' }])).error);
   const { data, error } = await m.client.from('ukt_candidates').select('reg_number');
   assert.ifError(error);
   assert.deepEqual(data.map((x) => x.reg_number), [reg]);
 });
 
 test('anggota tanpa peserta melihat 0 baris', async () => {
-  assert.ifError((await admin.from('ukt_candidates').insert({ reg_number: `T-7-${RUN}`, name: 'Lain' })).error);
+  assert.ifError((await admin.from('ukt_candidates').insert({ event_id: eventId, reg_number: `T-7-${RUN}`, name: 'Lain' })).error);
   const { data, error } = await anggota.client.from('ukt_candidates').select('id');
   assert.ifError(error);
   assert.equal(data.length, 0);
@@ -95,9 +101,9 @@ test('anggota tanpa peserta melihat 0 baris', async () => {
 
 test('upsert dua kali dengan reg_number sama → 1 baris, nilai terbaru', async () => {
   const reg = `T-8-${RUN}`;
-  const row = (pos1) => ({ reg_number: reg, name: 'Uji', pos1 });
+  const row = (pos1) => ({ event_id: eventId, reg_number: reg, name: 'Uji', pos1 });
   for (const v of [60, 90]) {
-    assert.ifError((await penguji.client.from('ukt_candidates').upsert(row(v), { onConflict: 'reg_number' })).error);
+    assert.ifError((await penguji.client.from('ukt_candidates').upsert(row(v), { onConflict: 'event_id,reg_number' })).error);
   }
   const { data, error } = await admin.from('ukt_candidates').select('pos1').eq('reg_number', reg);
   assert.ifError(error);
@@ -107,7 +113,7 @@ test('upsert dua kali dengan reg_number sama → 1 baris, nilai terbaru', async 
 
 test("simpan nilai dengan baseUpdatedAt lama → 'conflict', nilai server tidak berubah; dengan force → 'ok'", async () => {
   const reg = `T-9-${RUN}`;
-  const { data: row, error } = await admin.from('ukt_candidates').insert({ reg_number: reg, name: 'Uji', pos1: 50 }).select('id, updated_at').single();
+  const { data: row, error } = await admin.from('ukt_candidates').insert({ event_id: eventId, reg_number: reg, name: 'Uji', pos1: 50 }).select('id, updated_at').single();
   assert.ifError(error);
   const save = async (pos1, base, force) => { // query yang sama dengan api.saveCandidateScores
     let q = penguji.client.from('ukt_candidates').update({ pos1 }).eq('id', row.id);
@@ -370,18 +376,42 @@ test('akun baru otomatis dapat profil anggota (daftar mandiri)', async () => {
   assert.deepEqual(p, { full_name: 'Pendaftar Mandiri', role: 'anggota', reg_number: null });
 });
 
-test('kode penguji: sekali pakai, mengubah anggota jadi penguji; anggota tak bisa lihat kode', async () => {
-  const code = `T${RUN}A`.toUpperCase();
-  assert.ifError((await adminU.client.from('examiner_codes').insert({ code })).error);
-  const a = await createTestUser('anggota');
-  const b = await createTestUser('anggota');
-  const seen = await a.client.from('examiner_codes').select('code');
-  assert.equal(seen.data.length, 0);
-  assert.ifError((await a.client.rpc('redeem_examiner_code', { p_code: code.toLowerCase() })).error);
-  const { data: pa } = await admin.from('profiles').select('role').eq('id', a.id).single();
-  assert.equal(pa.role, 'penguji');
-  assert.ok((await b.client.rpc('redeem_examiner_code', { p_code: code })).error);
-  const { data: pb } = await admin.from('profiles').select('role').eq('id', b.id).single();
-  assert.equal(pb.role, 'anggota');
-  assert.ok((await a.client.from('examiner_codes').insert({ code: `T${RUN}B` })).error);
+test('UKT per PAC: kode UKT membuka penilaian UKT itu saja', async () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const o = await admin.from('ukt_events').insert({ name: `T-other-${RUN}`, exam_date: today, pac: `PAC-O-${RUN}`, examiner_code: `TO${RUN}` }).select('id').single();
+  assert.ifError(o.error);
+  const regA = `T-ea-${RUN}`, regB = `T-eb-${RUN}`;
+  assert.ifError((await admin.from('ukt_candidates').insert([{ event_id: eventId, reg_number: regA, name: 'A' }, { event_id: o.data.id, reg_number: regB, name: 'B' }])).error);
+  const m = await createTestUser('anggota');
+  assert.equal((await m.client.from('ukt_candidates').update({ pos1: 70 }).eq('reg_number', regA).select('id')).data.length, 0);
+  assert.ok((await m.client.rpc('join_ukt_by_code', { p_code: 'SALAH123' })).error);
+  assert.ifError((await m.client.rpc('join_ukt_by_code', { p_code: `te${RUN}` })).error);
+  assert.equal((await m.client.from('ukt_candidates').update({ pos1: 70 }).eq('reg_number', regA).select('id')).data.length, 1);
+  assert.equal((await m.client.from('ukt_candidates').update({ pos1: 70 }).eq('reg_number', regB).select('id')).data.length, 0);
+  const seen = (await m.client.from('ukt_events').select('id')).data.map((e) => e.id);
+  assert.deepEqual(seen, [eventId]);
+});
+
+test('UKT per PAC: admin PAC hanya melihat dan membuat UKT PAC-nya', async () => {
+  const pacAdmin = await createTestUser('admin', { pac: `PAC-T-${RUN}` });
+  const today = new Date().toISOString().slice(0, 10);
+  const o = await admin.from('ukt_events').insert({ name: `T-o2-${RUN}`, exam_date: today, pac: `PAC-Z-${RUN}` }).select('id').single();
+  assert.ifError(o.error);
+  const ids = (await pacAdmin.client.from('ukt_events').select('id')).data.map((e) => e.id);
+  assert.ok(ids.includes(eventId));
+  assert.ok(!ids.includes(o.data.id));
+  assert.ok((await pacAdmin.client.from('ukt_events').insert({ name: `T-x-${RUN}`, exam_date: today, pac: `PAC-Z-${RUN}` })).error);
+  assert.ifError((await pacAdmin.client.from('ukt_events').insert({ name: `T-y-${RUN}`, exam_date: today, pac: `PAC-T-${RUN}` })).error);
+});
+
+test('UKT lewat 7 hari: kode ditolak dan data terhapus oleh purge', async () => {
+  const old = new Date(Date.now() - 9 * 86400000).toISOString().slice(0, 10);
+  const o = await admin.from('ukt_events').insert({ name: `T-old-${RUN}`, exam_date: old, examiner_code: `TD${RUN}` }).select('id').single();
+  assert.ifError(o.error);
+  assert.ifError((await admin.from('ukt_candidates').insert({ event_id: o.data.id, reg_number: `T-old-${RUN}`, name: 'Lama' })).error);
+  const m = await createTestUser('anggota');
+  assert.ok((await m.client.rpc('join_ukt_by_code', { p_code: `TD${RUN}` })).error);
+  assert.ifError((await admin.rpc('purge_old_ukt_events')).error);
+  assert.equal((await admin.from('ukt_events').select('id').eq('id', o.data.id)).data.length, 0);
+  assert.equal((await admin.from('ukt_candidates').select('id').eq('reg_number', `T-old-${RUN}`)).data.length, 0);
 });

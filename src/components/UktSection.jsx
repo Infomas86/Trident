@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import ExaminerCodeCard from './ExaminerCodeCard';
+import UktEventsBar from './UktEventsBar';
 import { calculateUktScore, statusFromScore, parseCandidatesCsv, buildCandidatesCsv } from '../lib/ukt';
 import {
   GraduationCap,
@@ -39,6 +39,8 @@ export default function UktSection() {
     role,
     ROLES,
     isStaff,
+    selectedEvent,
+    canManageEvents,
     setIsLoginModalOpen,
     showToast,
     isOnline,
@@ -48,6 +50,8 @@ export default function UktSection() {
     resolveConflict,
     discardQueued,
   } = useApp();
+  // Scoring/participant tools open for the selected UKT (admin of its PAC or examiner who entered its code).
+  const canScore = !!selectedEvent;
 
   // Active Pos Sub-Tab: 'all' | 'pos1' | 'pos2' | 'pos3' | 'pos4'
   const [activePosTab, setActivePosTab] = useState('all');
@@ -319,7 +323,7 @@ export default function UktSection() {
   return (
     <div className="space-y-8 py-6">
       
-      {isStaff && (
+      {canScore && (
         <div className="space-y-3">
           <div className={`flex flex-wrap items-center gap-3 px-4 py-2.5 rounded-xl border text-xs font-semibold ${isOnline ? 'bg-emerald-950/30 border-emerald-700/40 text-emerald-300' : 'bg-amber-950/30 border-amber-700/40 text-amber-300'}`}>
             <span>{isOnline ? 'Online' : 'Offline: nilai disimpan di HP ini dan dikirim saat sinyal kembali'}</span>
@@ -386,7 +390,7 @@ export default function UktSection() {
         </div>
 
         {/* Action Buttons for Examiner & Admin: Import & Export */}
-        {isStaff && (
+        {canScore && (
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setIsImportModalOpen(true)}
@@ -408,7 +412,7 @@ export default function UktSection() {
       </div>
 
       {/* POS SELECTOR TABS (Pos 1, Pos 2, Pos 3, Pos 4, Semua Pos) - Khusus Penguji & Admin */}
-      {isStaff && (
+      {canScore && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1 bg-slate-900/70 p-2 rounded-2xl border border-slate-800">
           <button
             onClick={() => setActivePosTab('all')}
@@ -475,13 +479,13 @@ export default function UktSection() {
       {/* ========================================================================= */}
       {/* CASE 1: MEMBER VIEW (Read Hasil Pribadi)                                      */}
       {/* ========================================================================= */}
-      {role === ROLES.MEMBER && <ExaminerCodeCard />}
-      {role === ROLES.MEMBER && !myCandidate && (
+      <UktEventsBar />
+      {role === ROLES.MEMBER && !myCandidate && !canScore && (
         <div className="trident-card rounded-2xl p-6 border border-slate-800 text-sm text-slate-300">
           Anda belum terdaftar sebagai peserta UKT. Hubungi penguji.
         </div>
       )}
-      {role === ROLES.MEMBER && myCandidate && (
+      {myCandidate && !canScore && (
         <div className="space-y-6">
           
           {/* KARTU INFORMASI PRIBADI PENDAFTARAN PESERTA UKT */}
@@ -671,7 +675,7 @@ export default function UktSection() {
       {/* ========================================================================= */}
       {/* CASE 2: EXAMINER & ADMIN VIEW (Hak Pengujian)                            */}
       {/* ========================================================================= */}
-      {isStaff && (
+      {canScore && (
         <div className="space-y-6">
           
           {/* Overview Metrics Cards */}
@@ -852,12 +856,14 @@ export default function UktSection() {
                               <Sliders className="w-3.5 h-3.5" />
                               <span>Evaluasi Nilai</span>
                             </button>
+                            {canManageEvents && (
                             <button
-                              onClick={() => confirm(`Hapus peserta ${c.name}?`) && handleDeleteCandidate(c.id)}
-                              className="mt-1.5 text-[10px] text-rose-400 hover:text-rose-300 underline"
-                            >
-                              Hapus
-                            </button>
+                                onClick={() => confirm(`Hapus peserta ${c.name}?`) && handleDeleteCandidate(c.id)}
+                                className="mt-1.5 text-[10px] text-rose-400 hover:text-rose-300 underline"
+                              >
+                                Hapus
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );
