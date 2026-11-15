@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import ExaminerCodeCard from './ExaminerCodeCard';
 import { calculateUktScore, statusFromScore, parseCandidatesCsv, buildCandidatesCsv } from '../lib/ukt';
 import {
   GraduationCap,
@@ -474,6 +475,7 @@ export default function UktSection() {
       {/* ========================================================================= */}
       {/* CASE 1: MEMBER VIEW (Read Hasil Pribadi)                                      */}
       {/* ========================================================================= */}
+      {role === ROLES.MEMBER && <ExaminerCodeCard />}
       {role === ROLES.MEMBER && !myCandidate && (
         <div className="trident-card rounded-2xl p-6 border border-slate-800 text-sm text-slate-300">
           Anda belum terdaftar sebagai peserta UKT. Hubungi penguji.

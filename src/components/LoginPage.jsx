@@ -39,8 +39,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [isExaminer, setIsExaminer] = useState(false);
-  const [examinerCode, setExaminerCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   if (!isLoginModalOpen) return null;
@@ -64,7 +62,7 @@ export default function LoginPage() {
   const handleRegister = (e) => {
     e.preventDefault();
     run(() =>
-      signUp({ fullName: fullName.trim(), email: email.trim(), password, examinerCode: isExaminer ? examinerCode : '' }),
+      signUp({ fullName: fullName.trim(), email: email.trim(), password }),
     );
   };
 
@@ -88,12 +86,13 @@ export default function LoginPage() {
 
         <button
           onClick={() => setIsLoginModalOpen(false)}
-          className="absolute top-5 right-5 p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors z-10"
+          aria-label="Tutup"
+          className="absolute top-4 right-4 p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors z-30"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="text-center space-y-2 relative z-10">
+        <div className="text-center space-y-2 relative z-10 pt-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-bold tracking-wider uppercase">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Akun Resmi Perguruan</span>
@@ -104,7 +103,7 @@ export default function LoginPage() {
           <p className="text-xs sm:text-sm text-slate-400">
             {mode === 'login'
               ? 'Masuk untuk membuka Agenda, Donasi, dan Ujian Kenaikan Tingkat.'
-              : 'Daftar sebagai anggota. Penguji memasukkan kode dari admin.'}
+              : 'Daftar sebagai anggota perguruan.'}
           </p>
         </div>
 
@@ -172,29 +171,6 @@ export default function LoginPage() {
               <Label>Kata Sandi (minimal 8 karakter)</Label>
               <PasswordInput value={password} onChange={setPassword} autoComplete="new-password" minLength={8} />
             </div>
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={isExaminer}
-                onChange={(e) => setIsExaminer(e.target.checked)}
-                className="accent-amber-500"
-              />
-              Saya penguji (punya kode dari admin)
-            </label>
-            {isExaminer && (
-              <div>
-                <Label>Kode Penguji</Label>
-                <input
-                  type="text"
-                  autoCapitalize="characters"
-                  value={examinerCode}
-                  onChange={(e) => setExaminerCode(e.target.value.toUpperCase())}
-                  placeholder="Contoh: K7M2Q9XA"
-                  className={`${inputCls} font-mono tracking-widest`}
-                  required
-                />
-              </div>
-            )}
             <button
               type="submit"
               disabled={submitting}

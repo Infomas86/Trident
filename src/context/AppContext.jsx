@@ -197,32 +197,32 @@ export function AppProvider({ children }) {
     return true;
   };
 
-  // Self sign-up as anggota; an optional admin-issued code upgrades the new account to penguji.
-  const signUp = async ({ fullName, email, password, examinerCode }) => {
+  // Self sign-up always creates an anggota account.
+  const signUp = async ({ fullName, email, password }) => {
     try {
       const { session: s } = await api.signUp(email, password, fullName);
-      if (!s) {
-        showToast('Pendaftaran berhasil. Silakan masuk dengan akun Anda.', 'success');
-        return true;
-      }
-      if (examinerCode?.trim()) {
-        try {
-          await api.redeemExaminerCode(examinerCode);
-          setProfileVersion((v) => v + 1);
-          showToast('Akun dibuat dan terdaftar sebagai Penguji. Selamat datang!', 'success');
-        } catch (e) {
-          showToast(`Akun dibuat sebagai Anggota. ${e.message}`, 'error');
-        }
-      } else {
-        showToast('Akun berhasil dibuat. Selamat datang!', 'success');
-      }
-      setIsLoginModalOpen(false);
+      showToast(s ? 'Akun berhasil dibuat. Selamat datang!' : 'Pendaftaran berhasil. Silakan masuk dengan akun Anda.', 'success');
+      if (s) setIsLoginModalOpen(false);
       return true;
     } catch (e) {
       console.error(e);
       showToast(e instanceof api.UserError ? e.message : 'Gagal mendaftar, periksa koneksi', 'error');
       return false;
     }
+  };
+
+  // A signed-in anggota enters an admin-issued one-time code to become penguji.
+  const redeemExaminerCode = async (code) => {
+    try {
+      await api.redeemExaminerCode(code);
+    } catch (e) {
+      console.error(e);
+      showToast(e instanceof api.UserError ? e.message : 'Gagal memverifikasi kode, periksa koneksi', 'error');
+      return false;
+    }
+    setProfileVersion((v) => v + 1);
+    showToast('Kode valid. Anda sekarang Penguji UKT.', 'success');
+    return true;
   };
 
   const signOut = async () => {
@@ -544,6 +544,7 @@ export function AppProvider({ children }) {
         authLoading,
         signIn,
         signUp,
+        redeemExaminerCode,
         signOut,
         refresh,
         isLoginModalOpen,

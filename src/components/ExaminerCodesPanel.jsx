@@ -68,7 +68,7 @@ export default function ExaminerCodesPanel({ users }) {
         </button>
       </div>
       <p className="text-[11px] text-slate-400">
-        Berikan kode ke calon penguji. Saat mendaftar, ia mencentang "Saya penguji" dan memasukkan kode ini. Setiap kode hanya bisa dipakai sekali.
+        Berikan kode ke anggota yang bertugas sebagai penguji UKT. Setelah login, ia memasukkan kode di tab Ujian Kenaikan Tingkat. Setiap kode hanya bisa dipakai sekali.
       </p>
       {codes.length === 0 ? (
         <p className="text-xs text-slate-500">Belum ada kode.</p>
