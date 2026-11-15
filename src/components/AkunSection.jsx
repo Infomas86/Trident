@@ -9,7 +9,7 @@ const EMPTY = { email: '', password: '', full_name: '', role: ROLES.MEMBER, bran
 const blank = (v) => v.trim() || null;
 
 export default function AkunSection() {
-  const { showToast } = useApp();
+  const { showToast, currentUser } = useApp();
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState('');
   const [form, setForm] = useState(EMPTY);
@@ -73,6 +73,15 @@ export default function AkunSection() {
   const toggle = (u) => {
     if (u.active && !window.confirm(`Nonaktifkan ${u.email}? Pengguna tidak bisa masuk lagi.`)) return;
     run(() => api.setUserActive(u.id, !u.active), u.active ? 'Akun dinonaktifkan' : 'Akun diaktifkan', 'Gagal mengubah status akun');
+  };
+
+  const remove = (u) => {
+    const ok = window.confirm(
+      `Hapus permanen akun ${u.full_name ?? ''} (${u.email})?
+
+Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap tersimpan.`,
+    );
+    if (ok) run(() => api.deleteUser(u.id), 'Akun berhasil dihapus', 'Gagal menghapus akun');
   };
 
   const needle = q.trim().toLowerCase();
@@ -142,6 +151,9 @@ export default function AkunSection() {
                     <button disabled={busy} onClick={() => setEdit({ id: u.id, full_name: u.full_name ?? '', role: u.role ?? ROLES.MEMBER, branch: u.branch ?? '', reg_number: u.reg_number ?? '', pac: u.pac ?? '' })} className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700">Ubah</button>
                     <button disabled={busy} onClick={() => reset(u)} className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700">Reset Sandi</button>
                     <button disabled={busy} onClick={() => toggle(u)} className={`px-2 py-1 rounded text-white ${u.active ? 'bg-rose-700 hover:bg-rose-600' : 'bg-emerald-600 hover:bg-emerald-500'}`}>{u.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
+                    {u.id !== currentUser?.id && (
+                      <button disabled={busy} onClick={() => remove(u)} className="px-2 py-1 rounded text-white bg-rose-950 hover:bg-rose-900 border border-rose-700">Hapus</button>
+                    )}
                   </td>
                 </tr>
               ))}

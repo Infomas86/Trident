@@ -416,3 +416,15 @@ test('UKT lewat 7 hari: kode ditolak dan data terhapus oleh purge', async () => 
   assert.equal((await admin.from('ukt_events').select('id').eq('id', o.data.id)).data.length, 0);
   assert.equal((await admin.from('ukt_candidates').select('id').eq('reg_number', `T-old-${RUN}`)).data.length, 0);
 });
+
+test('manage-user: admin menghapus akun, donasinya tetap ada; tidak bisa hapus diri sendiri', async () => {
+  const u = await createTestUser('anggota');
+  const d = await admin.from('donations').insert({ campaign_id: campaignId, user_id: u.id, donor_name: `T-del-${RUN}`, amount: 5000, proof_path: `${u.id}/del-${RUN}.png` }).select('id').single();
+  assert.ifError(d.error);
+  assert.equal(status(await call(anggota, { action: 'delete', user_id: u.id })), 403);
+  assert.equal(status(await call(adminU, { action: 'delete', user_id: adminU.id })), 400);
+  assert.ifError((await call(adminU, { action: 'delete', user_id: u.id })).error);
+  assert.equal((await admin.from('profiles').select('id').eq('id', u.id)).data.length, 0);
+  const { data: kept } = await admin.from('donations').select('user_id').eq('id', d.data.id).single();
+  assert.equal(kept.user_id, null);
+});

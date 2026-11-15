@@ -54,6 +54,12 @@ async function handle(req: Request) {
       if (uid === me && !b.active) throw bad('tidak bisa menonaktifkan diri sendiri');
       must(await db.auth.admin.updateUserById(uid, { ban_duration: b.active ? 'none' : '876000h' }));
       return { ok: true };
+    case 'delete': {
+      if (uid === me) throw bad('tidak bisa menghapus akun sendiri');
+      const { error } = await db.auth.admin.deleteUser(uid); // profile cascades; donations keep their record
+      if (error) throw error.status === 404 ? new HttpError(404, 'akun tidak ditemukan') : new Error(error.message);
+      return { ok: true };
+    }
     case 'update_profile': {
       checkRole(b.role);
       if (uid === me && b.role !== undefined && b.role !== 'admin') throw bad('tidak bisa menurunkan peran sendiri');

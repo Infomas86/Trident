@@ -431,4 +431,5 @@ export const listUsers = async () => (await manageUser({ action: 'list' })).user
 export const createUser = (input) => manageUser({ action: 'create', ...input });
 export const resetPassword = (userId, password) => manageUser({ action: 'reset_password', user_id: userId, password });
 export const setUserActive = (userId, active) => manageUser({ action: 'set_active', user_id: userId, active });
+export const deleteUser = (userId) => manageUser({ action: 'delete', user_id: userId });
 export const updateUserProfile = (userId, patch) => manageUser({ action: 'update_profile', user_id: userId, ...patch });
