@@ -372,12 +372,15 @@ test('manage-user: update_profile dan list; admin tak bisa nonaktif/turun diri',
   assert.equal(status(await call(adminU, { action: 'update_profile', user_id: u.id, role: 'dewa' })), 400);
 });
 
-test('akun baru otomatis dapat profil anggota (daftar mandiri)', async () => {
+test('akun baru otomatis dapat profil anggota + PAC + no. registrasi (daftar mandiri)', async () => {
   const email = `u${RUN}-self@test.trident.local`;
-  const { data, error } = await admin.auth.admin.createUser({ email, password: 'Sandi-Mandiri-1', email_confirm: true, user_metadata: { full_name: 'Pendaftar Mandiri' } });
+  const { data, error } = await admin.auth.admin.createUser({ email, password: 'Sandi-Mandiri-1', email_confirm: true, user_metadata: { full_name: 'Pendaftar Mandiri', pac: 'Batam Kota' } });
   assert.ifError(error);
-  const { data: p } = await admin.from('profiles').select('full_name, role, reg_number').eq('id', data.user.id).single();
-  assert.deepEqual(p, { full_name: 'Pendaftar Mandiri', role: 'anggota', reg_number: null });
+  const { data: p } = await admin.from('profiles').select('full_name, role, pac, reg_number').eq('id', data.user.id).single();
+  assert.equal(p.full_name, 'Pendaftar Mandiri');
+  assert.equal(p.role, 'anggota');
+  assert.equal(p.pac, 'Batam Kota');
+  assert.match(p.reg_number, /^PNKB-\d{4}-\d{4}$/);
 });
 
 test('UKT per PAC: kode UKT membuka penilaian UKT itu saja', async () => {
