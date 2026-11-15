@@ -401,7 +401,8 @@ test('UKT per PAC: admin PAC hanya melihat dan membuat UKT PAC-nya', async () =>
   assert.ok(ids.includes(eventId));
   assert.ok(!ids.includes(o.data.id));
   assert.ok((await pacAdmin.client.from('ukt_events').insert({ name: `T-x-${RUN}`, exam_date: today, pac: `PAC-Z-${RUN}` })).error);
-  assert.ifError((await pacAdmin.client.from('ukt_events').insert({ name: `T-y-${RUN}`, exam_date: today, pac: `PAC-T-${RUN}` })).error);
+  // Create + read back (what the app does) must work for the admin's own PAC.
+  assert.ifError((await pacAdmin.client.from('ukt_events').insert({ name: `T-y-${RUN}`, exam_date: today, pac: `PAC-T-${RUN}` }).select('id').single()).error);
 });
 
 test('UKT lewat 7 hari: kode ditolak dan data terhapus oleh purge', async () => {
