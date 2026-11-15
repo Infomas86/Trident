@@ -73,13 +73,13 @@ export default function DonasiSection() {
     return (
       <div className="py-12 max-w-2xl mx-auto text-center space-y-6">
         <div className="w-20 h-20 rounded-3xl bg-amber-950/60 border border-amber-500/30 flex items-center justify-center mx-auto shadow-2xl">
-          <Lock className="w-10 h-10 text-amber-400 animate-pulse" />
+          <Lock className="w-10 h-10 text-amber-500 animate-pulse" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
             Program Donasi & Gotong Royong Perguruan
           </h2>
-          <p className="text-sm text-slate-400 max-w-md mx-auto">
+          <p className="text-sm text-slate-500 max-w-md mx-auto">
             Fitur kontribusi sarana perguruan bersifat eksklusif bagi anggota terdaftar dan pengurus perguruan.
           </p>
         </div>
@@ -176,14 +176,14 @@ export default function DonasiSection() {
       {/* Header and Controls */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-amber-400 text-xs font-bold uppercase tracking-widest mb-1">
+          <div className="inline-flex items-center gap-1.5 text-amber-500 text-xs font-bold uppercase tracking-widest mb-1">
             <HeartHandshake className="w-3.5 h-3.5" />
             <span>Kemandirian Finansial & Gotong Royong</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
             Program Donasi Sarana
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-500">
             Wujudkan fasilitas perguruan yang representatif dan dukung atlet berprestasi secara transparan.
           </p>
         </div>
@@ -211,33 +211,33 @@ export default function DonasiSection() {
           return (
             <div
               key={camp.id}
-              className="trident-card rounded-2xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all duration-300 flex flex-col justify-between space-y-6"
+              className="trident-card rounded-2xl p-6 border border-slate-200 hover:border-amber-500/40 transition-all duration-300 flex flex-col justify-between space-y-6"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold px-3 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800/50 uppercase tracking-wide">
+                  <span className="text-[11px] font-bold px-3 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 uppercase tracking-wide">
                     {camp.category}
                   </span>
-                  <span className="text-xs text-slate-400">
-                    Batas: <strong className="text-slate-200">{camp.deadline}</strong>
+                  <span className="text-xs text-slate-500">
+                    Batas: <strong className="text-slate-800">{camp.deadline}</strong>
                   </span>
                 </div>
                 {isAdmin && (
                   <div className="flex gap-2">
-                    <button onClick={() => openEditCampaign(camp)} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold">
+                    <button onClick={() => openEditCampaign(camp)} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-semibold">
                       <Pencil className="w-3 h-3" /> Ubah
                     </button>
-                    <button onClick={() => confirmDeleteCampaign(camp)} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-rose-900/60 text-rose-300 text-[11px] font-semibold">
+                    <button onClick={() => confirmDeleteCampaign(camp)} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-100 text-rose-600 text-[11px] font-semibold">
                       <Trash2 className="w-3 h-3" /> Hapus
                     </button>
                   </div>
                 )}
 
-                <h3 className="text-lg sm:text-xl font-bold text-white font-['Cinzel'] leading-snug">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 font-['Cinzel'] leading-snug">
                   {camp.title}
                 </h3>
 
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                   {camp.description}
                 </p>
 
@@ -245,35 +245,35 @@ export default function DonasiSection() {
                 <div className="space-y-2 pt-2">
                   <div className="flex justify-between items-end text-xs">
                     <div>
-                      <span className="text-slate-400">Terkumpul: </span>
-                      <strong className="text-base text-amber-400 font-bold">
+                      <span className="text-slate-500">Terkumpul: </span>
+                      <strong className="text-base text-amber-500 font-bold">
                         Rp {camp.collectedAmount.toLocaleString('id-ID')}
                       </strong>
                     </div>
                     <div className="text-right">
-                      <span className="text-slate-400">Target: </span>
-                      <span className="text-slate-200 font-medium">
+                      <span className="text-slate-500">Target: </span>
+                      <span className="text-slate-800 font-medium">
                         Rp {camp.targetAmount.toLocaleString('id-ID')}
                       </span>
                     </div>
                   </div>
 
-                  <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800 p-[1px]">
+                  <div className="w-full h-3 bg-white rounded-full overflow-hidden border border-slate-200 p-[1px]">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-blue-600 via-amber-500 to-amber-400 transition-all duration-500"
+                      className="h-full rounded-full bg-gradient-to-r from-teal-600 via-amber-500 to-amber-400 transition-all duration-500"
                       style={{ width: `${percent}%` }}
                     />
                   </div>
 
-                  <div className="flex justify-between items-center text-[11px] text-slate-400 pt-1">
-                    <span className="font-semibold text-amber-300">{percent}% Tercapai</span>
+                  <div className="flex justify-between items-center text-[11px] text-slate-500 pt-1">
+                    <span className="font-semibold text-amber-500">{percent}% Tercapai</span>
                     <span>{camp.donorsCount} Donatur Terdaftar</span>
                   </div>
                 </div>
               </div>
 
               {/* Action Button & Recent Feed Preview */}
-              <div className="pt-4 border-t border-slate-800 space-y-4">
+              <div className="pt-4 border-t border-slate-200 space-y-4">
                 <button
                   onClick={() => handleOpenDonateModal(camp)}
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-xs tracking-wider uppercase shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
@@ -284,15 +284,15 @@ export default function DonasiSection() {
 
                 {/* Mini feed */}
                 {camp.recentDonations && camp.recentDonations.length > 0 && (
-                  <div className="bg-slate-950/60 rounded-xl p-3 border border-slate-800/80 space-y-1.5">
+                  <div className="bg-white/60 rounded-xl p-3 border border-slate-200/80 space-y-1.5">
                     <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block">
                       Donasi Terkini:
                     </span>
-                    <div className="text-xs text-slate-300 flex items-center justify-between">
-                      <span className="font-medium text-white truncate max-w-[180px]">
+                    <div className="text-xs text-slate-700 flex items-center justify-between">
+                      <span className="font-medium text-slate-900 truncate max-w-[180px]">
                         {camp.recentDonations[0].donorName}
                       </span>
-                      <span className="font-bold text-amber-400 font-mono">
+                      <span className="font-bold text-amber-500 font-mono">
                         +Rp {camp.recentDonations[0].amount.toLocaleString('id-ID')}
                       </span>
                     </div>
@@ -307,20 +307,20 @@ export default function DonasiSection() {
 
       {/* Donasi Saya */}
       <div className="space-y-3">
-        <h3 className="text-lg font-bold text-white font-['Cinzel']">Donasi Saya</h3>
+        <h3 className="text-lg font-bold text-slate-900 font-['Cinzel']">Donasi Saya</h3>
         {myDonations.length === 0 ? (
-          <p className="text-xs text-slate-400">Belum ada donasi.</p>
+          <p className="text-xs text-slate-500">Belum ada donasi.</p>
         ) : (
           <div className="space-y-2">
             {myDonations.map((d) => (
-              <div key={d.id} className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+              <div key={d.id} className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
                 <div className="min-w-0">
-                  <p className="font-semibold text-white truncate">{d.campaignTitle}</p>
-                  <p className="text-slate-400">{d.timestamp} · {d.refNumber}</p>
+                  <p className="font-semibold text-slate-900 truncate">{d.campaignTitle}</p>
+                  <p className="text-slate-500">{d.timestamp} · {d.refNumber}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-mono font-bold text-amber-400">Rp {d.amount.toLocaleString('id-ID')}</span>
-                  <span className={`px-2 py-0.5 rounded font-bold ${d.status === 'accepted' ? 'bg-emerald-950 text-emerald-400' : d.status === 'rejected' ? 'bg-rose-950 text-rose-400' : 'bg-amber-950 text-amber-300'}`}>
+                  <span className="font-mono font-bold text-amber-500">Rp {d.amount.toLocaleString('id-ID')}</span>
+                  <span className={`px-2 py-0.5 rounded font-bold ${d.status === 'accepted' ? 'bg-emerald-950 text-emerald-600' : d.status === 'rejected' ? 'bg-rose-50 text-rose-600' : 'bg-amber-950 text-amber-500'}`}>
                     {d.status === 'accepted' ? 'Diterima' : d.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
                   </span>
                   {d.status === 'accepted' && (
@@ -337,21 +337,21 @@ export default function DonasiSection() {
 
       {/* Donation Form Modal */}
       {activeCampaign && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg bg-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-lg bg-slate-50 border border-amber-500/30 rounded-2xl p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
             
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
               <div>
-                <h3 className="text-base font-bold text-white font-['Cinzel']">
+                <h3 className="text-base font-bold text-slate-900 font-['Cinzel']">
                   Formulir Donasi Gotong Royong
                 </h3>
-                <p className="text-xs text-amber-400 truncate max-w-xs">
+                <p className="text-xs text-amber-500 truncate max-w-xs">
                   {activeCampaign.title}
                 </p>
               </div>
               <button
                 onClick={() => setActiveCampaign(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-500 hover:text-slate-900"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -361,7 +361,7 @@ export default function DonasiSection() {
               
               {/* Preset Nominal */}
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-2">
+                <label className="text-xs font-semibold text-slate-700 block mb-2">
                   Pilih Nominal Donasi
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -376,7 +376,7 @@ export default function DonasiSection() {
                       className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all ${
                         selectedPreset === amt && !customAmount
                           ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-950'
-                          : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+                          : 'bg-white text-slate-700 border-slate-200 hover:border-slate-200'
                       }`}
                     >
                       Rp {amt.toLocaleString('id-ID')}
@@ -387,7 +387,7 @@ export default function DonasiSection() {
 
               {/* Custom Input */}
               <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1">
+                <label className="text-xs font-semibold text-slate-500 block mb-1">
                   Atau Masukkan Nominal Lain (Rp)
                 </label>
                 <input
@@ -398,22 +398,22 @@ export default function DonasiSection() {
                   placeholder="Contoh: 750000"
                   value={customAmount}
                   onChange={(e) => setCustomAmount(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none font-mono"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none font-mono"
                 />
               </div>
 
               {/* Donor Name & Anonymous */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-300">
+                  <label className="text-xs font-semibold text-slate-700">
                     Nama Donatur
                   </label>
-                  <label className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer">
+                  <label className="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isAnonymous}
                       onChange={(e) => setIsAnonymous(e.target.checked)}
-                      className="rounded bg-slate-950 border-slate-700 text-amber-500 focus:ring-0"
+                      className="rounded bg-white border-slate-200 text-amber-500 focus:ring-0"
                     />
                     <span>Sembunyikan Nama (Hamba Allah)</span>
                   </label>
@@ -423,7 +423,7 @@ export default function DonasiSection() {
                     type="text"
                     value={donorName}
                     onChange={(e) => setDonorName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                     required
                   />
                 )}
@@ -431,7 +431,7 @@ export default function DonasiSection() {
 
               {/* Doa / Pesan */}
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
                   Doa / Pesan untuk Perguruan
                 </label>
                 <textarea
@@ -439,13 +439,13 @@ export default function DonasiSection() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Tuliskan ucapan atau doa semangat untuk saudara seperguruan..."
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                 />
               </div>
 
               {/* Payment Method Selector */}
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-2">
+                <label className="text-xs font-semibold text-slate-700 block mb-2">
                   Metode Pembayaran
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -454,14 +454,14 @@ export default function DonasiSection() {
                     onClick={() => setPaymentMethod('qris')}
                     className={`p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
                       paymentMethod === 'qris'
-                        ? 'bg-blue-950/70 border-blue-500 text-white shadow-md'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-teal-50 border-teal-500 text-slate-900 shadow-md'
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-200'
                     }`}
                   >
-                    <QrCode className="w-5 h-5 text-amber-400" />
+                    <QrCode className="w-5 h-5 text-amber-500" />
                     <div>
                       <p className="text-xs font-bold">QRIS Dinamis</p>
-                      <p className="text-[10px] text-slate-400">Gopay, OVO, Dana, BCA</p>
+                      <p className="text-[10px] text-slate-500">Gopay, OVO, Dana, BCA</p>
                     </div>
                   </button>
 
@@ -470,14 +470,14 @@ export default function DonasiSection() {
                     onClick={() => setPaymentMethod('bank')}
                     className={`p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
                       paymentMethod === 'bank'
-                        ? 'bg-blue-950/70 border-blue-500 text-white shadow-md'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-teal-50 border-teal-500 text-slate-900 shadow-md'
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-200'
                     }`}
                   >
-                    <Building className="w-5 h-5 text-blue-400" />
+                    <Building className="w-5 h-5 text-teal-600" />
                     <div>
                       <p className="text-xs font-bold">Virtual Account</p>
-                      <p className="text-[10px] text-slate-400">Bank Mandiri / BCA</p>
+                      <p className="text-[10px] text-slate-500">Bank Mandiri / BCA</p>
                     </div>
                   </button>
                 </div>
@@ -485,43 +485,43 @@ export default function DonasiSection() {
 
               {/* Payment info from admin settings */}
               {!hasPaymentInfo ? (
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center text-xs text-amber-300">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 text-center text-xs text-amber-500">
                   Info pembayaran belum diatur admin
                 </div>
               ) : paymentMethod === 'qris' ? (
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center space-y-2">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 text-center space-y-2">
                   {siteContent.qrisImageUrl ? (
                     <img src={siteContent.qrisImageUrl} alt="QRIS" className="w-40 h-40 object-contain bg-white p-2 rounded-xl mx-auto" />
                   ) : (
-                    <p className="text-xs text-slate-400">QRIS belum tersedia, gunakan transfer bank.</p>
+                    <p className="text-xs text-slate-500">QRIS belum tersedia, gunakan transfer bank.</p>
                   )}
-                  <p className="text-[11px] text-slate-400">Pindai dengan aplikasi m-Banking atau e-Wallet, lalu unggah bukti transfer.</p>
+                  <p className="text-[11px] text-slate-500">Pindai dengan aplikasi m-Banking atau e-Wallet, lalu unggah bukti transfer.</p>
                 </div>
               ) : hasBank ? (
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-400">Rekening {siteContent.bankName}:</span>
+                    <span className="text-slate-500">Rekening {siteContent.bankName}:</span>
                     {siteContent.bankAccount && (
-                      <button type="button" onClick={() => handleCopyVa(siteContent.bankAccount)} className="text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold">
+                      <button type="button" onClick={() => handleCopyVa(siteContent.bankAccount)} className="text-amber-500 hover:text-amber-500 flex items-center gap-1 font-semibold">
                         <Copy className="w-3 h-3" />
                         <span>{copiedBank ? 'Tersalin!' : 'Salin'}</span>
                       </button>
                     )}
                   </div>
-                  <p className="text-base font-mono font-bold text-white tracking-wider">{siteContent.bankAccount}</p>
-                  {siteContent.bankHolder && <p className="text-[11px] text-slate-400">a.n. {siteContent.bankHolder}</p>}
+                  <p className="text-base font-mono font-bold text-slate-900 tracking-wider">{siteContent.bankAccount}</p>
+                  {siteContent.bankHolder && <p className="text-[11px] text-slate-500">a.n. {siteContent.bankHolder}</p>}
                 </div>
               ) : (
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center text-xs text-slate-400">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 text-center text-xs text-slate-500">
                   Rekening bank belum tersedia, gunakan QRIS.
                 </div>
               )}
 
               {/* Proof of transfer */}
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">Bukti Transfer (JPEG/PNG/WebP, maks 5 MB)</label>
-                <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-950 border border-dashed border-slate-700 text-xs text-slate-300 cursor-pointer hover:border-amber-500">
-                  <ImagePlus className="w-4 h-4 text-amber-400" />
+                <label className="text-xs font-semibold text-slate-700 block mb-1">Bukti Transfer (JPEG/PNG/WebP, maks 5 MB)</label>
+                <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-dashed border-slate-200 text-xs text-slate-700 cursor-pointer hover:border-amber-500">
+                  <ImagePlus className="w-4 h-4 text-amber-500" />
                   <span className="truncate">{proofFile ? proofFile.name : 'Pilih foto bukti transfer'}</span>
                   <input
                     type="file"
@@ -561,16 +561,16 @@ export default function DonasiSection() {
 
       {/* Modal Buka Program Baru (Admin only) */}
       {isAddCampaignOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white font-['Cinzel'] flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-amber-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+              <h3 className="text-lg font-bold text-slate-900 font-['Cinzel'] flex items-center gap-2">
+                <PlusCircle className="w-5 h-5 text-amber-500" />
                 {editingId ? 'Ubah Program Donasi' : 'Buka Program Donasi / Gotong Royong Baru'}
               </h3>
               <button
                 onClick={closeCampaignForm}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-500 hover:text-slate-900"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -578,7 +578,7 @@ export default function DonasiSection() {
 
             <form onSubmit={handleSubmitNewCampaign} className="space-y-4">
               <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
+                <label className="text-xs text-slate-700 font-semibold block mb-1">
                   Nama Program / Pengadaan
                 </label>
                 <input
@@ -586,20 +586,20 @@ export default function DonasiSection() {
                   placeholder="Contoh: Renovasi Gelanggang Latihan Dojo Timur..."
                   value={newCampaignForm.title}
                   onChange={(e) => setNewCampaignForm({ ...newCampaignForm, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-300 font-semibold block mb-1">
+                  <label className="text-xs text-slate-700 font-semibold block mb-1">
                     Kategori Donasi
                   </label>
                   <select
                     value={newCampaignForm.category}
                     onChange={(e) => setNewCampaignForm({ ...newCampaignForm, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                   >
                     <option value="Sarana Perguruan">Sarana Perguruan</option>
                     <option value="Pemberdayaan Atlet">Pemberdayaan Atlet</option>
@@ -608,21 +608,21 @@ export default function DonasiSection() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-300 font-semibold block mb-1">
+                  <label className="text-xs text-slate-700 font-semibold block mb-1">
                     Target Dana (Rp)
                   </label>
                   <input
                     type="number"
                     value={newCampaignForm.targetAmount}
                     onChange={(e) => setNewCampaignForm({ ...newCampaignForm, targetAmount: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none font-mono"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none font-mono"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
+                <label className="text-xs text-slate-700 font-semibold block mb-1">
                   Batas Akhir Program (Deadline)
                 </label>
                 <input
@@ -630,13 +630,13 @@ export default function DonasiSection() {
                   placeholder="Contoh: 31 Desember 2026"
                   value={newCampaignForm.deadline}
                   onChange={(e) => setNewCampaignForm({ ...newCampaignForm, deadline: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
+                <label className="text-xs text-slate-700 font-semibold block mb-1">
                   Deskripsi & Peruntukan Dana
                 </label>
                 <textarea
@@ -644,16 +644,16 @@ export default function DonasiSection() {
                   value={newCampaignForm.description}
                   onChange={(e) => setNewCampaignForm({ ...newCampaignForm, description: e.target.value })}
                   placeholder="Jelaskan kebutuhan pengadaan, estimasi biaya, dan dampak bagi pesilat..."
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                   required
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={closeCampaignForm}
-                  className="px-4 py-2 rounded-lg text-slate-400 hover:text-white text-xs font-semibold"
+                  className="px-4 py-2 rounded-lg text-slate-500 hover:text-slate-900 text-xs font-semibold"
                 >
                   Batal
                 </button>

@@ -74,13 +74,13 @@ export default function UktSection() {
     return (
       <div className="py-12 max-w-2xl mx-auto text-center space-y-6">
         <div className="w-20 h-20 rounded-3xl bg-amber-950/60 border border-amber-500/30 flex items-center justify-center mx-auto shadow-2xl">
-          <Lock className="w-10 h-10 text-amber-400 animate-pulse" />
+          <Lock className="w-10 h-10 text-amber-500 animate-pulse" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
             Ujian Kenaikan Tingkat Terkunci
           </h2>
-          <p className="text-sm text-slate-400 max-w-md mx-auto">
+          <p className="text-sm text-slate-500 max-w-md mx-auto">
             Sesuai spesifikasi RBAC, sistem penilaian dan lembar evaluasi Ujian Kenaikan Tingkat hanya dapat diakses oleh Anggota (melihat hasil pribadi) dan Penguji (hak penuh penilaian Pos 1 - 4).
           </p>
         </div>
@@ -325,7 +325,7 @@ export default function UktSection() {
       
       {canScore && (
         <div className="space-y-3">
-          <div className={`flex flex-wrap items-center gap-3 px-4 py-2.5 rounded-xl border text-xs font-semibold ${isOnline ? 'bg-emerald-950/30 border-emerald-700/40 text-emerald-300' : 'bg-amber-950/30 border-amber-700/40 text-amber-300'}`}>
+          <div className={`flex flex-wrap items-center gap-3 px-4 py-2.5 rounded-xl border text-xs font-semibold ${isOnline ? 'bg-emerald-950/30 border-emerald-700/40 text-emerald-600' : 'bg-amber-950/30 border-amber-700/40 text-amber-500'}`}>
             <span>{isOnline ? 'Online' : 'Offline: nilai disimpan di HP ini dan dikirim saat sinyal kembali'}</span>
             {offlineQueue.length > 0 && (
               <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-bold" title="Nilai belum terkirim">{offlineQueue.length}</span>
@@ -333,28 +333,28 @@ export default function UktSection() {
             <button
               onClick={syncNow}
               disabled={!isOnline || offlineQueue.length === 0}
-              className="ml-auto px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="ml-auto px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Sinkronkan Sekarang
             </button>
           </div>
           {offlineQueue.filter((i) => i.failed).map((i) => (
-            <div key={i.candidateId} className="flex flex-wrap items-center gap-3 px-4 py-2 rounded-xl border border-rose-700/50 bg-rose-950/30 text-xs text-slate-200">
+            <div key={i.candidateId} className="flex flex-wrap items-center gap-3 px-4 py-2 rounded-xl border border-rose-200 bg-rose-50 text-xs text-slate-800">
               <strong>{i.candidateName ?? 'Peserta'}</strong>
-              <span className="text-rose-300">Gagal dikirim: {i.failed}</span>
-              <button onClick={() => discardQueued(i.candidateId)} className="ml-auto px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700">Buang</button>
+              <span className="text-rose-600">Gagal dikirim: {i.failed}</span>
+              <button onClick={() => discardQueued(i.candidateId)} className="ml-auto px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200">Buang</button>
             </div>
           ))}
           {conflicts.length > 0 && (
-            <div className="rounded-xl border border-rose-700/50 bg-rose-950/30 p-4 space-y-3">
-              <h3 className="text-sm font-bold text-rose-300">Nilai bentrok</h3>
-              <p className="text-xs text-slate-400">Peserta ini sudah dinilai penguji lain saat nilai Anda belum terkirim. Pilih nilai yang dipakai.</p>
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 space-y-3">
+              <h3 className="text-sm font-bold text-rose-600">Nilai bentrok</h3>
+              <p className="text-xs text-slate-500">Peserta ini sudah dinilai penguji lain saat nilai Anda belum terkirim. Pilih nilai yang dipakai.</p>
               {conflicts.map((c) => {
                 const mine = calculateUktScore(c.posScores.pos1.score, c.posScores.pos2.score, c.posScores.pos3.score, c.posScores.pos4.score).score;
                 const srv = serverCandidatesList.find((x) => x.id === c.candidateId);
                 const server = srv?.finalScore;
                 return (
-                  <div key={c.candidateId} className="flex flex-wrap items-center gap-3 text-xs text-slate-200">
+                  <div key={c.candidateId} className="flex flex-wrap items-center gap-3 text-xs text-slate-800">
                     <strong className="min-w-32">{c.candidateName ?? 'Peserta'}</strong>
                     {(c.posKeys ?? ['pos1', 'pos2', 'pos3', 'pos4']).map((k) => (
                       <span key={k}>
@@ -363,9 +363,9 @@ export default function UktSection() {
                     ))}
                     <span>Total saya: <strong>{mine.toFixed(1)}</strong></span>
                     <span>Total server: <strong>{server == null ? '-' : server.toFixed(1)}</strong></span>
-                    {c.posKeys && <span className="text-slate-400">(&quot;Pakai nilai saya&quot; hanya mengganti {c.posKeys.map((k) => k.replace('pos', 'Pos ')).join(', ')})</span>}
+                    {c.posKeys && <span className="text-slate-500">(&quot;Pakai nilai saya&quot; hanya mengganti {c.posKeys.map((k) => k.replace('pos', 'Pos ')).join(', ')})</span>}
                     <button onClick={() => resolveConflict(c.candidateId, 'mine')} className="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold">Pakai nilai saya</button>
-                    <button onClick={() => resolveConflict(c.candidateId, 'server')} className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700">Pakai nilai server</button>
+                    <button onClick={() => resolveConflict(c.candidateId, 'server')} className="px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200">Pakai nilai server</button>
                   </div>
                 );
               })}
@@ -377,14 +377,14 @@ export default function UktSection() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-amber-400 text-xs font-bold uppercase tracking-widest mb-1">
+          <div className="inline-flex items-center gap-1.5 text-amber-500 text-xs font-bold uppercase tracking-widest mb-1">
             <GraduationCap className="w-3.5 h-3.5" />
             <span>Digitalisasi Evaluasi Tingkatan</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
             Ujian Kenaikan Tingkat
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-500">
             Penilaian bertingkat stasiun Pos 1 s/d Pos 4 dengan kalkulasi otomatis dan manajemen peserta terpadu.
           </p>
         </div>
@@ -394,17 +394,17 @@ export default function UktSection() {
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setIsImportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold shadow-md transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-semibold shadow-md transition-all"
             >
-              <Upload className="w-4 h-4 text-amber-400" />
+              <Upload className="w-4 h-4 text-amber-500" />
               <span>Impor Peserta (CSV)</span>
             </button>
 
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-600 hover:to-blue-700 text-white text-xs font-bold shadow-md shadow-blue-950 transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-teal-700 to-teal-800 hover:from-teal-600 hover:to-teal-700 text-slate-900 text-xs font-bold shadow-md shadow-teal-950 transition-all"
             >
-              <Download className="w-4 h-4 text-blue-200" />
+              <Download className="w-4 h-4 text-teal-700" />
               <span>Ekspor Data (CSV)</span>
             </button>
           </div>
@@ -413,13 +413,13 @@ export default function UktSection() {
 
       {/* POS SELECTOR TABS (Pos 1, Pos 2, Pos 3, Pos 4, Semua Pos) - Khusus Penguji & Admin */}
       {canScore && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 bg-slate-900/70 p-2 rounded-2xl border border-slate-800">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 bg-slate-50/70 p-2 rounded-2xl border border-slate-200">
           <button
             onClick={() => setActivePosTab('all')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               activePosTab === 'all'
                 ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md shadow-amber-950/60'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <Award className="w-4 h-4" />
@@ -430,11 +430,11 @@ export default function UktSection() {
             onClick={() => setActivePosTab('pos1')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               activePosTab === 'pos1'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-950'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-teal-600 text-slate-900 shadow-md shadow-teal-950'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Activity className="w-4 h-4 text-blue-300" />
+            <Activity className="w-4 h-4 text-teal-700" />
             <span>Pos 1: Fisik (25%)</span>
           </button>
 
@@ -442,11 +442,11 @@ export default function UktSection() {
             onClick={() => setActivePosTab('pos2')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               activePosTab === 'pos2'
-                ? 'bg-amber-600 text-white shadow-md shadow-amber-950'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-amber-600 text-slate-900 shadow-md shadow-amber-950'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Sword className="w-4 h-4 text-amber-300" />
+            <Sword className="w-4 h-4 text-amber-500" />
             <span>Pos 2: Teknik Jurus (30%)</span>
           </button>
 
@@ -454,11 +454,11 @@ export default function UktSection() {
             onClick={() => setActivePosTab('pos3')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               activePosTab === 'pos3'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-950'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-teal-600 text-slate-900 shadow-md shadow-teal-950'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <BookOpen className="w-4 h-4 text-blue-300" />
+            <BookOpen className="w-4 h-4 text-teal-700" />
             <span>Pos 3: Materi & Etika (20%)</span>
           </button>
 
@@ -466,11 +466,11 @@ export default function UktSection() {
             onClick={() => setActivePosTab('pos4')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               activePosTab === 'pos4'
-                ? 'bg-amber-600 text-white shadow-md shadow-amber-950'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-amber-600 text-slate-900 shadow-md shadow-amber-950'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Shield className="w-4 h-4 text-amber-300" />
+            <Shield className="w-4 h-4 text-amber-500" />
             <span>Pos 4: Pertarungan Sabung (25%)</span>
           </button>
         </div>
@@ -481,7 +481,7 @@ export default function UktSection() {
       {/* ========================================================================= */}
       <UktEventsBar />
       {role === ROLES.MEMBER && !myCandidate && !canScore && (
-        <div className="trident-card rounded-2xl p-6 border border-slate-800 text-sm text-slate-300">
+        <div className="trident-card rounded-2xl p-6 border border-slate-200 text-sm text-slate-700">
           Anda belum terdaftar sebagai peserta UKT. Hubungi penguji.
         </div>
       )}
@@ -489,10 +489,10 @@ export default function UktSection() {
         <div className="space-y-6">
           
           {/* KARTU INFORMASI PRIBADI PENDAFTARAN PESERTA UKT */}
-          <div className="trident-card rounded-2xl p-6 sm:p-8 border border-blue-900/40 relative overflow-hidden space-y-6 shadow-2xl">
+          <div className="trident-card rounded-2xl p-6 sm:p-8 border border-teal-200 relative overflow-hidden space-y-6 shadow-2xl">
             
             {/* Header Data Pendaftaran */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
               <div className="flex items-center gap-4">
                 <img
                   src={myCandidate.photo}
@@ -501,32 +501,32 @@ export default function UktSection() {
                 />
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xl sm:text-2xl font-bold text-white font-['Cinzel']">
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 font-['Cinzel']">
                       {myCandidate.name}
                     </h3>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-amber-400 border border-slate-700">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-50 text-amber-500 border border-slate-200">
                       {myCandidate.regNumber}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 mt-1">
-                    Kenaikan Tingkat: <strong className="text-amber-400">{myCandidate.currentBelt} ➔ {myCandidate.targetBelt}</strong>
+                  <p className="text-xs text-slate-700 mt-1">
+                    Kenaikan Tingkat: <strong className="text-amber-500">{myCandidate.currentBelt} ➔ {myCandidate.targetBelt}</strong>
                   </p>
-                  <p className="text-xs text-slate-300 mt-0.5">
-                    Skor Akhir: <strong className="text-amber-400">{myCandidate.finalScore.toFixed(1)}</strong> • {statusFromScore(myCandidate.finalScore).status}
+                  <p className="text-xs text-slate-700 mt-0.5">
+                    Skor Akhir: <strong className="text-amber-500">{myCandidate.finalScore.toFixed(1)}</strong> • {statusFromScore(myCandidate.finalScore).status}
                   </p>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Ranting / Cabang: <strong className="text-slate-200">{myCandidate.branch}</strong>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Ranting / Cabang: <strong className="text-slate-800">{myCandidate.branch}</strong>
                   </p>
                 </div>
               </div>
 
               {/* Status Pendaftaran Badge */}
               <div className="flex flex-col sm:items-end gap-1.5 w-full sm:w-auto">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
                   Status Registrasi Peserta:
                 </span>
-                <div className="px-4 py-1.5 rounded-xl border text-xs font-black uppercase tracking-wider text-center text-emerald-400 bg-emerald-950/60 border-emerald-600/50 flex items-center gap-2 shadow-md">
-                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                <div className="px-4 py-1.5 rounded-xl border text-xs font-black uppercase tracking-wider text-center text-emerald-600 bg-emerald-950/60 border-emerald-300/50 flex items-center gap-2 shadow-md">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
                   <span>TERDAFTAR & TERVERIFIKASI</span>
                 </div>
               </div>
@@ -535,11 +535,11 @@ export default function UktSection() {
             {/* Title Section */}
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-base font-bold text-white font-['Cinzel'] flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-amber-400" />
+                <h4 className="text-base font-bold text-slate-900 font-['Cinzel'] flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-amber-500" />
                   Informasi Pribadi & Data Registrasi Pendaftaran
                 </h4>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Berikut adalah rincian data diri resmi yang diisi saat mendaftarkan diri pada Ujian Kenaikan Tingkat.
                 </p>
               </div>
@@ -548,120 +548,120 @@ export default function UktSection() {
             {/* Grid Data Pribadi yang diisi ketika daftar */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">Nama Lengkap Pesilat</span>
-                <p className="text-sm font-bold text-white">{myCandidate.name}</p>
+              <div className="bg-white/80 p-4 rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] text-slate-500 block">Nama Lengkap Pesilat</span>
+                <p className="text-sm font-bold text-slate-900">{myCandidate.name}</p>
                 <p className="text-[10px] text-slate-500">Sesuai KTP / Akta Kelahiran</p>
               </div>
 
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">Nomor Registrasi / No. Anggota</span>
-                <p className="text-sm font-mono font-bold text-amber-400">{myCandidate.regNumber}</p>
+              <div className="bg-white/80 p-4 rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] text-slate-500 block">Nomor Registrasi / No. Anggota</span>
+                <p className="text-sm font-mono font-bold text-amber-500">{myCandidate.regNumber}</p>
                 <p className="text-[10px] text-slate-500">Terdaftar di Buku Induk Perguruan</p>
               </div>
 
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">Ranting / Asal Cabang</span>
-                <p className="text-sm font-bold text-white">{myCandidate.branch}</p>
+              <div className="bg-white/80 p-4 rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] text-slate-500 block">Ranting / Asal Cabang</span>
+                <p className="text-sm font-bold text-slate-900">{myCandidate.branch}</p>
                 <p className="text-[10px] text-slate-500">Wilayah Pembinaan Silat</p>
               </div>
 
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">Tingkatan Sabuk Saat Ini</span>
-                <p className="text-sm font-bold text-emerald-400">{myCandidate.currentBelt}</p>
+              <div className="bg-white/80 p-4 rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] text-slate-500 block">Tingkatan Sabuk Saat Ini</span>
+                <p className="text-sm font-bold text-emerald-600">{myCandidate.currentBelt}</p>
                 <p className="text-[10px] text-slate-500">Tingkat Kemahiran Aktif</p>
               </div>
 
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">Target Kenaikan Jenjang</span>
-                <p className="text-sm font-bold text-amber-400">{myCandidate.targetBelt}</p>
+              <div className="bg-white/80 p-4 rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] text-slate-500 block">Target Kenaikan Jenjang</span>
+                <p className="text-sm font-bold text-amber-500">{myCandidate.targetBelt}</p>
                 <p className="text-[10px] text-slate-500">Tingkat Ujian yang Ditempuh</p>
               </div>
 
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">Pelatih / Pembina Ranting</span>
-                <p className="text-sm font-bold text-white">Pendekar Hendro Suwarno</p>
+              <div className="bg-white/80 p-4 rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] text-slate-500 block">Pelatih / Pembina Ranting</span>
+                <p className="text-sm font-bold text-slate-900">Pendekar Hendro Suwarno</p>
                 <p className="text-[10px] text-slate-500">Rekomendasi Dewan Pelatih</p>
               </div>
 
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">Tempat & Tanggal Lahir</span>
-                <p className="text-sm font-semibold text-slate-200">Jakarta, 14 Juli 2004 (22 Th)</p>
+              <div className="bg-white/80 p-4 rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] text-slate-500 block">Tempat & Tanggal Lahir</span>
+                <p className="text-sm font-semibold text-slate-800">Jakarta, 14 Juli 2004 (22 Th)</p>
                 <p className="text-[10px] text-slate-500">Kategori Usia: Dewasa</p>
               </div>
 
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">Kontak WhatsApp / HP</span>
-                <p className="text-sm font-mono font-semibold text-slate-200">+62 812-9842-1084</p>
+              <div className="bg-white/80 p-4 rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] text-slate-500 block">Kontak WhatsApp / HP</span>
+                <p className="text-sm font-mono font-semibold text-slate-800">+62 812-9842-1084</p>
                 <p className="text-[10px] text-slate-500">Nomor Aktif Pemberitahuan</p>
               </div>
 
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">Lokasi & Jadwal Ujian UKT</span>
-                <p className="text-sm font-semibold text-white">Perguruan Pusat • 22 Nov 2026</p>
+              <div className="bg-white/80 p-4 rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] text-slate-500 block">Lokasi & Jadwal Ujian UKT</span>
+                <p className="text-sm font-semibold text-slate-900">Perguruan Pusat • 22 Nov 2026</p>
                 <p className="text-[10px] text-slate-500">Pukul 07:30 WIB - Selesai</p>
               </div>
 
             </div>
 
             {/* Garis Struktural Hirarki Organisasi Pendaftaran Peserta (PP ➔ PW ➔ PC ➔ PAC ➔ PR ➔ PAR) */}
-            <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-900 to-slate-950 border border-blue-800/50 space-y-3 shadow-inner">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
-                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 font-['Cinzel']">
-                  <Network className="w-4 h-4 text-amber-400" />
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-teal-50 via-slate-100 to-white border border-teal-200 space-y-3 shadow-inner">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
+                <span className="text-xs font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1.5 font-['Cinzel']">
+                  <Network className="w-4 h-4 text-amber-500" />
                   Garis Struktural Organisasi Resmi (6 Tingkatan)
                 </span>
-                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-600/50 text-emerald-300 font-bold flex items-center gap-1 w-fit">
-                  <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-300/50 text-emerald-600 font-bold flex items-center gap-1 w-fit">
+                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
                   TERDATA DI BUKU INDUK PERGURUAN
                 </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-1">
-                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
-                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">1. Pimpinan Pusat</span>
-                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pp || 'PP Pagar Nusa'}</p>
+                <div className="bg-white/90 p-3 rounded-xl border border-slate-200 flex flex-col justify-between">
+                  <span className="text-[9px] text-amber-500 font-bold uppercase block tracking-wider">1. Pimpinan Pusat</span>
+                  <p className="text-xs font-bold text-slate-900 mt-1">{myCandidate.structure?.pp || 'PP Pagar Nusa'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Nasional</span>
                 </div>
 
-                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
-                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">2. Pimpinan Wilayah</span>
-                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pw || 'PW Kepulauan Riau'}</p>
+                <div className="bg-white/90 p-3 rounded-xl border border-slate-200 flex flex-col justify-between">
+                  <span className="text-[9px] text-amber-500 font-bold uppercase block tracking-wider">2. Pimpinan Wilayah</span>
+                  <p className="text-xs font-bold text-slate-900 mt-1">{myCandidate.structure?.pw || 'PW Kepulauan Riau'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Provinsi</span>
                 </div>
 
-                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
-                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">3. Pimpinan Cabang</span>
-                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pc || 'PC Kota Batam'}</p>
+                <div className="bg-white/90 p-3 rounded-xl border border-slate-200 flex flex-col justify-between">
+                  <span className="text-[9px] text-amber-500 font-bold uppercase block tracking-wider">3. Pimpinan Cabang</span>
+                  <p className="text-xs font-bold text-slate-900 mt-1">{myCandidate.structure?.pc || 'PC Kota Batam'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Kab / Kota</span>
                 </div>
 
-                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
-                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">4. Pimpinan Anak Cabang</span>
-                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pac || 'PAC Sungai Beduk'}</p>
+                <div className="bg-white/90 p-3 rounded-xl border border-slate-200 flex flex-col justify-between">
+                  <span className="text-[9px] text-amber-500 font-bold uppercase block tracking-wider">4. Pimpinan Anak Cabang</span>
+                  <p className="text-xs font-bold text-slate-900 mt-1">{myCandidate.structure?.pac || 'PAC Sungai Beduk'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Kecamatan</span>
                 </div>
 
-                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
-                  <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">5. Ranting</span>
-                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pr || 'PR Tanjung Piayu'}</p>
+                <div className="bg-white/90 p-3 rounded-xl border border-slate-200 flex flex-col justify-between">
+                  <span className="text-[9px] text-amber-500 font-bold uppercase block tracking-wider">5. Ranting</span>
+                  <p className="text-xs font-bold text-slate-900 mt-1">{myCandidate.structure?.pr || 'PR Tanjung Piayu'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Kelurahan / Desa</span>
                 </div>
 
-                <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between ring-1 ring-amber-500/40">
-                  <span className="text-[9px] text-emerald-400 font-bold uppercase block tracking-wider">6. Tempat Latihan (PAR)</span>
-                  <p className="text-xs font-bold text-amber-300 mt-1">{myCandidate.structure?.par || 'PAR Buana Garden'}</p>
-                  <span className="text-[9px] text-emerald-400/80 mt-1 block">Tempat Latihan</span>
+                <div className="bg-white/90 p-3 rounded-xl border border-slate-200 flex flex-col justify-between ring-1 ring-amber-500/40">
+                  <span className="text-[9px] text-emerald-600 font-bold uppercase block tracking-wider">6. Tempat Latihan (PAR)</span>
+                  <p className="text-xs font-bold text-amber-500 mt-1">{myCandidate.structure?.par || 'PAR Buana Garden'}</p>
+                  <span className="text-[9px] text-emerald-600 mt-1 block">Tempat Latihan</span>
                 </div>
               </div>
             </div>
 
             {/* Perlengkapan yang harus dibawa */}
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-              <span className="text-xs font-bold text-amber-400 block uppercase tracking-wider">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+              <span className="text-xs font-bold text-amber-500 block uppercase tracking-wider">
                 Catatan Perlengkapan Saat Mengikuti Ujian:
               </span>
-              <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside leading-relaxed">
+              <ul className="text-xs text-slate-700 space-y-1 list-disc list-inside leading-relaxed">
                 <li>Mengenakan seragam sakral resmi perguruan lengkap dengan sabuk saat ini ({myCandidate.currentBelt}).</li>
                 <li>Membawa perlengkapan pelindung pribadi: gumshield, pelindung tulang kering, dan body protector.</li>
                 <li>Wajib hadir di lokasi perguruan minimal 30 menit sebelum apel pembukaan ujian dimulai.</li>
@@ -680,56 +680,56 @@ export default function UktSection() {
           
           {/* Overview Metrics Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800">
-              <p className="text-xs text-slate-400">Total Peserta UKT</p>
-              <p className="text-2xl font-black text-white font-['Cinzel'] mt-1">
+            <div className="bg-slate-50/90 p-4 rounded-xl border border-slate-200">
+              <p className="text-xs text-slate-500">Total Peserta UKT</p>
+              <p className="text-2xl font-black text-slate-900 font-['Cinzel'] mt-1">
                 {candidatesList.length} Pesilat
               </p>
             </div>
 
             <div className="bg-amber-950/30 p-4 rounded-xl border border-amber-600/30">
-              <p className="text-xs text-amber-300">Lulus Dengan Pujian (≥85)</p>
-              <p className="text-2xl font-black text-amber-400 font-['Cinzel'] mt-1">
+              <p className="text-xs text-amber-500">Lulus Dengan Pujian (≥85)</p>
+              <p className="text-2xl font-black text-amber-500 font-['Cinzel'] mt-1">
                 {cumlaudeCount}
               </p>
             </div>
 
-            <div className="bg-emerald-950/30 p-4 rounded-xl border border-emerald-600/30">
-              <p className="text-xs text-emerald-300">Lulus Reguler (70 - 84.9)</p>
-              <p className="text-2xl font-black text-emerald-400 font-['Cinzel'] mt-1">
+            <div className="bg-emerald-950/30 p-4 rounded-xl border border-emerald-300/30">
+              <p className="text-xs text-emerald-600">Lulus Reguler (70 - 84.9)</p>
+              <p className="text-2xl font-black text-emerald-600 font-['Cinzel'] mt-1">
                 {passCount}
               </p>
             </div>
 
-            <div className="bg-rose-950/30 p-4 rounded-xl border border-rose-600/30">
-              <p className="text-xs text-rose-300">Perlu HER / Tunda (&lt;70)</p>
-              <p className="text-2xl font-black text-rose-400 font-['Cinzel'] mt-1">
+            <div className="bg-rose-50 p-4 rounded-xl border border-rose-600/30">
+              <p className="text-xs text-rose-600">Perlu HER / Tunda (&lt;70)</p>
+              <p className="text-2xl font-black text-rose-600 font-['Cinzel'] mt-1">
                 {herCount}
               </p>
             </div>
           </div>
 
           {/* Search bar & Controls */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-50/60 p-3 rounded-2xl border border-slate-200">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
               <div className="relative min-w-[260px] flex-1">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Cari nama peserta, nomor registrasi, atau cabang/ranting..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               {/* Multi-Tenant Ranting Filter (Anti-Bentrok) */}
               <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-amber-400 shrink-0" />
+                <Filter className="w-4 h-4 text-amber-500 shrink-0" />
                 <select
                   value={selectedRantingFilter}
                   onChange={(e) => setSelectedRantingFilter(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer"
+                  className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-amber-500 cursor-pointer"
                 >
                   <option value="all">Semua Ranting & Tempat Latihan (Multi-Tenant)</option>
                   {rantingOptions.map((pr) => (
@@ -739,36 +739,36 @@ export default function UktSection() {
               </div>
             </div>
 
-            <div className="text-xs text-slate-400 font-medium shrink-0">
+            <div className="text-xs text-slate-500 font-medium shrink-0">
               Menampilkan {filteredCandidates.length} dari {candidatesList.length} peserta ujian
             </div>
           </div>
 
           {/* Anti-Bentrok Banner Sesi Ujian Serentak */}
           {selectedRantingFilter !== 'all' ? (
-            <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-600/40 text-emerald-300 text-xs flex items-center justify-between shadow-lg">
+            <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-300/40 text-emerald-600 text-xs flex items-center justify-between shadow-lg">
               <div className="flex items-center gap-2.5">
-                <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
                 <span>
                   <strong>Sesi Ujian Terisolasi:</strong> Menampilkan peserta dari unit <strong>{selectedRantingFilter}</strong>. Sesi pengujian di ranting lain berjalan serentak tanpa risiko bentrok data.
                 </span>
               </div>
               <button
                 onClick={() => setSelectedRantingFilter('all')}
-                className="text-xs text-emerald-400 underline font-semibold shrink-0 hover:text-emerald-300 ml-2"
+                className="text-xs text-emerald-600 underline font-semibold shrink-0 hover:text-emerald-600 ml-2"
               >
                 Tampilkan Semua
               </button>
             </div>
           ) : (
-            <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-800/40 text-slate-300 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-md">
+            <div className="p-3.5 rounded-xl bg-teal-50 border border-teal-200 text-slate-700 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-md">
               <div className="flex items-center gap-2.5">
-                <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0" />
+                <ShieldCheck className="w-5 h-5 text-amber-500 shrink-0" />
                 <span>
                   <strong>Sistem Multi-Ranting Aktif:</strong> Setiap Ranting (PR) dan Tempat Latihan (PAR) memiliki sesi penilaian Pos 1-4 independen. Penilaian serentak di hari yang sama terisolasi rapi dan tidak akan saling bentrok.
                 </span>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-900/50 text-blue-300 border border-blue-700/50 shrink-0 w-fit">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-300 shrink-0 w-fit">
                 ANTI-BENTROK OK
               </span>
             </div>
@@ -778,10 +778,10 @@ export default function UktSection() {
           {/* SUB-VIEW A: SEMUA POS (REKAPITULASI)                                  */}
           {/* ===================================================================== */}
           {activePosTab === 'all' && (
-            <div className="trident-card rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+            <div className="trident-card rounded-2xl border border-slate-200 overflow-hidden shadow-2xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+                  <thead className="bg-white text-slate-500 uppercase tracking-wider text-[10px] border-b border-slate-200">
                     <tr>
                       <th className="py-3 px-4">Peserta UKT</th>
                       <th className="py-3 px-3">Jenjang Kenaikan</th>
@@ -803,41 +803,41 @@ export default function UktSection() {
                       const res = { score: c.finalScore, ...statusFromScore(c.finalScore) };
 
                       return (
-                        <tr key={c.id} className="hover:bg-slate-900/60 transition-colors">
+                        <tr key={c.id} className="hover:bg-slate-50/60 transition-colors">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
                               <img
                                 src={c.photo}
                                 alt={c.name}
-                                className="w-9 h-9 rounded-xl object-cover border border-slate-700"
+                                className="w-9 h-9 rounded-xl object-cover border border-slate-200"
                               />
                               <div>
                                 <div className="flex items-center gap-1.5">
-                                  <p className="font-bold text-white text-xs">{c.name}</p>
+                                  <p className="font-bold text-slate-900 text-xs">{c.name}</p>
                                 </div>
-                                <p className="text-[10px] text-amber-400 font-mono">{c.regNumber}</p>
-                                <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                                  <MapPin className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                                <p className="text-[10px] text-amber-500 font-mono">{c.regNumber}</p>
+                                <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                                  <MapPin className="w-2.5 h-2.5 text-amber-500 shrink-0" />
                                   <span>{c.structure?.pr ? `${c.structure.pr} • ${c.structure.par}` : c.branch}</span>
                                 </p>
                               </div>
                             </div>
                           </td>
 
-                          <td className="py-3 px-3 text-slate-300">
-                            <p className="text-[11px] text-slate-400">{c.currentBelt}</p>
-                            <p className="text-xs font-semibold text-blue-300 flex items-center gap-1">
+                          <td className="py-3 px-3 text-slate-700">
+                            <p className="text-[11px] text-slate-500">{c.currentBelt}</p>
+                            <p className="text-xs font-semibold text-teal-700 flex items-center gap-1">
                               ➔ {c.targetBelt}
                             </p>
                           </td>
 
-                          <td className="py-3 px-2 text-center font-mono font-bold text-slate-300">{p1}</td>
-                          <td className="py-3 px-2 text-center font-mono font-bold text-amber-300">{p2}</td>
-                          <td className="py-3 px-2 text-center font-mono font-bold text-slate-300">{p3}</td>
-                          <td className="py-3 px-2 text-center font-mono font-bold text-amber-300">{p4}</td>
+                          <td className="py-3 px-2 text-center font-mono font-bold text-slate-700">{p1}</td>
+                          <td className="py-3 px-2 text-center font-mono font-bold text-amber-500">{p2}</td>
+                          <td className="py-3 px-2 text-center font-mono font-bold text-slate-700">{p3}</td>
+                          <td className="py-3 px-2 text-center font-mono font-bold text-amber-500">{p4}</td>
 
                           <td className="py-3 px-3 text-right">
-                            <span className="text-sm font-black font-mono text-white">
+                            <span className="text-sm font-black font-mono text-slate-900">
                               {res.score.toFixed(1)}
                             </span>
                           </td>
@@ -851,7 +851,7 @@ export default function UktSection() {
                           <td className="py-3 px-4 text-center">
                             <button
                               onClick={() => handleOpenEvaluation(c)}
-                              className="px-3 py-1.5 rounded-lg bg-blue-900/40 hover:bg-blue-800 text-blue-300 border border-blue-700/50 text-xs font-semibold flex items-center justify-center gap-1.5 mx-auto transition-colors"
+                              className="px-3 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-300 text-xs font-semibold flex items-center justify-center gap-1.5 mx-auto transition-colors"
                             >
                               <Sliders className="w-3.5 h-3.5" />
                               <span>Evaluasi Nilai</span>
@@ -859,7 +859,7 @@ export default function UktSection() {
                             {canManageEvents && (
                             <button
                                 onClick={() => confirm(`Hapus peserta ${c.name}?`) && handleDeleteCandidate(c.id)}
-                                className="mt-1.5 text-[10px] text-rose-400 hover:text-rose-300 underline"
+                                className="mt-1.5 text-[10px] text-rose-600 hover:text-rose-600 underline"
                               >
                                 Hapus
                               </button>
@@ -885,27 +885,27 @@ export default function UktSection() {
                 const conf = posConfig[activePosTab];
                 const Icon = conf.icon;
                 return (
-                  <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-blue-950/40 to-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-50 via-teal-50 to-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-blue-600/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+                      <div className="w-12 h-12 rounded-xl bg-teal-600/20 text-amber-500 flex items-center justify-center border border-amber-500/30">
                         <Icon className="w-6 h-6" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-base font-bold text-white font-['Cinzel']">
+                          <h3 className="text-base font-bold text-slate-900 font-['Cinzel']">
                             {conf.title}
                           </h3>
-                          <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/40">
                             {conf.weight}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-500 mt-0.5">
                           Sub-kriteria penilaian: {conf.subCriteria.map((s) => s.label).join(' • ')}
                         </p>
                       </div>
                     </div>
 
-                    <div className="text-xs text-slate-400 flex items-center gap-2">
+                    <div className="text-xs text-slate-500 flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                       <span>Meja Penguji Stasiun Aktif</span>
                     </div>
@@ -924,7 +924,7 @@ export default function UktSection() {
                   return (
                     <div
                       key={c.id}
-                      className="trident-card rounded-2xl p-5 border border-slate-800 hover:border-amber-500/40 transition-all flex flex-col justify-between space-y-4"
+                      className="trident-card rounded-2xl p-5 border border-slate-200 hover:border-amber-500/40 transition-all flex flex-col justify-between space-y-4"
                     >
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -932,34 +932,34 @@ export default function UktSection() {
                             <img
                               src={c.photo}
                               alt=""
-                              className="w-10 h-10 rounded-xl object-cover border border-slate-700"
+                              className="w-10 h-10 rounded-xl object-cover border border-slate-200"
                             />
                             <div>
-                              <p className="font-bold text-white text-xs">{c.name}</p>
-                              <p className="text-[10px] text-amber-400 font-mono">{c.regNumber}</p>
-                              <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                                <MapPin className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                              <p className="font-bold text-slate-900 text-xs">{c.name}</p>
+                              <p className="text-[10px] text-amber-500 font-mono">{c.regNumber}</p>
+                              <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                                <MapPin className="w-2.5 h-2.5 text-amber-500 shrink-0" />
                                 <span>{c.structure?.pr ? `${c.structure.pr} • ${c.structure.par}` : c.branch}</span>
                               </p>
                             </div>
                           </div>
 
                           <div className="text-right">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block">
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
                               Nilai {activePosTab.toUpperCase()}
                             </span>
-                            <span className="text-xl font-black font-mono text-amber-400">
+                            <span className="text-xl font-black font-mono text-amber-500">
                               {posScore} <span className="text-[11px] text-slate-500 font-normal">pts</span>
                             </span>
                           </div>
                         </div>
 
                         {/* Sub-criteria breakdown */}
-                        <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800/80 space-y-1.5 text-xs">
+                        <div className="bg-white/80 p-3 rounded-xl border border-slate-200/80 space-y-1.5 text-xs">
                           {conf.subCriteria.map((sub) => (
-                            <div key={sub.key} className="flex justify-between items-center text-slate-300">
-                              <span className="text-[11px] text-slate-400">{sub.label}</span>
-                              <strong className="text-slate-200 font-mono">
+                            <div key={sub.key} className="flex justify-between items-center text-slate-700">
+                              <span className="text-[11px] text-slate-500">{sub.label}</span>
+                              <strong className="text-slate-800 font-mono">
                                 {subData[sub.key] ?? posScore}
                               </strong>
                             </div>
@@ -968,7 +968,7 @@ export default function UktSection() {
                       </div>
 
                       {/* Action */}
-                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                      <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between">
                         <span className="text-[11px] text-slate-500">
                           {c.currentBelt} ➔ {c.targetBelt}
                         </span>
@@ -995,35 +995,35 @@ export default function UktSection() {
       {/* MODAL IMPOR PESERTA (CSV)                                                 */}
       {/* ========================================================================= */}
       {isImportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-xl bg-slate-900 border border-amber-500/40 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/85 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-xl bg-slate-50 border border-amber-500/40 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
             
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <FileSpreadsheet className="w-5 h-5 text-amber-400" />
-                <h3 className="text-base font-bold text-white font-['Cinzel']">
+                <FileSpreadsheet className="w-5 h-5 text-amber-500" />
+                <h3 className="text-base font-bold text-slate-900 font-['Cinzel']">
                   Impor Data Peserta Ujian Kenaikan Tingkat
                 </h3>
               </div>
               <button
                 onClick={() => setIsImportModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-500 hover:text-slate-900"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-slate-700 leading-relaxed">
               Unggah file <strong>.CSV</strong> atau tempel teks tabular langsung pada kolom di bawah. Data peserta akan otomatis ditambahkan ke sistem rekapitulasi ujian.
             </p>
 
             {/* Template sample button */}
-            <div className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
-              <span className="text-slate-400">Belum memiliki format CSV?</span>
+            <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200 text-xs">
+              <span className="text-slate-500">Belum memiliki format CSV?</span>
               <button
                 type="button"
                 onClick={downloadSampleTemplate}
-                className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1"
+                className="text-amber-500 hover:text-amber-500 font-bold flex items-center gap-1"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Unduh Contoh Format Template CSV</span>
@@ -1032,20 +1032,20 @@ export default function UktSection() {
 
             {/* File Upload input */}
             <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+              <label className="text-xs font-semibold text-slate-700 block mb-1.5">
                 Pilih File CSV dari Komputer:
               </label>
               <input
                 type="file"
                 accept=".csv,text/csv"
                 onChange={handleFileUpload}
-                className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-900/60 file:text-blue-300 hover:file:bg-blue-800 cursor-pointer"
+                className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 cursor-pointer"
               />
             </div>
 
             {/* Paste CSV Textarea */}
             <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+              <label className="text-xs font-semibold text-slate-700 block mb-1.5">
                 Atau Tempel (Paste) Isi CSV di Sini:
               </label>
               <textarea
@@ -1053,16 +1053,16 @@ export default function UktSection() {
                 value={importCsvText}
                 onChange={(e) => setImportCsvText(e.target.value)}
                 placeholder="No Registrasi,Nama Peserta,Cabang Perguruan,Sabuk Saat Ini,Sabuk Target,Pos 1 Fisik,Pos 2 Jurus,Pos 3 Etika,Pos 4 Sabung,Skor Akhir,Status Kelulusan,Catatan..."
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-xs focus:border-amber-500 outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono text-xs focus:border-amber-500 outline-none"
               />
             </div>
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
               <button
                 type="button"
                 onClick={() => setIsImportModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold"
+                className="px-4 py-2 rounded-xl text-slate-500 hover:text-slate-900 text-xs font-semibold"
               >
                 Batal
               </button>
@@ -1084,8 +1084,8 @@ export default function UktSection() {
       {/* MODAL QUICK POS EVALUATION (UNTUK POS 1, POS 2, POS 3, ATAU POS 4)        */}
       {/* ========================================================================= */}
       {quickPosModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg bg-slate-900 border border-amber-500/40 rounded-2xl p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/85 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-lg bg-slate-50 border border-amber-500/40 rounded-2xl p-6 shadow-2xl space-y-4">
             
             {(() => {
               const conf = posConfig[quickPosModal.posKey];
@@ -1112,11 +1112,11 @@ export default function UktSection() {
       {/* MODAL EVALUASI PENUH 4 POS (Sliders Komprehensif)                        */}
       {/* ========================================================================= */}
       {selectedCandidateForEval && evalScores && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-3xl bg-slate-900 border border-amber-500/40 rounded-2xl p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/85 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-3xl bg-slate-50 border border-amber-500/40 rounded-2xl p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-6">
             
             {/* Header of Modal */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-3">
                 <img
                   src={selectedCandidateForEval.photo}
@@ -1124,10 +1124,10 @@ export default function UktSection() {
                   className="w-12 h-12 rounded-xl object-cover border border-amber-500/40"
                 />
                 <div>
-                  <h3 className="text-base font-bold text-white font-['Cinzel']">
+                  <h3 className="text-base font-bold text-slate-900 font-['Cinzel']">
                     Evaluasi Lengkap UKT: {selectedCandidateForEval.name}
                   </h3>
-                  <p className="text-xs text-amber-400 font-mono">
+                  <p className="text-xs text-amber-500 font-mono">
                     {selectedCandidateForEval.regNumber} • {selectedCandidateForEval.currentBelt} ➔ {selectedCandidateForEval.targetBelt}
                   </p>
                 </div>
@@ -1135,23 +1135,23 @@ export default function UktSection() {
 
               <button
                 onClick={() => setSelectedCandidateForEval(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-500 hover:text-slate-900"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* LIVE AUTO-CALCULATION BANNER */}
-            <div className="bg-slate-950 p-4 rounded-xl border border-blue-900/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="bg-white p-4 rounded-xl border border-teal-200 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
-                <span className="text-[11px] text-slate-400 uppercase tracking-wider block">
+                <span className="text-[11px] text-slate-500 uppercase tracking-wider block">
                   Hasil Kalkulasi Otomatis Berbasis Slider:
                 </span>
                 <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="text-3xl font-black text-amber-300 font-mono">
+                  <span className="text-3xl font-black text-amber-500 font-mono">
                     {liveResult.score.toFixed(1)}
                   </span>
-                  <span className="text-xs text-slate-400">/ 100</span>
+                  <span className="text-xs text-slate-500">/ 100</span>
                   <span className="text-xs text-slate-500 ml-2">
                     ({(liveP1 * 0.25).toFixed(1)} + {(liveP2 * 0.30).toFixed(1)} + {(liveP3 * 0.20).toFixed(1)} + {(liveP4 * 0.25).toFixed(1)})
                   </span>
@@ -1167,24 +1167,24 @@ export default function UktSection() {
             <div className="space-y-6">
               
               {/* POS 1: FISIK (Bobot 25%) */}
-              <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-3">
+              <div className="bg-white/70 p-4 rounded-xl border border-slate-200 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-blue-400" />
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                    <Activity className="w-4 h-4 text-teal-600" />
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                       Pos 1: Pengujian Fisik (Bobot 25%)
                     </h4>
                   </div>
-                  <span className="text-xs font-mono font-bold text-blue-300">
+                  <span className="text-xs font-mono font-bold text-teal-700">
                     Rata-rata: {liveP1} pts
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Daya Tahan Stamina</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos1.stamina}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos1.stamina}</strong>
                     </div>
                     <input
                       type="range"
@@ -1197,14 +1197,14 @@ export default function UktSection() {
                           pos1: { ...evalScores.pos1, stamina: Number(e.target.value) },
                         })
                       }
-                      className="w-full accent-blue-500 cursor-pointer"
+                      className="w-full accent-teal-500 cursor-pointer"
                     />
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Push-Up / Sit-Up</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos1.physicalEndurance}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos1.physicalEndurance}</strong>
                     </div>
                     <input
                       type="range"
@@ -1217,14 +1217,14 @@ export default function UktSection() {
                           pos1: { ...evalScores.pos1, physicalEndurance: Number(e.target.value) },
                         })
                       }
-                      className="w-full accent-blue-500 cursor-pointer"
+                      className="w-full accent-teal-500 cursor-pointer"
                     />
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Agilitas & Refleks</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos1.agility}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos1.agility}</strong>
                     </div>
                     <input
                       type="range"
@@ -1237,31 +1237,31 @@ export default function UktSection() {
                           pos1: { ...evalScores.pos1, agility: Number(e.target.value) },
                         })
                       }
-                      className="w-full accent-blue-500 cursor-pointer"
+                      className="w-full accent-teal-500 cursor-pointer"
                     />
                   </div>
                 </div>
               </div>
 
               {/* POS 2: TEKNIK JURUS (Bobot 30%) */}
-              <div className="bg-slate-950/70 p-4 rounded-xl border border-amber-900/30 space-y-3">
+              <div className="bg-white/70 p-4 rounded-xl border border-amber-900/30 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sword className="w-4 h-4 text-amber-400" />
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                    <Sword className="w-4 h-4 text-amber-500" />
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                       Pos 2: Pengujian Teknik Jurus (Bobot 30%)
                     </h4>
                   </div>
-                  <span className="text-xs font-mono font-bold text-amber-400">
+                  <span className="text-xs font-mono font-bold text-amber-500">
                     Rata-rata: {liveP2} pts
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Presisi Jurus Wajib</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos2.jurusPrecision}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos2.jurusPrecision}</strong>
                     </div>
                     <input
                       type="range"
@@ -1279,9 +1279,9 @@ export default function UktSection() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Akurasi Tendangan & Tangkis</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos2.strikeAccuracy}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos2.strikeAccuracy}</strong>
                     </div>
                     <input
                       type="range"
@@ -1299,9 +1299,9 @@ export default function UktSection() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Kestabilan Kuda-Kuda</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos2.stancesStability}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos2.stancesStability}</strong>
                     </div>
                     <input
                       type="range"
@@ -1321,24 +1321,24 @@ export default function UktSection() {
               </div>
 
               {/* POS 3: MATERI & ETIKA (Bobot 20%) */}
-              <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-3">
+              <div className="bg-white/70 p-4 rounded-xl border border-slate-200 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-blue-400" />
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                    <BookOpen className="w-4 h-4 text-teal-600" />
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                       Pos 3: Pemahaman Materi & Etika (Bobot 20%)
                     </h4>
                   </div>
-                  <span className="text-xs font-mono font-bold text-blue-300">
+                  <span className="text-xs font-mono font-bold text-teal-700">
                     Rata-rata: {liveP3} pts
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Teori Bela Diri</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos3.theory}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos3.theory}</strong>
                     </div>
                     <input
                       type="range"
@@ -1351,14 +1351,14 @@ export default function UktSection() {
                           pos3: { ...evalScores.pos3, theory: Number(e.target.value) },
                         })
                       }
-                      className="w-full accent-blue-500 cursor-pointer"
+                      className="w-full accent-teal-500 cursor-pointer"
                     />
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Sejarah Perguruan</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos3.history}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos3.history}</strong>
                     </div>
                     <input
                       type="range"
@@ -1371,14 +1371,14 @@ export default function UktSection() {
                           pos3: { ...evalScores.pos3, history: Number(e.target.value) },
                         })
                       }
-                      className="w-full accent-blue-500 cursor-pointer"
+                      className="w-full accent-teal-500 cursor-pointer"
                     />
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Etika & Penghormatan</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos3.ethicsRespect}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos3.ethicsRespect}</strong>
                     </div>
                     <input
                       type="range"
@@ -1391,31 +1391,31 @@ export default function UktSection() {
                           pos3: { ...evalScores.pos3, ethicsRespect: Number(e.target.value) },
                         })
                       }
-                      className="w-full accent-blue-500 cursor-pointer"
+                      className="w-full accent-teal-500 cursor-pointer"
                     />
                   </div>
                 </div>
               </div>
 
               {/* POS 4: PERTARUNGAN SABUNG / SPARRING (Bobot 25%) */}
-              <div className="bg-slate-950/70 p-4 rounded-xl border border-amber-900/30 space-y-3">
+              <div className="bg-white/70 p-4 rounded-xl border border-amber-900/30 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-amber-400" />
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                    <Shield className="w-4 h-4 text-amber-500" />
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                       Pos 4: Pertarungan Sabung / Sparring (Bobot 25%)
                     </h4>
                   </div>
-                  <span className="text-xs font-mono font-bold text-amber-400">
+                  <span className="text-xs font-mono font-bold text-amber-500">
                     Rata-rata: {liveP4} pts
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Keberanian Tanding</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos4.fightingCourage}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos4.fightingCourage}</strong>
                     </div>
                     <input
                       type="range"
@@ -1433,9 +1433,9 @@ export default function UktSection() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Penerapan Teknik Bertarung</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos4.techniqueApplication}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos4.techniqueApplication}</strong>
                     </div>
                     <input
                       type="range"
@@ -1453,9 +1453,9 @@ export default function UktSection() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs text-slate-700 mb-1">
                       <span>Sportivitas / Kontrol Emosi</span>
-                      <strong className="text-amber-400 font-mono">{evalScores.pos4.emotionalControl}</strong>
+                      <strong className="text-amber-500 font-mono">{evalScores.pos4.emotionalControl}</strong>
                     </div>
                     <input
                       type="range"
@@ -1476,7 +1476,7 @@ export default function UktSection() {
 
               {/* Examiner Notes */}
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
                   Catatan Dewan Penguji untuk Peserta:
                 </label>
                 <textarea
@@ -1484,18 +1484,18 @@ export default function UktSection() {
                   value={examinerNotesInput}
                   onChange={(e) => setExaminerNotesInput(e.target.value)}
                   placeholder="Berikan masukan koreksi teknik, apresiasi stamina, atau catatan kesiapan naik sabuk..."
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                 />
               </div>
 
             </div>
 
             {/* Modal Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-800">
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-200">
               <button
                 type="button"
                 onClick={() => setSelectedCandidateForEval(null)}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl text-slate-500 hover:text-slate-900 text-xs font-semibold"
               >
                 Batal
               </button>
@@ -1527,23 +1527,23 @@ function QuickPosEditor({ candidate, posConfig, posKey, initialSub, onClose, onS
 
   return (
     <>
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200">
         <div>
-          <h3 className="text-base font-bold text-white font-['Cinzel']">
+          <h3 className="text-base font-bold text-slate-900 font-['Cinzel']">
             Penilaian {posConfig.title}
           </h3>
-          <p className="text-xs text-amber-400 font-mono">
+          <p className="text-xs text-amber-500 font-mono">
             {candidate.name} • {candidate.regNumber}
           </p>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-white">
+        <button onClick={onClose} className="text-slate-500 hover:text-slate-900">
           <X className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
-        <span className="text-xs text-slate-300">Nilai Rata-rata {posKey.toUpperCase()}:</span>
-        <span className="text-2xl font-black font-mono text-amber-400">
+      <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+        <span className="text-xs text-slate-700">Nilai Rata-rata {posKey.toUpperCase()}:</span>
+        <span className="text-2xl font-black font-mono text-amber-500">
           {currentAvg} <span className="text-xs text-slate-500 font-normal">pts</span>
         </span>
       </div>
@@ -1551,9 +1551,9 @@ function QuickPosEditor({ candidate, posConfig, posKey, initialSub, onClose, onS
       <div className="space-y-4 py-2">
         {posConfig.subCriteria.map((sub) => (
           <div key={sub.key} className="space-y-1">
-            <div className="flex justify-between text-xs text-slate-300">
+            <div className="flex justify-between text-xs text-slate-700">
               <span>{sub.label}</span>
-              <strong className="text-amber-400 font-mono">{subValues[sub.key] ?? 80}</strong>
+              <strong className="text-amber-500 font-mono">{subValues[sub.key] ?? 80}</strong>
             </div>
             <input
               type="range"
@@ -1567,11 +1567,11 @@ function QuickPosEditor({ candidate, posConfig, posKey, initialSub, onClose, onS
         ))}
       </div>
 
-      <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+      <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold"
+          className="px-4 py-2 rounded-xl text-slate-500 hover:text-slate-900 text-xs font-semibold"
         >
           Batal
         </button>

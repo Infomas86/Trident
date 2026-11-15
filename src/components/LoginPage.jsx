@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { X, Lock, Sparkles, Eye, EyeOff, UserPlus } from 'lucide-react';
 
 const inputCls =
-  'w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none';
+  'w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none';
 
 function PasswordInput({ value, onChange, autoComplete, minLength }) {
   const [show, setShow] = useState(false);
@@ -23,7 +23,7 @@ function PasswordInput({ value, onChange, autoComplete, minLength }) {
         type="button"
         onClick={() => setShow((v) => !v)}
         aria-label={show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-        className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-amber-400"
+        className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-amber-500"
       >
         {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
       </button>
@@ -31,7 +31,7 @@ function PasswordInput({ value, onChange, autoComplete, minLength }) {
   );
 }
 
-const Label = ({ children }) => <label className="text-xs text-slate-300 font-medium block mb-1">{children}</label>;
+const Label = ({ children }) => <label className="text-xs text-slate-700 font-medium block mb-1">{children}</label>;
 
 export default function LoginPage() {
   const { isLoginModalOpen, setIsLoginModalOpen, signIn, signUp } = useApp();
@@ -39,6 +39,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [pac, setPac] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   if (!isLoginModalOpen) return null;
@@ -62,7 +63,7 @@ export default function LoginPage() {
   const handleRegister = (e) => {
     e.preventDefault();
     run(() =>
-      signUp({ fullName: fullName.trim(), email: email.trim(), password }),
+      signUp({ fullName: fullName.trim(), email: email.trim(), pac: pac.trim(), password }),
     );
   };
 
@@ -71,7 +72,7 @@ export default function LoginPage() {
       type="button"
       onClick={() => setMode(key)}
       className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
-        mode === key ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
+        mode === key ? 'bg-amber-500 text-slate-950' : 'text-slate-500 hover:text-slate-900'
       }`}
     >
       {label}
@@ -79,35 +80,35 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn overflow-y-auto">
-      <div className="w-full max-w-md bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-amber-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-5 my-auto">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/85 backdrop-blur-md animate-fadeIn overflow-y-auto">
+      <div className="w-full max-w-md bg-gradient-to-b from-slate-50 via-slate-100 to-white border border-amber-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-5 my-auto">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-teal-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <button
           onClick={() => setIsLoginModalOpen(false)}
           aria-label="Tutup"
-          className="absolute top-4 right-4 p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors z-30"
+          className="absolute top-4 right-4 p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition-colors z-30"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="text-center space-y-2 relative z-10 pt-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-bold tracking-wider uppercase">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[11px] font-bold tracking-wider uppercase">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             <span>Akun Resmi Perguruan</span>
           </div>
-          <h3 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
-            Portal <span className="text-amber-400">PAGAR NUSA</span>
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
+            Portal <span className="text-amber-500">PAGAR NUSA</span>
           </h3>
-          <p className="text-xs sm:text-sm text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-500">
             {mode === 'login'
               ? 'Masuk untuk membuka Agenda, Donasi, dan Ujian Kenaikan Tingkat.'
               : 'Daftar sebagai anggota perguruan.'}
           </p>
         </div>
 
-        <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 relative z-10">
+        <div className="flex rounded-xl bg-white p-1 border border-slate-200 relative z-10">
           {tab('login', 'Masuk')}
           {tab('register', 'Daftar')}
         </div>
@@ -168,6 +169,17 @@ export default function LoginPage() {
               />
             </div>
             <div>
+              <Label>PAC (Pimpinan Anak Cabang)</Label>
+              <input
+                type="text"
+                value={pac}
+                onChange={(e) => setPac(e.target.value)}
+                placeholder="Contoh: Batam Kota"
+                className={inputCls}
+                required
+              />
+            </div>
+            <div>
               <Label>Kata Sandi (minimal 8 karakter)</Label>
               <PasswordInput value={password} onChange={setPassword} autoComplete="new-password" minLength={8} />
             </div>
@@ -182,7 +194,7 @@ export default function LoginPage() {
           </form>
         )}
 
-        <div className="text-center text-[11px] text-slate-500 pt-2 border-t border-slate-800/80 relative z-10">
+        <div className="text-center text-[11px] text-slate-500 pt-2 border-t border-slate-200/80 relative z-10">
           Pagar Nusa Kota Batam © 2026
         </div>
       </div>

@@ -15,23 +15,23 @@ export default function LockedFeatureModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn no-print">
-      <div className="relative w-full max-w-md bg-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-2xl shadow-blue-950/80 text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-md animate-fadeIn no-print">
+      <div className="relative w-full max-w-md bg-slate-50 border border-amber-500/30 rounded-2xl p-6 shadow-2xl shadow-teal-950/80 text-center">
         <button
           onClick={close}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="mx-auto w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-4">
-          <Lock className="w-8 h-8 text-amber-400 animate-pulse" />
+          <Lock className="w-8 h-8 text-amber-500 animate-pulse" />
         </div>
 
-        <h3 className="text-xl font-bold text-white font-['Cinzel'] tracking-wide">Akses Fitur Terkunci</h3>
+        <h3 className="text-xl font-bold text-slate-900 font-['Cinzel'] tracking-wide">Akses Fitur Terkunci</h3>
 
-        <p className="text-sm text-slate-300 mt-2">
-          Fitur <span className="font-semibold text-amber-400">"{lockedModal.featureName}"</span> hanya untuk anggota Perguruan yang sudah masuk.
+        <p className="text-sm text-slate-700 mt-2">
+          Fitur <span className="font-semibold text-amber-500">"{lockedModal.featureName}"</span> hanya untuk anggota Perguruan yang sudah masuk.
         </p>
 
         <button

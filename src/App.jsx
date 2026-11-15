@@ -18,7 +18,7 @@ function MainContent() {
   const { activeTab, toast, isAdmin } = useApp();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen flex flex-col bg-white text-slate-900 selection:bg-amber-500 selection:text-slate-950">
       
       {/* Navbar with Role Indicator */}
       <Navbar />
@@ -32,13 +32,13 @@ function MainContent() {
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 animate-bounce no-print">
-          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 border border-amber-500/50 text-white text-xs shadow-2xl backdrop-blur-md">
+          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-50 border border-amber-500/50 text-slate-900 text-xs shadow-2xl backdrop-blur-md">
             {toast.type === 'error' ? (
-              <AlertCircle className="w-4 h-4 text-rose-400" />
+              <AlertCircle className="w-4 h-4 text-rose-600" />
             ) : toast.type === 'info' ? (
-              <Info className="w-4 h-4 text-blue-400" />
+              <Info className="w-4 h-4 text-teal-600" />
             ) : (
-              <CheckCircle className="w-4 h-4 text-emerald-400" />
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
             )}
             <span className="font-semibold">{toast.message}</span>
           </div>

@@ -7,7 +7,7 @@ import { useApp } from '../context/AppContext';
 export default function ImageField({ label, value, onChange, folder }) {
   const { showToast } = useApp();
   const [uploading, setUploading] = useState(false);
-  const input = 'w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none';
+  const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none';
 
   const pick = async (e) => {
     const file = e.target.files?.[0];
@@ -27,7 +27,7 @@ export default function ImageField({ label, value, onChange, folder }) {
 
   return (
     <div>
-      <label className="text-xs text-slate-300 font-semibold block mb-1">{label}</label>
+      <label className="text-xs text-slate-700 font-semibold block mb-1">{label}</label>
       <div className="flex gap-2">
         <input
           type="url"
@@ -37,13 +37,13 @@ export default function ImageField({ label, value, onChange, folder }) {
           className={input}
           required
         />
-        <label className={`shrink-0 flex items-center gap-1.5 px-3 rounded-lg border text-xs font-semibold cursor-pointer ${uploading ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-slate-800 hover:bg-slate-700 border-slate-600 text-slate-200'}`}>
+        <label className={`shrink-0 flex items-center gap-1.5 px-3 rounded-lg border text-xs font-semibold cursor-pointer ${uploading ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'}`}>
           {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
           <span>{uploading ? 'Mengunggah…' : 'Pilih File'}</span>
           <input type="file" accept="image/jpeg,image/png,image/webp" onChange={pick} disabled={uploading} className="hidden" />
         </label>
       </div>
-      {value && <img src={value} alt="" className="mt-2 h-24 rounded-lg object-cover border border-slate-800" />}
+      {value && <img src={value} alt="" className="mt-2 h-24 rounded-lg object-cover border border-slate-200" />}
     </div>
   );
 }

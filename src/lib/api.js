@@ -29,8 +29,8 @@ export async function getProfile(userId) {
 
 // --- Daftar mandiri ---
 // Self sign-up always creates an 'anggota' profile (DB trigger); the name travels as metadata.
-export async function signUp(email, password, fullName) {
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+export async function signUp(email, password, fullName, pac) {
+  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName, pac } } });
   if (error) {
     if (/registered|exists/i.test(error.message)) throw new UserError('Email sudah terdaftar, silakan masuk');
     if (/password/i.test(error.message)) throw new UserError('Kata sandi terlalu lemah (minimal 8 karakter)');

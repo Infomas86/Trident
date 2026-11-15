@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useApp, ROLES } from '../context/AppContext';
 import * as api from '../lib/api';
 
-const input = 'w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none';
+const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none';
 const ROLE_OPTIONS = [[ROLES.MEMBER, 'Anggota'], [ROLES.EXAMINER, 'Penguji'], [ROLES.ADMIN, 'Admin']];
 const roleLabel = (r) => ROLE_OPTIONS.find(([v]) => v === r)?.[1] ?? '-';
-const EMPTY = { email: '', password: '', full_name: '', role: ROLES.MEMBER, branch: '', reg_number: '', pac: '' };
+const EMPTY = { email: '', password: '', full_name: '', role: ROLES.MEMBER, reg_number: '', pac: '' };
 const blank = (v) => v.trim() || null;
 
 export default function AkunSection() {
@@ -45,7 +45,7 @@ export default function AkunSection() {
     const done = await run(
       () => api.createUser({
         email: form.email.trim(), password: form.password, full_name: form.full_name.trim(), role: form.role,
-        branch: blank(form.branch), reg_number: blank(form.reg_number), pac: blank(form.pac),
+        reg_number: blank(form.reg_number), pac: blank(form.pac),
       }),
       'Akun berhasil dibuat', 'Gagal membuat akun',
     );
@@ -54,10 +54,10 @@ export default function AkunSection() {
 
   const saveEdit = async (e) => {
     e.preventDefault();
-    const { id, full_name, role, branch, reg_number, pac } = edit;
+    const { id, full_name, role, reg_number, pac } = edit;
     if (!full_name.trim()) return showToast('Nama wajib diisi', 'error');
     const done = await run(
-      () => api.updateUserProfile(id, { full_name: full_name.trim(), role, branch: blank(branch), reg_number: blank(reg_number), pac: blank(pac ?? '') }),
+      () => api.updateUserProfile(id, { full_name: full_name.trim(), role, reg_number: blank(reg_number), pac: blank(pac ?? '') }),
       'Akun berhasil diperbarui', 'Gagal memperbarui akun',
     );
     if (done) setEdit(null);
@@ -85,7 +85,7 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
   };
 
   const needle = q.trim().toLowerCase();
-  const shown = users.filter((u) => !needle || [u.full_name, u.email, u.branch, u.reg_number].some((v) => v?.toLowerCase().includes(needle)));
+  const shown = users.filter((u) => !needle || [u.full_name, u.email, u.reg_number].some((v) => v?.toLowerCase().includes(needle)));
   const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
   const setE = (k) => (e) => setEdit({ ...edit, [k]: e.target.value });
 
@@ -101,7 +101,6 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
       <select className={input} value={v.role} onChange={set('role')}>
         {ROLE_OPTIONS.map(([val, label]) => <option key={val} value={val}>{label}</option>)}
       </select>
-      <input className={input} placeholder="Cabang" value={v.branch} onChange={set('branch')} />
       <input className={input} placeholder="PAC (untuk admin UKT, kosong = pusat)" value={v.pac ?? ''} onChange={set('pac')} />
       <input className={input} placeholder="No. registrasi peserta UKT (opsional)" value={v.reg_number} onChange={set('reg_number')} />
     </>
@@ -109,50 +108,49 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
 
   return (
     <div className="space-y-8 py-6">
-      <h2 className="text-2xl font-extrabold text-white font-['Cinzel']">Kelola Akun</h2>
+      <h2 className="text-2xl font-extrabold text-slate-900 font-['Cinzel']">Kelola Akun</h2>
 
 
-      <form onSubmit={create} className="trident-card rounded-2xl p-5 border border-slate-800 space-y-3">
-        <h3 className="text-sm font-bold text-white">Tambah Akun</h3>
+      <form onSubmit={create} className="trident-card rounded-2xl p-5 border border-slate-200 space-y-3">
+        <h3 className="text-sm font-bold text-slate-900">Tambah Akun</h3>
         <div className="grid sm:grid-cols-3 gap-3">{fields(form, setF, true)}</div>
         <button type="submit" disabled={busy} className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-xs font-bold">Tambah</button>
       </form>
 
       {edit && (
         <form onSubmit={saveEdit} className="trident-card rounded-2xl p-5 border border-amber-500/40 space-y-3">
-          <h3 className="text-sm font-bold text-white">Ubah Akun</h3>
+          <h3 className="text-sm font-bold text-slate-900">Ubah Akun</h3>
           <div className="grid sm:grid-cols-3 gap-3">{fields(edit, setE, false)}</div>
           <div className="flex gap-2">
             <button type="submit" disabled={busy} className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-xs font-bold">Simpan</button>
-            <button type="button" onClick={() => setEdit(null)} className="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold">Batal</button>
+            <button type="button" onClick={() => setEdit(null)} className="px-5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold">Batal</button>
           </div>
         </form>
       )}
 
       <div className="space-y-3">
-        <input className={input} placeholder="Cari nama, email, cabang, atau no. registrasi" value={q} onChange={(e) => setQ(e.target.value)} />
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
+        <input className={input} placeholder="Cari nama, email, atau no. registrasi" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-xs text-left">
-            <thead className="bg-slate-900 text-slate-400">
-              <tr>{['Nama', 'Email', 'Peran', 'PAC', 'Cabang', 'No. Reg', 'Status', 'Aksi'].map((h) => <th key={h} className="px-3 py-2 font-semibold">{h}</th>)}</tr>
+            <thead className="bg-slate-50 text-slate-500">
+              <tr>{['Nama', 'Email', 'Peran', 'PAC', 'No. Reg', 'Status', 'Aksi'].map((h) => <th key={h} className="px-3 py-2 font-semibold">{h}</th>)}</tr>
             </thead>
             <tbody>
-              {shown.length === 0 && <tr><td colSpan={8} className="px-3 py-4 text-slate-400">Tidak ada akun.</td></tr>}
+              {shown.length === 0 && <tr><td colSpan={7} className="px-3 py-4 text-slate-500">Tidak ada akun.</td></tr>}
               {shown.map((u) => (
-                <tr key={u.id} className="border-t border-slate-800 text-slate-200">
-                  <td className="px-3 py-2 font-bold text-white">{u.full_name ?? '-'}</td>
+                <tr key={u.id} className="border-t border-slate-200 text-slate-800">
+                  <td className="px-3 py-2 font-bold text-slate-900">{u.full_name ?? '-'}</td>
                   <td className="px-3 py-2">{u.email}</td>
                   <td className="px-3 py-2">{roleLabel(u.role)}</td>
                   <td className="px-3 py-2">{u.pac ?? '-'}</td>
-                  <td className="px-3 py-2">{u.branch ?? '-'}</td>
                   <td className="px-3 py-2 font-mono">{u.reg_number ?? '-'}</td>
-                  <td className="px-3 py-2">{u.active ? <span className="text-emerald-400">Aktif</span> : <span className="text-rose-400">Nonaktif</span>}</td>
+                  <td className="px-3 py-2">{u.active ? <span className="text-emerald-600">Aktif</span> : <span className="text-rose-600">Nonaktif</span>}</td>
                   <td className="px-3 py-2 whitespace-nowrap space-x-1">
-                    <button disabled={busy} onClick={() => setEdit({ id: u.id, full_name: u.full_name ?? '', role: u.role ?? ROLES.MEMBER, branch: u.branch ?? '', reg_number: u.reg_number ?? '', pac: u.pac ?? '' })} className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700">Ubah</button>
-                    <button disabled={busy} onClick={() => reset(u)} className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700">Reset Sandi</button>
-                    <button disabled={busy} onClick={() => toggle(u)} className={`px-2 py-1 rounded text-white ${u.active ? 'bg-rose-700 hover:bg-rose-600' : 'bg-emerald-600 hover:bg-emerald-500'}`}>{u.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
+                    <button disabled={busy} onClick={() => setEdit({ id: u.id, full_name: u.full_name ?? '', role: u.role ?? ROLES.MEMBER, reg_number: u.reg_number ?? '', pac: u.pac ?? '' })} className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200">Ubah</button>
+                    <button disabled={busy} onClick={() => reset(u)} className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200">Reset Sandi</button>
+                    <button disabled={busy} onClick={() => toggle(u)} className={`px-2 py-1 rounded text-slate-900 ${u.active ? 'bg-rose-700 hover:bg-rose-600' : 'bg-emerald-600 hover:bg-emerald-500'}`}>{u.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
                     {u.id !== currentUser?.id && (
-                      <button disabled={busy} onClick={() => remove(u)} className="px-2 py-1 rounded text-white bg-rose-950 hover:bg-rose-900 border border-rose-700">Hapus</button>
+                      <button disabled={busy} onClick={() => remove(u)} className="px-2 py-1 rounded text-slate-900 bg-rose-50 hover:bg-rose-100 border border-rose-200">Hapus</button>
                     )}
                   </td>
                 </tr>

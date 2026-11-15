@@ -78,15 +78,15 @@ export default function PrestasiSection() {
         };
       case 'perunggu':
         return {
-          bg: 'bg-gradient-to-r from-amber-700 via-orange-600 to-amber-800 text-white font-black',
+          bg: 'bg-gradient-to-r from-amber-700 via-orange-600 to-amber-800 text-slate-900 font-black',
           border: 'border-amber-700/80',
           glow: 'shadow-lg shadow-amber-700/20',
           label: 'MEDALI PERUNGGU',
         };
       default:
         return {
-          bg: 'bg-blue-600 text-white font-bold',
-          border: 'border-blue-500',
+          bg: 'bg-teal-600 text-slate-900 font-bold',
+          border: 'border-teal-500',
           glow: '',
           label: medal.toUpperCase(),
         };
@@ -99,14 +99,14 @@ export default function PrestasiSection() {
       {/* Header and Controls */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-amber-400 text-xs font-bold uppercase tracking-widest mb-1">
+          <div className="inline-flex items-center gap-1.5 text-amber-500 text-xs font-bold uppercase tracking-widest mb-1">
             <Trophy className="w-3.5 h-3.5" />
             <span>Etalase Juara & Kebanggaan</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
             Galeri Prestasi Atlet
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-500">
             Rekam jejak perjuangan para pesilat di gelanggang kejuaraan daerah, nasional, dan internasional.
           </p>
         </div>
@@ -123,8 +123,8 @@ export default function PrestasiSection() {
       </div>
 
       {/* Scope Filter Pills */}
-      <div className="flex items-center gap-2 bg-slate-900/60 p-2 rounded-2xl border border-slate-800 overflow-x-auto">
-        <span className="text-xs text-slate-400 font-medium px-2 hidden sm:inline">Cakupan Wilayah:</span>
+      <div className="flex items-center gap-2 bg-slate-50/60 p-2 rounded-2xl border border-slate-200 overflow-x-auto">
+        <span className="text-xs text-slate-500 font-medium px-2 hidden sm:inline">Cakupan Wilayah:</span>
         {scopes.map((scope) => (
           <button
             key={scope}
@@ -132,7 +132,7 @@ export default function PrestasiSection() {
             className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
               selectedScope === scope
                 ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-950'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             {scope}
@@ -142,9 +142,9 @@ export default function PrestasiSection() {
 
       {/* Achievements Cards Grid */}
       {achievementsList.length === 0 && (
-        <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-dashed border-slate-800">
-          <Trophy className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-slate-300">Belum ada prestasi</p>
+        <div className="text-center py-16 bg-slate-50/40 rounded-2xl border border-dashed border-slate-200">
+          <Trophy className="w-12 h-12 text-slate-500 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-slate-700">Belum ada prestasi</p>
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -153,10 +153,10 @@ export default function PrestasiSection() {
           return (
             <div
               key={item.id}
-              className="trident-card rounded-2xl overflow-hidden border border-slate-800 hover:border-amber-500/40 transition-all duration-300 flex flex-col group"
+              className="trident-card rounded-2xl overflow-hidden border border-slate-200 hover:border-amber-500/40 transition-all duration-300 flex flex-col group"
             >
               {/* Photo & Badge Banner */}
-              <div className="relative h-52 bg-slate-950 overflow-hidden">
+              <div className="relative h-52 bg-white overflow-hidden">
                 <img
                   src={item.photo}
                   alt={item.athleteName}
@@ -168,7 +168,7 @@ export default function PrestasiSection() {
                     onClick={() => {
                       if (confirm(`Hapus prestasi ${item.athleteName}?`)) handleDeleteAchievement(item.id);
                     }}
-                    className="absolute top-3 left-3 p-1.5 rounded-lg bg-slate-950/80 hover:bg-rose-950 text-slate-300 hover:text-rose-400 backdrop-blur-md transition-colors"
+                    className="absolute top-3 left-3 p-1.5 rounded-lg bg-white/80 hover:bg-rose-50 text-slate-700 hover:text-rose-600 backdrop-blur-md transition-colors"
                     title="Hapus Prestasi"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -185,7 +185,7 @@ export default function PrestasiSection() {
 
                 {/* Scope Badge */}
                 <div className="absolute bottom-3 left-3">
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded bg-slate-950/80 text-blue-300 border border-blue-500/30 backdrop-blur-md flex items-center gap-1">
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded bg-white/80 text-teal-700 border border-teal-500/30 backdrop-blur-md flex items-center gap-1">
                     <Globe className="w-3 h-3" />
                     Tingkat {item.scope} ({item.year})
                   </span>
@@ -196,32 +196,32 @@ export default function PrestasiSection() {
               <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-blue-600/20 text-amber-400 flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-teal-600/20 text-amber-500 flex items-center justify-center">
                       <User className="w-3.5 h-3.5" />
                     </div>
-                    <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors">
+                    <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-500 transition-colors">
                       {item.athleteName}
                     </h3>
                   </div>
 
-                  <p className="text-xs font-semibold text-amber-400/90">
+                  <p className="text-xs font-semibold text-amber-500/90">
                     {item.championship}
                   </p>
 
-                  <div className="inline-block px-2.5 py-1 rounded bg-slate-950 text-slate-300 text-xs border border-slate-800">
-                    Kategori: <strong className="text-white">{item.category}</strong>
+                  <div className="inline-block px-2.5 py-1 rounded bg-white text-slate-700 text-xs border border-slate-200">
+                    Kategori: <strong className="text-slate-900">{item.category}</strong>
                   </div>
 
                   {item.notes && (
-                    <p className="text-xs text-slate-400 italic pt-1 leading-relaxed">
+                    <p className="text-xs text-slate-500 italic pt-1 leading-relaxed">
                       "{item.notes}"
                     </p>
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-500 flex items-center justify-between">
+                <div className="pt-3 border-t border-slate-200 text-[11px] text-slate-500 flex items-center justify-between">
                   <span>Kontingen Perguruan</span>
-                  <span className="text-amber-400 font-semibold flex items-center gap-1">
+                  <span className="text-amber-500 font-semibold flex items-center gap-1">
                     <Sparkles className="w-3 h-3" /> Terverifikasi
                   </span>
                 </div>
@@ -233,16 +233,16 @@ export default function PrestasiSection() {
 
       {/* Modal Tambah Prestasi Baru (Examiner only) */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white font-['Cinzel'] flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-amber-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+              <h3 className="text-lg font-bold text-slate-900 font-['Cinzel'] flex items-center gap-2">
+                <PlusCircle className="w-5 h-5 text-amber-500" />
                 Catat Prestasi Atlet Perguruan
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-500 hover:text-slate-900"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -250,7 +250,7 @@ export default function PrestasiSection() {
 
             <form onSubmit={handleSubmitAchievement} className="space-y-4">
               <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
+                <label className="text-xs text-slate-700 font-semibold block mb-1">
                   Nama Atlet / Pesilat
                 </label>
                 <input
@@ -258,13 +258,13 @@ export default function PrestasiSection() {
                   placeholder="Contoh: Gilang Pratama..."
                   value={newAchForm.athleteName}
                   onChange={(e) => setNewAchForm({ ...newAchForm, athleteName: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
+                <label className="text-xs text-slate-700 font-semibold block mb-1">
                   Nama Kejuaraan / Turnamen
                 </label>
                 <input
@@ -272,20 +272,20 @@ export default function PrestasiSection() {
                   placeholder="Contoh: Kejuaraan Nasional Silat Open 2026..."
                   value={newAchForm.championship}
                   onChange={(e) => setNewAchForm({ ...newAchForm, championship: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-300 font-semibold block mb-1">
+                  <label className="text-xs text-slate-700 font-semibold block mb-1">
                     Cakupan Wilayah
                   </label>
                   <select
                     value={newAchForm.scope}
                     onChange={(e) => setNewAchForm({ ...newAchForm, scope: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                   >
                     <option value="Internasional">Internasional</option>
                     <option value="Nasional">Nasional</option>
@@ -294,13 +294,13 @@ export default function PrestasiSection() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-300 font-semibold block mb-1">
+                  <label className="text-xs text-slate-700 font-semibold block mb-1">
                     Jenis Medali
                   </label>
                   <select
                     value={newAchForm.medal}
                     onChange={(e) => setNewAchForm({ ...newAchForm, medal: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                   >
                     <option value="Emas">Emas (Gold)</option>
                     <option value="Perak">Perak (Silver)</option>
@@ -310,7 +310,7 @@ export default function PrestasiSection() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
+                <label className="text-xs text-slate-700 font-semibold block mb-1">
                   Kategori Tanding / Seni
                 </label>
                 <input
@@ -318,7 +318,7 @@ export default function PrestasiSection() {
                   placeholder="Contoh: Tanding Dewasa Putra Kelas F (70-75 Kg)..."
                   value={newAchForm.category}
                   onChange={(e) => setNewAchForm({ ...newAchForm, category: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                   required
                 />
               </div>
@@ -336,7 +336,7 @@ export default function PrestasiSection() {
               />
 
               <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
+                <label className="text-xs text-slate-700 font-semibold block mb-1">
                   Catatan Pertandingan / Keterangan
                 </label>
                 <textarea
@@ -344,15 +344,15 @@ export default function PrestasiSection() {
                   value={newAchForm.notes}
                   onChange={(e) => setNewAchForm({ ...newAchForm, notes: e.target.value })}
                   placeholder="Contoh: Menang angka mutlak 5-0 di babak final..."
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-lg text-slate-400 hover:text-white text-xs font-semibold"
+                  className="px-4 py-2 rounded-lg text-slate-500 hover:text-slate-900 text-xs font-semibold"
                 >
                   Batal
                 </button>

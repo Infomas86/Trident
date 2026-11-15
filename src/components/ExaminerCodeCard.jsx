@@ -21,10 +21,10 @@ export default function ExaminerCodeCard() {
   return (
     <form onSubmit={submit} className="trident-card rounded-2xl p-5 border border-amber-500/30 space-y-3">
       <div className="flex items-center gap-2">
-        <KeyRound className="w-4 h-4 text-amber-400" />
-        <h3 className="text-sm font-bold text-white">Bertugas sebagai Penguji UKT?</h3>
+        <KeyRound className="w-4 h-4 text-amber-500" />
+        <h3 className="text-sm font-bold text-slate-900">Bertugas sebagai Penguji UKT?</h3>
       </div>
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-500">
         Masukkan kode UKT dari admin PAC penyelenggara untuk membuka meja penilaian UKT tersebut.
       </p>
       <div className="flex gap-2">
@@ -34,7 +34,7 @@ export default function ExaminerCodeCard() {
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="Contoh: K7M2Q9XA"
-          className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs font-mono tracking-widest focus:border-amber-500 outline-none"
+          className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs font-mono tracking-widest focus:border-amber-500 outline-none"
           required
         />
         <button
