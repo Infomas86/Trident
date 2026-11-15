@@ -55,7 +55,7 @@ export default function Navbar() {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 font-['Cinzel']">
+                <span className="font-extrabold text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-green-500 to-green-600 font-['Cinzel']">
                   PAGAR NUSA
                 </span>
               </div>

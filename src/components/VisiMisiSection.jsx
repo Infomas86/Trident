@@ -218,7 +218,7 @@ export default function VisiMisiSection() {
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight font-['Cinzel'] leading-tight">
             {heroData?.titleMain || 'PENCAK SILAT NAHDLATUL ULAMA'}{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-green-500 to-green-600">
               {heroData?.titleHighlight || 'PAGAR NUSA'}
             </span>
           </h1>

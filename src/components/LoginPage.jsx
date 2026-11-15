@@ -99,7 +99,7 @@ export default function LoginPage() {
             <span>Akun Resmi Perguruan</span>
           </div>
           <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
-            Portal <span className="text-amber-500">PAGAR NUSA</span>
+            Portal <span className="text-green-600">PAGAR NUSA</span>
           </h3>
           <p className="text-xs sm:text-sm text-slate-500">
             {mode === 'login'
