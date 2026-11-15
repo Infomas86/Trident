@@ -198,7 +198,7 @@ export default function VisiMisiSection() {
           <div className="flex items-center justify-center gap-3">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold tracking-wider uppercase">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>{heroData?.badge || 'Padepokan Agung Seni Bela Diri Kesatria'}</span>
+              <span>{heroData?.badge || 'Perguruan Pencak Silat Pagar Nusa'}</span>
             </div>
 
             {isAdmin && (
@@ -217,14 +217,14 @@ export default function VisiMisiSection() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight font-['Cinzel'] leading-tight">
-            {heroData?.titleMain || 'TRIDENT'}{' '}
+            {heroData?.titleMain || 'PENCAK SILAT NAHDLATUL ULAMA'}{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500">
-              {heroData?.titleHighlight || 'ACADEMY'}
+              {heroData?.titleHighlight || 'PAGAR NUSA'}
             </span>
           </h1>
 
           <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            {heroData?.subtitle || 'Membina raga, menata rasa, dan menggembleng jiwa kesatria sejati melalui kurikulum bela diri terpadu serta standarisasi evaluasi kenaikan tingkat 4 Pos yang presisi.'}
+            {heroData?.subtitle || 'Organisasi pencak silat di bawah naungan Nahdlatul Ulama, Cabang Kota Batam.'}
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
@@ -249,7 +249,7 @@ export default function VisiMisiSection() {
               Statistik Real-Time Perguruan
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Data akumulasi anggota, prestasi, dan jangkauan padepokan Trident di seluruh Indonesia
+              Data akumulasi anggota, prestasi, dan jangkauan perguruan di Kota Batam
             </p>
           </div>
 
@@ -300,7 +300,7 @@ export default function VisiMisiSection() {
               {stats.padepokanBranches} Cabang
             </div>
             <div className="text-xs font-medium text-slate-400 mt-1">
-              Dojo & Padepokan Daerah
+              Dojo & Perguruan Daerah
             </div>
           </div>
 
@@ -331,7 +331,7 @@ export default function VisiMisiSection() {
               Pilar Visi & Misi Perguruan
             </h2>
             <p className="text-xs sm:text-sm text-slate-400">
-              Nilai dasar etika kesatria yang dipegang teguh oleh setiap murid, pendekar, dan dewan penguji Trident.
+              Nilai dasar etika kesatria yang dipegang teguh oleh setiap murid, pendekar, dan dewan penguji perguruan.
             </p>
           </div>
 
@@ -392,7 +392,7 @@ export default function VisiMisiSection() {
 
                 <div className="mt-5 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
                   <span>Pilar #{pillars.indexOf(pillar) + 1}</span>
-                  <span className="text-blue-400 font-semibold group-hover:translate-x-1 transition-transform">Trident Doctrine</span>
+                  <span className="text-blue-400 font-semibold group-hover:translate-x-1 transition-transform">Doktrin Perguruan</span>
                 </div>
               </div>
             );
@@ -679,10 +679,10 @@ export default function VisiMisiSection() {
             <span>Rekam Jejak Historis</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
-            Sejarah Perjalanan Perguruan Trident
+            Sejarah Perjalanan Perguruan
           </h2>
           <p className="text-xs sm:text-sm text-slate-400">
-            Dari padepokan sederhana di pelosok desa hingga transformasi digital modern berstandar internasional.
+            Dari perguruan sederhana di pelosok desa hingga transformasi digital modern berstandar internasional.
           </p>
           {isAdmin && (
             <button
@@ -790,7 +790,7 @@ export default function VisiMisiSection() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-300 font-medium block mb-1">Jumlah Cabang Padepokan</label>
+                <label className="text-xs text-slate-300 font-medium block mb-1">Jumlah Cabang Perguruan</label>
                 <input
                   type="number"
                   value={statsForm.padepokanBranches}
@@ -906,7 +906,7 @@ export default function VisiMisiSection() {
             <form onSubmit={handleSaveTimeline} className="space-y-4">
               {[
                 ['year', 'Tahun', 'Contoh: 1984'],
-                ['title', 'Judul', 'Contoh: Pendirian Padepokan Utama'],
+                ['title', 'Judul', 'Contoh: Pendirian Perguruan Utama'],
                 ['badge', 'Label', 'Contoh: Akar Tradisi'],
               ].map(([key, label, ph]) => (
                 <div key={key}>

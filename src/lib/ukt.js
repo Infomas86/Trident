@@ -18,7 +18,7 @@ export function calculateUktScore(pos1, pos2, pos3, pos4) {
 }
 
 const HEADERS = [
-  'No Registrasi', 'Nama Peserta', 'Cabang Padepokan', 'Sabuk Saat Ini', 'Sabuk Target',
+  'No Registrasi', 'Nama Peserta', 'Cabang Perguruan', 'Sabuk Saat Ini', 'Sabuk Target',
   'Pos 1 Fisik (25%)', 'Pos 2 Jurus (30%)', 'Pos 3 Etika (20%)', 'Pos 4 Sabung (25%)',
   'Skor Akhir', 'Status Kelulusan', 'Catatan Penguji',
   'PP', 'PW', 'PC', 'PAC', 'PR', 'PAR',

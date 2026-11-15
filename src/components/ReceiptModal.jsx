@@ -70,10 +70,10 @@ export default function ReceiptModal() {
               </div>
               <div>
                 <h2 className="text-xl font-black text-amber-300 font-['Cinzel'] tracking-wide">
-                  TRIDENT ACADEMY
+                  PAGAR NUSA KOTA BATAM
                 </h2>
                 <p className="text-[11px] text-slate-400">
-                  Yayasan Padepokan Agung Seni Bela Diri Kesatria
+                  Yayasan Perguruan Agung Seni Bela Diri Kesatria
                 </p>
                 <p className="text-[10px] text-slate-500">
                   SK Kemenkumham RI No. AHU-0019284.AH.01.07.2026
@@ -144,10 +144,10 @@ export default function ReceiptModal() {
           <div className="flex items-center justify-between pt-4 border-t border-slate-800 text-[11px] text-slate-400">
             <div className="space-y-1">
               <p className="text-slate-300 font-semibold">
-                Bendahara Kas Padepokan Trident
+                Bendahara Kas Perguruan
               </p>
               <p className="text-slate-500">
-                Dicetak secara otomatis & sah melalui Sistem Trident
+                Dicetak secara otomatis & sah melalui Sistem Informasi Perguruan
               </p>
             </div>
 
@@ -155,7 +155,7 @@ export default function ReceiptModal() {
               <div className="w-14 h-14 bg-white p-1 rounded-lg">
                 {/* Simulated QR Code matrix */}
                 <div className="w-full h-full bg-slate-950 flex items-center justify-center text-white text-[9px] font-mono text-center p-0.5">
-                  TRIDENT QRIS VERIFIED
+                  QRIS VERIFIED
                 </div>
               </div>
               <span className="text-[9px] text-slate-500 mt-1">E-Verify Code</span>

@@ -104,10 +104,10 @@ export default function PrestasiSection() {
             <span>Etalase Juara & Kebanggaan</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
-            Galeri Prestasi Atlet Trident
+            Galeri Prestasi Atlet
           </h2>
           <p className="text-xs sm:text-sm text-slate-400">
-            Rekam jejak perjuangan para pesilat Trident di gelanggang kejuaraan daerah, nasional, dan internasional.
+            Rekam jejak perjuangan para pesilat di gelanggang kejuaraan daerah, nasional, dan internasional.
           </p>
         </div>
 
@@ -220,7 +220,7 @@ export default function PrestasiSection() {
                 </div>
 
                 <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-500 flex items-center justify-between">
-                  <span>Kontingen Padepokan Trident</span>
+                  <span>Kontingen Perguruan</span>
                   <span className="text-amber-400 font-semibold flex items-center gap-1">
                     <Sparkles className="w-3 h-3" /> Terverifikasi
                   </span>

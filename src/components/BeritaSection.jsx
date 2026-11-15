@@ -78,7 +78,7 @@ export default function BeritaSection() {
             Warta & Berita Perguruan
           </h2>
           <p className="text-xs sm:text-sm text-slate-400">
-            Pengumuman ujian tingkatan, liputan turnamen, dan jadwal kegiatan padepokan Trident.
+            Pengumuman ujian tingkatan, liputan turnamen, dan jadwal kegiatan Pagar Nusa Kota Batam.
           </p>
         </div>
 

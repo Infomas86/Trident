@@ -258,9 +258,9 @@ export default function UktSection() {
   };
 
   const downloadSampleTemplate = () => {
-    const template = `No Registrasi,Nama Peserta,Cabang Padepokan,Sabuk Saat Ini,Sabuk Target,Pos 1 Fisik (25%),Pos 2 Jurus (30%),Pos 3 Etika (20%),Pos 4 Sabung (25%),Skor Akhir,Status Kelulusan,Catatan Penguji
-"TRD-UKT-2026-091","Dimas Prasetyo","Padepokan Cabang Solo","Sabuk Hijau (Tingkat 2)","Sabuk Kuning (Tingkat 3)",85,82,88,84,84.4,"LULUS","Teknik tendangan bagus"
-"TRD-UKT-2026-092","Aris Budiman","Padepokan Cabang Malang","Sabuk Kuning (Tingkat 3)","Sabuk Biru (Tingkat 4)",90,92,94,88,91.0,"LULUS DENGAN PUJIAN","Kuda-kuda sangat kokoh"`;
+    const template = `No Registrasi,Nama Peserta,Cabang Perguruan,Sabuk Saat Ini,Sabuk Target,Pos 1 Fisik (25%),Pos 2 Jurus (30%),Pos 3 Etika (20%),Pos 4 Sabung (25%),Skor Akhir,Status Kelulusan,Catatan Penguji
+"TRD-UKT-2026-091","Dimas Prasetyo","Perguruan Cabang Solo","Sabuk Hijau (Tingkat 2)","Sabuk Kuning (Tingkat 3)",85,82,88,84,84.4,"LULUS","Teknik tendangan bagus"
+"TRD-UKT-2026-092","Aris Budiman","Perguruan Cabang Malang","Sabuk Kuning (Tingkat 3)","Sabuk Biru (Tingkat 4)",90,92,94,88,91.0,"LULUS DENGAN PUJIAN","Kuda-kuda sangat kokoh"`;
 
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -557,7 +557,7 @@ export default function UktSection() {
               <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
                 <span className="text-[11px] text-slate-400 block">Nomor Registrasi / No. Anggota</span>
                 <p className="text-sm font-mono font-bold text-amber-400">{myCandidate.regNumber}</p>
-                <p className="text-[10px] text-slate-500">Terdaftar di Buku Induk Padepokan</p>
+                <p className="text-[10px] text-slate-500">Terdaftar di Buku Induk Perguruan</p>
               </div>
 
               <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
@@ -598,7 +598,7 @@ export default function UktSection() {
 
               <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
                 <span className="text-[11px] text-slate-400 block">Lokasi & Jadwal Ujian UKT</span>
-                <p className="text-sm font-semibold text-white">Padepokan Pusat • 22 Nov 2026</p>
+                <p className="text-sm font-semibold text-white">Perguruan Pusat • 22 Nov 2026</p>
                 <p className="text-[10px] text-slate-500">Pukul 07:30 WIB - Selesai</p>
               </div>
 
@@ -620,7 +620,7 @@ export default function UktSection() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-1">
                 <div className="bg-slate-950/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
                   <span className="text-[9px] text-amber-400 font-bold uppercase block tracking-wider">1. Pimpinan Pusat</span>
-                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pp || 'PP Trident'}</p>
+                  <p className="text-xs font-bold text-white mt-1">{myCandidate.structure?.pp || 'PP Pagar Nusa'}</p>
                   <span className="text-[9px] text-slate-500 mt-1 block">Tingkat Nasional</span>
                 </div>
 
@@ -664,7 +664,7 @@ export default function UktSection() {
               <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside leading-relaxed">
                 <li>Mengenakan seragam sakral resmi perguruan lengkap dengan sabuk saat ini ({myCandidate.currentBelt}).</li>
                 <li>Membawa perlengkapan pelindung pribadi: gumshield, pelindung tulang kering, dan body protector.</li>
-                <li>Wajib hadir di lokasi padepokan minimal 30 menit sebelum apel pembukaan ujian dimulai.</li>
+                <li>Wajib hadir di lokasi perguruan minimal 30 menit sebelum apel pembukaan ujian dimulai.</li>
               </ul>
             </div>
 
@@ -1052,7 +1052,7 @@ export default function UktSection() {
                 rows={5}
                 value={importCsvText}
                 onChange={(e) => setImportCsvText(e.target.value)}
-                placeholder="No Registrasi,Nama Peserta,Cabang Padepokan,Sabuk Saat Ini,Sabuk Target,Pos 1 Fisik,Pos 2 Jurus,Pos 3 Etika,Pos 4 Sabung,Skor Akhir,Status Kelulusan,Catatan..."
+                placeholder="No Registrasi,Nama Peserta,Cabang Perguruan,Sabuk Saat Ini,Sabuk Target,Pos 1 Fisik,Pos 2 Jurus,Pos 3 Etika,Pos 4 Sabung,Skor Akhir,Status Kelulusan,Catatan..."
                 className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-xs focus:border-amber-500 outline-none"
               />
             </div>

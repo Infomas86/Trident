@@ -50,14 +50,14 @@ export default function DonasiSection() {
   const [customAmount, setCustomAmount] = useState('');
   const [donorName, setDonorName] = useState(currentUser?.name || '');
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [message, setMessage] = useState('Semoga padepokan semakin jaya dan berkah!');
+  const [message, setMessage] = useState('Semoga perguruan semakin jaya dan berkah!');
   const [paymentMethod, setPaymentMethod] = useState('qris'); // 'qris' or 'bank'
   const [copiedBank, setCopiedBank] = useState(false);
 
   // New Campaign Form (Examiner)
   const [newCampaignForm, setNewCampaignForm] = useState({
     title: '',
-    category: 'Sarana Padepokan',
+    category: 'Sarana Perguruan',
     targetAmount: 25000000,
     deadline: '2026-12-31',
     description: '',
@@ -80,7 +80,7 @@ export default function DonasiSection() {
             Program Donasi & Gotong Royong Perguruan
           </h2>
           <p className="text-sm text-slate-400 max-w-md mx-auto">
-            Fitur kontribusi sarana padepokan bersifat eksklusif bagi anggota terdaftar dan pengurus perguruan.
+            Fitur kontribusi sarana perguruan bersifat eksklusif bagi anggota terdaftar dan pengurus perguruan.
           </p>
         </div>
         <div className="pt-2 flex items-center justify-center">
@@ -138,11 +138,11 @@ export default function DonasiSection() {
     if (done) setActiveCampaign(null);
   };
 
-  const emptyCampaignForm = { title: '', category: 'Sarana Padepokan', targetAmount: 25000000, deadline: '2026-12-31', description: '' };
+  const emptyCampaignForm = { title: '', category: 'Sarana Perguruan', targetAmount: 25000000, deadline: '2026-12-31', description: '' };
 
   const openEditCampaign = (c) => {
     setEditingId(c.id);
-    setNewCampaignForm({ title: c.title, category: c.category || 'Sarana Padepokan', targetAmount: c.targetAmount, deadline: c.deadlineDate, description: c.description || '' });
+    setNewCampaignForm({ title: c.title, category: c.category || 'Sarana Perguruan', targetAmount: c.targetAmount, deadline: c.deadlineDate, description: c.description || '' });
     setIsAddCampaignOpen(true);
   };
 
@@ -184,7 +184,7 @@ export default function DonasiSection() {
             Program Donasi Sarana
           </h2>
           <p className="text-xs sm:text-sm text-slate-400">
-            Wujudkan fasilitas padepokan yang representatif dan dukung atlet berprestasi secara transparan.
+            Wujudkan fasilitas perguruan yang representatif dan dukung atlet berprestasi secara transparan.
           </p>
         </div>
 
@@ -432,7 +432,7 @@ export default function DonasiSection() {
               {/* Doa / Pesan */}
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Doa / Pesan untuk Padepokan
+                  Doa / Pesan untuk Perguruan
                 </label>
                 <textarea
                   rows={2}
@@ -601,7 +601,7 @@ export default function DonasiSection() {
                     onChange={(e) => setNewCampaignForm({ ...newCampaignForm, category: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"
                   >
-                    <option value="Sarana Padepokan">Sarana Padepokan</option>
+                    <option value="Sarana Perguruan">Sarana Perguruan</option>
                     <option value="Pemberdayaan Atlet">Pemberdayaan Atlet</option>
                     <option value="Sosial Kemasyarakatan">Sosial Kemasyarakatan</option>
                   </select>

@@ -98,7 +98,7 @@ export default function LoginPage() {
             <span>Akun Resmi Perguruan</span>
           </div>
           <h3 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
-            Portal <span className="text-amber-400">TRIDENT</span>
+            Portal <span className="text-amber-400">PAGAR NUSA</span>
           </h3>
           <p className="text-xs sm:text-sm text-slate-400">
             {mode === 'login'
@@ -183,7 +183,7 @@ export default function LoginPage() {
         )}
 
         <div className="text-center text-[11px] text-slate-500 pt-2 border-t border-slate-800/80 relative z-10">
-          Padepokan Seni Bela Diri Kesatria Trident © 2026
+          Pagar Nusa Kota Batam © 2026
         </div>
       </div>
     </div>

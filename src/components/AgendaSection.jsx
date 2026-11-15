@@ -31,7 +31,7 @@ export default function AgendaSection() {
     title: '',
     date: new Date().toISOString().slice(0, 10),
     time: '16:00 - 18:30 WIB',
-    location: 'Padepokan Pusat - Dojo Cakra Bhakti',
+    location: 'Perguruan Pusat - Dojo Cakra Bhakti',
     speaker: 'Dewan Pelatih Utama',
     description: '',
   });
@@ -48,7 +48,7 @@ export default function AgendaSection() {
             Agenda Kegiatan Khusus Anggota & Penguji
           </h2>
           <p className="text-sm text-slate-400 max-w-md mx-auto">
-            Jadwal kegiatan resmi, latihan gabungan, dan agenda ujian padepokan hanya dapat diakses oleh anggota dan pengurus perguruan.
+            Jadwal kegiatan resmi, latihan gabungan, dan agenda ujian perguruan hanya dapat diakses oleh anggota dan pengurus perguruan.
           </p>
         </div>
         <div className="pt-2 flex items-center justify-center">
@@ -78,7 +78,7 @@ export default function AgendaSection() {
       title: '',
       date: new Date().toISOString().slice(0, 10),
       time: '16:00 - 18:30 WIB',
-      location: 'Padepokan Pusat - Dojo Cakra Bhakti',
+      location: 'Perguruan Pusat - Dojo Cakra Bhakti',
       speaker: 'Dewan Pelatih Utama',
       description: '',
     });
@@ -96,10 +96,10 @@ export default function AgendaSection() {
             <span>Kanal Informasi Jadwal & Kegiatan</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-['Cinzel']">
-            Agenda Kegiatan Padepokan
+            Agenda Kegiatan Perguruan
           </h2>
           <p className="text-xs sm:text-sm text-slate-400">
-            Informasi lengkap jadwal latihan gabungan, persiapan ujian kenaikan tingkat, dan kegiatan resmi perguruan Trident.
+            Informasi lengkap jadwal latihan gabungan, persiapan ujian kenaikan tingkat, dan kegiatan resmi perguruan.
           </p>
         </div>
 
@@ -252,11 +252,11 @@ export default function AgendaSection() {
 
               <div>
                 <label className="text-xs text-slate-300 font-semibold block mb-1">
-                  Lokasi Padepokan / Gedung
+                  Lokasi Perguruan / Gedung
                 </label>
                 <input
                   type="text"
-                  placeholder="Contoh: Padepokan Pusat - Dojo Cakra Bhakti"
+                  placeholder="Contoh: Perguruan Pusat - Dojo Cakra Bhakti"
                   value={newAgendaForm.location}
                   onChange={(e) => setNewAgendaForm({ ...newAgendaForm, location: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-500 outline-none"

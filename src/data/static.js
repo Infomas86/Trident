@@ -16,7 +16,7 @@ export const ORGANIZATIONAL_HIERARCHY = [
     short: "PP",
     scope: "Tingkat Nasional / Pusat",
     desc: "Penetapan AD/ART, kurikulum baku bela diri, standarisasi Ujian Kenaikan Tingkat (UKT) nasional, dan sertifikasi dewan penguji utama.",
-    example: "PP Pagar Nusa Trident",
+    example: "PP Pagar Nusa",
     badge: "Otoritas Tertinggi",
   },
   {

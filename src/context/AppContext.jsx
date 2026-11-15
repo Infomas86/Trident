@@ -554,7 +554,7 @@ export function AppProvider({ children }) {
   const handleDeleteAgenda = (id) => mutate(() => api.deleteAgenda(id), 'agendas', 'Agenda berhasil dihapus.', 'Gagal menghapus agenda', 'info');
 
   const handleAddCampaign = (c) =>
-    mutate(() => api.addCampaign(c), 'campaigns', 'Program donasi padepokan baru berhasil diluncurkan!', 'Gagal membuat program donasi');
+    mutate(() => api.addCampaign(c), 'campaigns', 'Program donasi perguruan baru berhasil diluncurkan!', 'Gagal membuat program donasi');
   const handleUpdateCampaign = (id, c) =>
     mutate(() => api.updateCampaign(id, c), 'campaigns', 'Program donasi berhasil diperbarui.', 'Gagal memperbarui program donasi');
   const handleDeleteCampaign = (id) =>
@@ -587,7 +587,7 @@ export function AppProvider({ children }) {
   const handleUpdateSiteContent = (patch, okMsg = 'Konten situs berhasil diperbarui!') =>
     mutate(() => api.updateSiteContent(patch), 'content', okMsg, 'Gagal memperbarui konten situs');
   const handleUpdateHero = (h) =>
-    handleUpdateSiteContent({ heroData: h }, 'Slogan & Teks Hero Padepokan berhasil diperbarui!');
+    handleUpdateSiteContent({ heroData: h }, 'Slogan & Teks Hero Perguruan berhasil diperbarui!');
 
   return (
     <AppContext.Provider

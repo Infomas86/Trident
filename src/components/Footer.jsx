@@ -7,7 +7,7 @@ export default function Footer() {
   const { navigateToTab, siteContent, isAdmin, handleUpdateSiteContent } = useApp();
   const [secForm, setSecForm] = useState(null); // null = closed
   const sec = {
-    name: siteContent.secretariatName || 'Sekretariat Padepokan',
+    name: siteContent.secretariatName || 'Sekretariat Perguruan',
     address: siteContent.secretariatAddress || '',
     phone: siteContent.secretariatPhone || '',
     email: siteContent.secretariatEmail || '',
@@ -39,12 +39,12 @@ export default function Footer() {
                 </div>
               </div>
               <span className="font-extrabold text-xl tracking-wider text-amber-400 font-['Cinzel']">
-                TRIDENT ACADEMY
+                PAGAR NUSA KOTA BATAM
               </span>
             </div>
             
             <p className="text-xs text-slate-400 leading-relaxed max-w-md">
-              Padepokan Agung Seni Bela Diri Kesatria yang berlandaskan keluhuran budi pekerti, ketangguhan fisik terukur, serta evaluasi kenaikan tingkat transparan berbasis 4 Pos Penilaian standar internasional.
+              Perguruan Pencak Silat Nahdlatul Ulama Pagar Nusa yang berlandaskan keluhuran budi pekerti, ketangguhan fisik terukur, serta evaluasi kenaikan tingkat transparan berbasis 4 Pos Penilaian standar internasional.
             </p>
 
             <div className="text-[11px] text-slate-500 font-mono">
@@ -141,7 +141,7 @@ export default function Footer() {
 
         {/* Copyright bar */}
         <div className="mt-8 pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-          <p>© 2026 Trident Martial Arts Academy. Hak Cipta Dilindungi Undang-Undang.</p>
+          <p>© 2026 Pagar Nusa Cabang Batam. Hak Cipta Dilindungi Undang-Undang.</p>
           <p className="flex items-center gap-1">
             Dirancang dengan kehormatan & semangat kesatria
           </p>
