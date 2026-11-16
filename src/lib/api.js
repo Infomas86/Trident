@@ -29,15 +29,28 @@ export async function getProfile(userId) {
 
 // --- Daftar mandiri ---
 // Self sign-up always creates an 'anggota' profile (DB trigger); the name travels as metadata.
-export async function signUp(email, password, fullName, pac) {
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName, pac } } });
+export async function signUp(email, password, fullName, regCode) {
+  // Hanya anggota yang punya kode pendaftaran dari admin yang boleh daftar.
+  const { data: valid } = await supabase.rpc('registration_code_valid', { p_code: regCode });
+  if (!valid) throw new UserError('Kode pendaftaran salah atau tidak aktif. Minta kode ke admin perguruan.');
+  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName, reg_code: regCode } } });
   if (error) {
     if (/registered|exists/i.test(error.message)) throw new UserError('Email sudah terdaftar, silakan masuk');
     if (/password/i.test(error.message)) throw new UserError('Kata sandi terlalu lemah (minimal 8 karakter)');
+    if (/Database error|KODE_PENDAFTARAN/i.test(error.message)) throw new UserError('Kode pendaftaran salah atau tidak aktif. Minta kode ke admin perguruan.');
     throw error;
   }
   return data;
 }
+
+// --- Kode pendaftaran (admin) ---
+export const listRegCodes = async () =>
+  ok(await supabase.from('registration_codes').select('code,pac,label,active,created_at').order('created_at', { ascending: false }));
+export const createRegCode = async ({ code, pac, label }) =>
+  hit(supabase.from('registration_codes').insert({ code: code.trim().toUpperCase(), pac: pac?.trim() || null, label: label?.trim() || null }));
+export const setRegCodeActive = async (code, active) =>
+  hit(supabase.from('registration_codes').update({ active }).eq('code', code));
+export const deleteRegCode = async (code) => hit(supabase.from('registration_codes').delete().eq('code', code));
 
 // --- Berita ---
 const NEWS_MAP = { title: 'title', category: 'category', summary: 'summary', content: 'content', image: 'image_url', tags: 'tags', author: 'author_name' };

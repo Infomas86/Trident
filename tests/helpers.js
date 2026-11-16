@@ -10,7 +10,8 @@ export const anonClient = () => createClient(url, process.env.VITE_SUPABASE_ANON
 export async function createTestUser(role, extra = {}) {
   const email = `u${RUN}-${Math.random().toString(36).slice(2, 8)}@test.trident.local`;
   const password = `Pw-${Math.random().toString(36).slice(2)}A1`;
-  const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  // admin_created menandai akun dibuat admin -> trigger melewati cek kode pendaftaran.
+  const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, app_metadata: { admin_created: true } });
   if (error) throw error;
   const id = data.user.id;
   const { error: pe } = await admin.from('profiles').upsert({ id, full_name: 'Uji ' + role, role, ...extra }, { onConflict: 'id' });
@@ -34,6 +35,7 @@ export async function cleanup() {
   check(await admin.from('training_grounds').delete().like('name', like));
   check(await admin.from('ukt_candidates').delete().like('reg_number', like));
   check(await admin.from('ukt_events').delete().like('name', like)); // cascades to candidates/examiners
+  check(await admin.from('registration_codes').delete().like('label', like));
   const ids = []; // kumpulkan dulu, supaya hapus tidak menggeser halaman
   for (let page = 1; ; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });

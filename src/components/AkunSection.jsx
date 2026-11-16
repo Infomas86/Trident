@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp, ROLES } from '../context/AppContext';
 import * as api from '../lib/api';
+import RegCodesSection from './RegCodesSection';
 
 const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none';
 const ROLE_OPTIONS = [[ROLES.MEMBER, 'Anggota'], [ROLES.EXAMINER, 'Penguji'], [ROLES.ADMIN, 'Admin']];
@@ -110,6 +111,9 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
     <div className="space-y-8 py-6">
       <h2 className="text-2xl font-extrabold text-slate-900 font-['Cinzel']">Kelola Akun</h2>
 
+      <div className="trident-card rounded-2xl p-5 border border-slate-200">
+        <RegCodesSection />
+      </div>
 
       <form onSubmit={create} className="trident-card rounded-2xl p-5 border border-slate-200 space-y-3">
         <h3 className="text-sm font-bold text-slate-900">Tambah Akun</h3>

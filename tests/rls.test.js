@@ -372,15 +372,31 @@ test('manage-user: update_profile dan list; admin tak bisa nonaktif/turun diri',
   assert.equal(status(await call(adminU, { action: 'update_profile', user_id: u.id, role: 'dewa' })), 400);
 });
 
-test('akun baru otomatis dapat profil anggota + PAC + no. registrasi (daftar mandiri)', async () => {
-  const email = `u${RUN}-self@test.trident.local`;
-  const { data, error } = await admin.auth.admin.createUser({ email, password: 'Sandi-Mandiri-1', email_confirm: true, user_metadata: { full_name: 'Pendaftar Mandiri', pac: 'Batam Kota' } });
-  assert.ifError(error);
-  const { data: p } = await admin.from('profiles').select('full_name, role, pac, reg_number').eq('id', data.user.id).single();
-  assert.equal(p.full_name, 'Pendaftar Mandiri');
+test('gerbang kode pendaftaran: RPC validasi + PAC anggota ikut kode', async () => {
+  const code = `RC${RUN}`.toUpperCase();
+  // kode belum ada -> RPC menolak (gerbang aplikasi menolak pendaftaran)
+  assert.equal((await anonClient().rpc('registration_code_valid', { p_code: 'SALAH99' })).data, false);
+
+  // admin buat kode untuk sebuah PAC
+  assert.ifError((await admin.from('registration_codes').insert({ code, pac: 'Batam Kota', label: `T-rc-${RUN}` })).error);
+  assert.equal((await anonClient().rpc('registration_code_valid', { p_code: code })).data, true);
+
+  // daftar dengan kode -> profil anggota, PAC dari kode, no. registrasi otomatis
+  const good = await anonClient().auth.signUp({ email: `u${RUN}-withcode@test.trident.local`, password: 'Sandi-Mandiri-1', options: { data: { full_name: 'Pendaftar Mandiri', reg_code: code } } });
+  assert.ifError(good.error);
+  const { data: p } = await admin.from('profiles').select('role, pac, reg_number').eq('id', good.data.user.id).single();
   assert.equal(p.role, 'anggota');
   assert.equal(p.pac, 'Batam Kota');
   assert.match(p.reg_number, /^PNKB-\d{4}-\d{4}$/);
+
+  // kode dinonaktifkan -> RPC menolak
+  assert.ifError((await admin.from('registration_codes').update({ active: false }).eq('code', code)).error);
+  assert.equal((await anonClient().rpc('registration_code_valid', { p_code: code })).data, false);
+});
+
+test('anggota biasa tidak bisa membaca/menulis kode pendaftaran', async () => {
+  assert.equal((await anggota.client.from('registration_codes').select('code')).data?.length ?? 0, 0, 'anggota tidak boleh melihat kode');
+  assert.ok((await anggota.client.from('registration_codes').insert({ code: `X${RUN}`.toUpperCase(), label: `T-x-${RUN}` })).error, 'anggota tidak boleh buat kode');
 });
 
 test('UKT per PAC: kode UKT membuka penilaian UKT itu saja', async () => {

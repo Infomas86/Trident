@@ -203,9 +203,9 @@ export function AppProvider({ children }) {
   };
 
   // Self sign-up always creates an anggota account.
-  const signUp = async ({ fullName, email, password, pac }) => {
+  const signUp = async ({ fullName, email, password, regCode }) => {
     try {
-      const { session: s } = await api.signUp(email, password, fullName, pac);
+      const { session: s } = await api.signUp(email, password, fullName, regCode);
       showToast(s ? 'Akun berhasil dibuat. Selamat datang!' : 'Pendaftaran berhasil. Silakan masuk dengan akun Anda.', 'success');
       if (s) setIsLoginModalOpen(false);
       return true;

@@ -39,7 +39,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [pac, setPac] = useState('');
+  const [regCode, setRegCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   if (!isLoginModalOpen) return null;
@@ -63,7 +63,7 @@ export default function LoginPage() {
   const handleRegister = (e) => {
     e.preventDefault();
     run(() =>
-      signUp({ fullName: fullName.trim(), email: email.trim(), pac: pac.trim(), password }),
+      signUp({ fullName: fullName.trim(), email: email.trim(), regCode: regCode.trim(), password }),
     );
   };
 
@@ -169,15 +169,17 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <Label>PAC (Pimpinan Anak Cabang)</Label>
+              <Label>Kode Pendaftaran</Label>
               <input
                 type="text"
-                value={pac}
-                onChange={(e) => setPac(e.target.value)}
-                placeholder="Contoh: Batam Kota"
-                className={inputCls}
+                autoCapitalize="characters"
+                value={regCode}
+                onChange={(e) => setRegCode(e.target.value.toUpperCase())}
+                placeholder="Kode dari admin perguruan"
+                className={`${inputCls} font-mono tracking-widest`}
                 required
               />
+              <p className="text-[10px] text-slate-500 mt-1">Belum punya kode? Minta ke admin PAC Anda.</p>
             </div>
             <div>
               <Label>Kata Sandi (minimal 8 karakter)</Label>

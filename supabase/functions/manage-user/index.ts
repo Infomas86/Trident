@@ -36,7 +36,8 @@ async function handle(req: Request) {
       checkPassword(b.password);
       if (typeof b.full_name !== 'string' || !b.full_name.trim()) throw bad('nama wajib');
       if (!ROLES.includes(b.role)) throw bad('role tidak valid');
-      const { data, error } = await db.auth.admin.createUser({ email, password: b.password, email_confirm: true });
+      // admin_created menandai akun ini dibuat admin, bukan daftar mandiri -> trigger lewati cek kode pendaftaran.
+      const { data, error } = await db.auth.admin.createUser({ email, password: b.password, email_confirm: true, app_metadata: { admin_created: true } });
       if (error) throw bad(error.message);
       const { error: pe } = await db.from('profiles').upsert({ id: data.user.id, ...pick(b) }, { onConflict: 'id' });
       if (pe) {
