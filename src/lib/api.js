@@ -232,6 +232,7 @@ const fromCandidateRow = (r) => ({
   examinerName: r.examiner_name,
   dateExam: r.exam_date ? fmtDate(r.exam_date) : null,
   structure: Object.fromEntries(STRUCT_KEYS.map((k) => [k, r[`struct_${k}`] ?? ''])),
+  predikat: r.predikat ?? {},
   updatedAt: r.updated_at,
 });
 
@@ -290,6 +291,22 @@ export async function saveCandidateScores(id, posScores, notes, { baseUpdatedAt,
   if (!force) q = q.eq('updated_at', baseUpdatedAt);
   const rows = ok(await q.select('id'));
   return rows.length ? 'ok' : 'conflict';
+}
+
+// Predikat huruf satu materi (grade null = hapus). Atomik di database: penguji lain tidak tertimpa.
+export async function setPredikat(candidateId, materi, grade) {
+  const { error } = await supabase.rpc('set_predikat', { p_id: candidateId, p_materi: materi, p_grade: grade });
+  if (error) throw error.message?.includes('diizinkan') ? new UserError('Tidak diizinkan menilai peserta ini') : error;
+}
+
+// Peserta model rubrik: tanpa nilai angka. Impor ulang hanya memperbarui data diri; predikat tidak disentuh.
+export async function upsertParticipants(rows, eventId) {
+  const payload = rows.map((r) => ({
+    event_id: eventId, reg_number: r.regNumber, name: r.name, branch: r.branch,
+    current_belt: r.currentBelt, target_belt: r.targetBelt,
+  }));
+  ok(await supabase.from('ukt_candidates').upsert(payload, { onConflict: 'event_id,reg_number' }));
+  return payload.length;
 }
 
 export async function upsertCandidates(rows, eventId) {

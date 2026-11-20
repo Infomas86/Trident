@@ -520,6 +520,39 @@ export function AppProvider({ children }) {
     return true;
   };
 
+  // Predikat huruf per materi (UKT model rubrik). Tampil langsung (optimistis); gagal = kembalikan dari server.
+  const handleSetPredikat = async (candidateId, materi, grade) => {
+    setCandidatesList((list) => list.map((c) => {
+      if (c.id !== candidateId) return c;
+      const predikat = { ...c.predikat };
+      if (grade) predikat[materi] = grade; else delete predikat[materi];
+      return { ...c, predikat };
+    }));
+    try {
+      await api.setPredikat(candidateId, materi, grade);
+    } catch (e) {
+      console.error(e);
+      showToast(e instanceof api.UserError ? e.message : 'Predikat gagal disimpan, periksa koneksi', 'error');
+      refreshCandidates();
+    }
+  };
+
+  // Impor peserta model rubrik (rows dari parseRubrikCsv atau form tambah peserta).
+  const handleImportParticipants = async (rows) => {
+    let count;
+    try {
+      if (!selectedEventId) throw new api.UserError('Pilih atau buat UKT terlebih dahulu');
+      count = await api.upsertParticipants(rows, selectedEventId);
+    } catch (e) {
+      console.error(e);
+      showToast(e.message === api.NOT_ALLOWED || e instanceof api.UserError ? e.message : 'Gagal menyimpan peserta', 'error');
+      return false;
+    }
+    showToast(`${count} peserta UKT tersimpan.`, 'success');
+    refreshCandidates();
+    return true;
+  };
+
   // Import Candidates (rows = CandidateInput[] from parseCandidatesCsv)
   const handleImportCandidates = async (rows) => {
     let count;
@@ -664,6 +697,8 @@ export function AppProvider({ children }) {
         syncNow,
         resolveConflict,
         handleImportCandidates,
+        handleSetPredikat,
+        handleImportParticipants,
         handleDeleteCandidate,
         myCandidate: myResult,
         selectedReceipt,

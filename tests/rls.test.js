@@ -451,3 +451,52 @@ test('manage-user: admin menghapus akun, donasinya tetap ada; tidak bisa hapus d
   const { data: kept } = await admin.from('donations').select('user_id').eq('id', d.data.id).single();
   assert.equal(kept.user_id, null);
 });
+
+test('predikat UKT: penguji simpan per materi; huruf/kunci salah, anggota biasa, dan anon ditolak', async () => {
+  const reg = `T-pr-${RUN}`;
+  const c = await admin.from('ukt_candidates').insert({ event_id: eventId, reg_number: reg, name: 'Peserta Predikat', current_belt: 'Strip Putih', target_belt: 'Strip Kuning' }).select('id').single();
+  assert.ifError(c.error);
+  const id = c.data.id;
+  const set = (client, materi, grade) => client.rpc('set_predikat', { p_id: id, p_materi: materi, p_grade: grade });
+  const read = async () => (await admin.from('ukt_candidates').select('predikat, examiner_id, exam_date').eq('id', id).single()).data;
+
+  // penguji UKT ini: dua materi berbeda tersimpan, saling tidak menimpa
+  assert.ifError((await set(penguji.client, 'I', 'B')).error);
+  assert.ifError((await set(penguji.client, 'III', 'A')).error);
+  let row = await read();
+  assert.deepEqual(row.predikat, { I: 'B', III: 'A' });
+  assert.equal(row.examiner_id, penguji.id);
+  const { data: ev } = await admin.from('ukt_events').select('exam_date').eq('id', eventId).single();
+  assert.equal(row.exam_date, ev.exam_date, 'tanggal di lembar hasil = tanggal UKT');
+
+  // grade null = hapus satu materi saja
+  assert.ifError((await set(penguji.client, 'I', null)).error);
+  assert.deepEqual((await read()).predikat, { III: 'A' });
+
+  // huruf di luar A-E dan nomor materi di luar I-IV ditolak oleh database
+  assert.ok((await set(penguji.client, 'I', 'F')).error, 'huruf F ditolak');
+  assert.ok((await set(penguji.client, 'V', 'A')).error, 'materi V ditolak');
+  assert.deepEqual((await read()).predikat, { III: 'A' });
+
+  // anggota biasa dan tamu tidak boleh menilai
+  assert.ok((await set(anggota.client, 'II', 'A')).error, 'anggota ditolak');
+  assert.ok((await set(anon, 'II', 'A')).error, 'tamu ditolak');
+  assert.deepEqual((await read()).predikat, { III: 'A' });
+
+  // batasan tabel menolak data rusak walau ditulis langsung (service role)
+  for (const bad of [{ I: 5 }, { I: 'Z' }, { X: 'A' }, { I: 'a' }]) {
+    assert.ok((await admin.from('ukt_candidates').update({ predikat: bad }).eq('id', id)).error, `ditolak: ${JSON.stringify(bad)}`);
+  }
+  assert.ifError((await admin.from('ukt_candidates').update({ predikat: { I: 'E', IV: 'A' } }).eq('id', id)).error);
+});
+
+test('predikat UKT: anggota yang no. registrasinya cocok hanya melihat predikat dirinya', async () => {
+  const reg = `T-pm-${RUN}`;
+  assert.ifError((await admin.from('ukt_candidates').insert([
+    { event_id: eventId, reg_number: reg, name: 'Milik Saya', current_belt: 'Strip Putih', target_belt: 'Strip Kuning', predikat: { I: 'A' } },
+    { event_id: eventId, reg_number: `T-px-${RUN}`, name: 'Milik Orang Lain', current_belt: 'Strip Putih', target_belt: 'Strip Kuning', predikat: { I: 'C' } },
+  ])).error);
+  const me = await createTestUser('anggota', { reg_number: reg });
+  const { data } = await me.client.from('ukt_candidates').select('name, predikat');
+  assert.deepEqual(data, [{ name: 'Milik Saya', predikat: { I: 'A' } }]);
+});

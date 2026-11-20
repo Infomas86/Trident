@@ -42,7 +42,7 @@ export function buildCandidatesCsv(candidates) {
 }
 
 // Pecah teks CSV jadi record { cols, line }; menangani kutip, "" dan baris baru dalam kutip.
-function splitCsv(text) {
+export function splitCsv(text) {
   const records = [];
   let cols = [], cur = '', inQ = false, line = 1, start = 1;
   const endRecord = () => {
