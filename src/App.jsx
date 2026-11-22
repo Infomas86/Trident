@@ -1,17 +1,17 @@
 import { isTabEnabled } from './config';
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import LockedFeatureModal from './components/LockedFeatureModal';
 import LoginPage from './components/LoginPage';
 import VisiMisiSection from './components/VisiMisiSection';
-import BeritaSection from './components/BeritaSection';
-import PrestasiSection from './components/PrestasiSection';
-import AgendaSection from './components/AgendaSection';
-import DonasiSection from './components/DonasiSection';
-import DonasiVerifikasi from './components/DonasiVerifikasi';
-import AkunSection from './components/AkunSection';
-import UktSection from './components/UktSection';
+const BeritaSection = lazy(() => import('./components/BeritaSection'));
+const PrestasiSection = lazy(() => import('./components/PrestasiSection'));
+const AgendaSection = lazy(() => import('./components/AgendaSection'));
+const DonasiSection = lazy(() => import('./components/DonasiSection'));
+const DonasiVerifikasi = lazy(() => import('./components/DonasiVerifikasi'));
+const AkunSection = lazy(() => import('./components/AkunSection'));
+const UktSection = lazy(() => import('./components/UktSection'));
 import Footer from './components/Footer';
 import { CheckCircle, Info, AlertCircle } from 'lucide-react';
 
@@ -48,6 +48,7 @@ function MainContent() {
 
       {/* Active Section Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <Suspense fallback={<div className="py-16 text-center text-sm text-slate-500">Memuat…</div>}>
         {activeTab === 'visi' && <VisiMisiSection />}
         {activeTab === 'berita' && <BeritaSection />}
         {activeTab === 'prestasi' && <PrestasiSection />}
@@ -56,6 +57,7 @@ function MainContent() {
         {activeTab === 'ukt' && <UktSection />}
         {activeTab === 'verifikasi' && isAdmin && <DonasiVerifikasi />}
         {activeTab === 'akun' && isAdmin && <AkunSection />}
+        </Suspense>
       </main>
 
       {/* Martial Arts Academy Footer */}

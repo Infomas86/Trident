@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { supabase } from '../lib/supabase';
 import { memoClear } from '../lib/memo';
 import { isTabEnabled } from '../config';
+import { ttlGet, ttlSet } from '../lib/ttlCache';
 import * as api from '../lib/api';
 import { enqueueForUser, withoutUser, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearCaches, overlayQueued, mineScores, mergeKeys, storedAuthUserId } from '../lib/offline';
 
@@ -269,22 +270,30 @@ export function AppProvider({ children }) {
     showToast('Anda telah keluar dari akun.', 'info');
   };
 
+  // Data publik: useCache=true (hanya saat aplikasi dibuka) memakai cache perangkat bila masih segar; selain itu selalu ambil baru.
+  const loadPublic = async (key, fetcher, set, useCache) => {
+    const hit = useCache ? ttlGet(key) : undefined;
+    if (hit !== undefined) return set(hit);
+    const value = await fetcher();
+    ttlSet(key, value);
+    set(value);
+  };
   const loaders = {
-    news: () => api.listNews().then(setNewsList),
-    achievements: () => api.listAchievements().then(setAchievementsList),
+    news: (c) => loadPublic('news', api.listNews, setNewsList, c),
+    achievements: (c) => loadPublic('achievements', api.listAchievements, setAchievementsList, c),
     agendas: () => (userId ? api.listAgendas().then(setAgendaList) : setAgendaList([])),
-    stats: () => api.getSiteStats().then(setStats),
-    content: () =>
-      api.getSiteContent().then((c) => {
-        setHeroData(c.heroData);
-        setSiteContent(c);
-      }),
+    stats: (c) => loadPublic('stats', api.getSiteStats, setStats, c),
+    content: (c) =>
+      loadPublic('content', api.getSiteContent, (v) => {
+        setHeroData(v.heroData);
+        setSiteContent(v);
+      }, c),
     campaigns: () => (userId ? api.listCampaigns().then(setCampaignList) : setCampaignList([])),
     myDonations: () => (userId ? api.listMyDonations().then(setMyDonations) : setMyDonations([])),
     pendingDonations: () => (isAdmin ? api.listPendingDonations().then(setPendingDonations) : setPendingDonations([])),
-    pillars: () => api.listPillars().then(setPillars),
-    timeline: () => api.listTimeline().then(setTimeline),
-    grounds: () => api.listTrainingGrounds().then(setTrainingGrounds),
+    pillars: (c) => loadPublic('pillars', api.listPillars, setPillars, c),
+    timeline: (c) => loadPublic('timeline', api.listTimeline, setTimeline, c),
+    grounds: (c) => loadPublic('grounds', api.listTrainingGrounds, setTrainingGrounds, c),
     events: async () => {
       if (!userId) return setUktEvents([]);
       try {
@@ -327,8 +336,8 @@ export function AppProvider({ children }) {
     loaders.candidates().catch(() => showToast('Gagal memuat peserta UKT', 'error'));
   }, [selectedEventId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const runLoaders = async (names) => {
-    const results = await Promise.allSettled(names.map((n) => loaders[n]()));
+  const runLoaders = async (names, useCache = false) => {
+    const results = await Promise.allSettled(names.map((n) => loaders[n](useCache)));
     if (results.some((r) => r.status === 'rejected')) showToast('Sebagian data gagal dimuat', 'error');
   };
   // Data tab disimpan di state context: pindah tab tidak mengambil ulang. Hanya dua kondisi yang memuat:
@@ -341,7 +350,7 @@ export function AppProvider({ children }) {
   const refresh = () => runLoaders([...PUBLIC_LOADERS, ...USER_LOADERS, ...Object.entries(LAZY_TABS).filter(([tab]) => isTabEnabled(tab)).flatMap(([, names]) => names)]); // muat ulang manual
 
   useEffect(() => {
-    runLoaders(PUBLIC_LOADERS);
+    runLoaders(PUBLIC_LOADERS, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

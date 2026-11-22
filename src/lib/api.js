@@ -1,3 +1,4 @@
+import { compressImage, extOf } from './image.js';
 import { supabase } from './supabase';
 
 const ok = ({ data, error }) => {
@@ -348,8 +349,10 @@ export async function uploadPublicImage(file, folder) {
   const ext = PROOF_TYPES[file?.type];
   if (!ext) throw new UserError('Foto harus berupa gambar JPG, PNG, atau WEBP');
   if (file.size > MAX_PROOF_BYTES) throw new UserError('Ukuran foto maksimal 5 MB');
-  const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from('public-images').upload(path, file, { contentType: file.type });
+  const small = await compressImage(file);
+  const path = `${folder}/${crypto.randomUUID()}.${extOf(small)}`;
+  // cacheControl 1 tahun: nama file unik per unggahan, jadi aman di-cache lama oleh browser dan CDN.
+  const { error } = await supabase.storage.from('public-images').upload(path, small, { contentType: small.type, cacheControl: '31536000' });
   if (error) throw error;
   return supabase.storage.from('public-images').getPublicUrl(path).data.publicUrl;
 }
@@ -415,8 +418,9 @@ export async function submitDonation({ campaignId, amount, donorName, message, p
   const { data: sess } = await supabase.auth.getSession();
   const uid = sess.session?.user?.id;
   if (!uid) throw new UserError('Silakan masuk terlebih dahulu');
-  const path = `${uid}/${crypto.randomUUID()}.${ext}`;
-  const up = await supabase.storage.from('donation-proofs').upload(path, proofFile, { contentType: proofFile.type });
+  const small = await compressImage(proofFile);
+  const path = `${uid}/${crypto.randomUUID()}.${extOf(small)}`;
+  const up = await supabase.storage.from('donation-proofs').upload(path, small, { contentType: small.type });
   if (up.error) throw up.error;
   // status is never sent: the force_pending trigger sets it.
   const ins = await supabase
