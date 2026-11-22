@@ -32,7 +32,7 @@ export default function RubrikUkt({ candidates, onGrade, onDelete, area }) {
   const present = [...new Set(items.map((x) => x.ti))].sort((a, b) => rank(a) - rank(b));
   const needle = q.trim().toLowerCase();
   const shown = items
-    .filter((x) => (filter === 'all' || x.ti === filter) && [x.c.name, x.c.regNumber, x.c.branch].some((v) => v?.toLowerCase().includes(needle)))
+    .filter((x) => (filter === 'all' || x.ti === filter) && [x.c.name, x.c.regNumber].some((v) => v?.toLowerCase().includes(needle)))
     .sort((a, b) => rank(a.ti) - rank(b.ti) || a.c.name.localeCompare(b.c.name));
   // Panel selalu milik peserta yang terlihat di daftar: bila yang dipilih tersaring/terhapus, pakai yang teratas.
   const active = shown.find((x) => x.c.id === activeId) ?? shown[0] ?? null;
