@@ -11,8 +11,8 @@ export class UserError extends Error {}
 
 export const NOT_ALLOWED = 'Tidak diizinkan atau data tidak ditemukan';
 // RLS-blocked update/delete returns no error and 0 rows; surface that as an error.
-const hit = async (query) => {
-  if (!ok(await query.select('id')).length) throw new Error(NOT_ALLOWED);
+const hit = async (query, keyColumn = 'id') => {
+  if (!ok(await query.select(keyColumn)).length) throw new Error(NOT_ALLOWED);
 };
 
 // Copy only the keys present in `patch`, renamed via map {appKey: dbColumn}.
@@ -48,10 +48,10 @@ export async function signUp(email, password, fullName, regCode) {
 export const listRegCodes = async () =>
   ok(await supabase.from('registration_codes').select('code,pac,label,active,created_at').order('created_at', { ascending: false }).limit(200));
 export const createRegCode = async ({ code, pac, label }) =>
-  hit(supabase.from('registration_codes').insert({ code: code.trim().toUpperCase(), pac: pac?.trim() || null, label: label?.trim() || null }));
+  hit(supabase.from('registration_codes').insert({ code: code.trim().toUpperCase(), pac: pac?.trim() || null, label: label?.trim() || null }), 'code');
 export const setRegCodeActive = async (code, active) =>
-  hit(supabase.from('registration_codes').update({ active }).eq('code', code));
-export const deleteRegCode = async (code) => hit(supabase.from('registration_codes').delete().eq('code', code));
+  hit(supabase.from('registration_codes').update({ active }).eq('code', code), 'code');
+export const deleteRegCode = async (code) => hit(supabase.from('registration_codes').delete().eq('code', code), 'code');
 
 // --- Berita ---
 const NEWS_MAP = { title: 'title', category: 'category', summary: 'summary', content: 'content', image: 'image_url', tags: 'tags', author: 'author_name' };
