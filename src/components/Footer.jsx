@@ -1,3 +1,4 @@
+import { isTabEnabled } from '../config';
 import React, { useState } from 'react';
 import TridentIcon from './TridentIcon';
 import { useApp } from '../context/AppContext';
@@ -82,14 +83,16 @@ export default function Footer() {
                   Galeri Prestasi Atlet
                 </button>
               </li>
+              {isTabEnabled('agenda') && (
               <li>
-                <button
-                  onClick={() => navigateToTab('agenda')}
-                  className="hover:text-amber-500 transition-colors"
-                >
-                  Agenda Kegiatan & RSVP
-                </button>
-              </li>
+                  <button
+                    onClick={() => navigateToTab('agenda')}
+                    className="hover:text-amber-500 transition-colors"
+                  >
+                    Agenda Kegiatan & RSVP
+                  </button>
+                </li>
+              )}
               <li>
                 <button
                   onClick={() => navigateToTab('donasi')}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import TridentIcon from './TridentIcon';
 import { useApp, ROLES } from '../context/AppContext';
+import { isTabEnabled } from '../config';
 
 import {
   Shield,
@@ -36,7 +37,7 @@ export default function Navbar() {
     { id: 'donasi', label: 'Donasi', icon: HeartHandshake, locked: role === ROLES.PUBLIC },
     { id: 'ukt', label: 'Ujian Kenaikan Tingkat', icon: GraduationCap, locked: role === ROLES.PUBLIC },
     ...(isAdmin ? [{ id: 'verifikasi', label: 'Verifikasi', icon: BadgeCheck, locked: false, badge: pendingDonations.length }, { id: 'akun', label: 'Kelola Akun', icon: Users, locked: false }] : []),
-  ];
+  ].filter((item) => isTabEnabled(item.id));
 
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-teal-200 no-print">

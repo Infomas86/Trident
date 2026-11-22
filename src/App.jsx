@@ -1,3 +1,4 @@
+import { isTabEnabled } from './config';
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
@@ -50,7 +51,7 @@ function MainContent() {
         {activeTab === 'visi' && <VisiMisiSection />}
         {activeTab === 'berita' && <BeritaSection />}
         {activeTab === 'prestasi' && <PrestasiSection />}
-        {activeTab === 'agenda' && <AgendaSection />}
+        {activeTab === 'agenda' && isTabEnabled('agenda') && <AgendaSection />}
         {activeTab === 'donasi' && <DonasiSection />}
         {activeTab === 'ukt' && <UktSection />}
         {activeTab === 'verifikasi' && isAdmin && <DonasiVerifikasi />}

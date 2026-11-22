@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { memoClear } from '../lib/memo';
+import { isTabEnabled } from '../config';
 import * as api from '../lib/api';
 import { enqueueForUser, withoutUser, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearCaches, overlayQueued, mineScores, mergeKeys, storedAuthUserId } from '../lib/offline';
 
@@ -337,7 +338,7 @@ export function AppProvider({ children }) {
   // Data tab yang berat dimuat saat tab pertama kali dibuka (bukan saat login), lalu di-cache sampai ganti akun.
   const LAZY_TABS = { agenda: ['agendas'], donasi: ['campaigns', 'myDonations'] };
   const lazyLoaded = useRef(new Set());
-  const refresh = () => runLoaders([...PUBLIC_LOADERS, ...USER_LOADERS, ...Object.values(LAZY_TABS).flat()]); // muat ulang manual
+  const refresh = () => runLoaders([...PUBLIC_LOADERS, ...USER_LOADERS, ...Object.entries(LAZY_TABS).filter(([tab]) => isTabEnabled(tab)).flatMap(([, names]) => names)]); // muat ulang manual
 
   useEffect(() => {
     runLoaders(PUBLIC_LOADERS);
@@ -358,7 +359,7 @@ export function AppProvider({ children }) {
   // Muat data tab saat pertama kali dibuka (setelah profil siap); buka ulang tab = tanpa request.
   useEffect(() => {
     if (userScope === null) return;
-    const names = (LAZY_TABS[activeTab] ?? []).filter((n) => !lazyLoaded.current.has(n));
+    const names = (isTabEnabled(activeTab) ? LAZY_TABS[activeTab] ?? [] : []).filter((n) => !lazyLoaded.current.has(n));
     if (!names.length) return;
     names.forEach((n) => lazyLoaded.current.add(n));
     runLoaders(names);
@@ -390,6 +391,7 @@ export function AppProvider({ children }) {
 
   // Switch tab with access check
   const navigateToTab = (tabName) => {
+    if (!isTabEnabled(tabName)) return;
     if (['agenda', 'donasi', 'ukt'].includes(tabName) && role === ROLES.PUBLIC) {
       setIsLoginModalOpen(true);
       return;
