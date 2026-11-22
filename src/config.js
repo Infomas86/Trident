@@ -2,6 +2,7 @@
 // Tab yang dimatikan hilang dari menu, tidak bisa dibuka, dan datanya tidak diambil dari Supabase.
 export const FEATURES = {
   agenda: false,
+  prestasi: false,
 };
 
 export const isTabEnabled = (tab) => FEATURES[tab] !== false;

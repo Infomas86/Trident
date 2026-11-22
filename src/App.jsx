@@ -53,7 +53,7 @@ function MainContent() {
         <Suspense fallback={<div className="py-16 text-center text-sm text-slate-500">Memuat…</div>}>
         {activeTab === 'visi' && <VisiMisiSection />}
         {activeTab === 'berita' && <BeritaSection />}
-        {activeTab === 'prestasi' && <PrestasiSection />}
+        {activeTab === 'prestasi' && isTabEnabled('prestasi') && <PrestasiSection />}
         {activeTab === 'agenda' && isTabEnabled('agenda') && <AgendaSection />}
         {activeTab === 'donasi' && <DonasiSection />}
         {activeTab === 'ukt' && <UktSection />}

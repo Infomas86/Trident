@@ -75,14 +75,16 @@ export default function Footer() {
                   Warta & Berita Resmi
                 </button>
               </li>
+              {isTabEnabled('prestasi') && (
               <li>
-                <button
-                  onClick={() => navigateToTab('prestasi')}
-                  className="hover:text-amber-500 transition-colors"
-                >
-                  Galeri Prestasi Atlet
-                </button>
-              </li>
+                  <button
+                    onClick={() => navigateToTab('prestasi')}
+                    className="hover:text-amber-500 transition-colors"
+                  >
+                    Galeri Prestasi Atlet
+                  </button>
+                </li>
+              )}
               {isTabEnabled('agenda') && (
               <li>
                   <button
