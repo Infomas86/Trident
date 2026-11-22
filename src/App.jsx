@@ -1,5 +1,6 @@
 import { isTabEnabled } from './config';
 import React, { lazy, Suspense } from 'react';
+import ErrorBoundary from './components/ErrorBoundary';
 import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import LockedFeatureModal from './components/LockedFeatureModal';
@@ -48,6 +49,7 @@ function MainContent() {
 
       {/* Active Section Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <ErrorBoundary key={activeTab}>
         <Suspense fallback={<div className="py-16 text-center text-sm text-slate-500">Memuat…</div>}>
         {activeTab === 'visi' && <VisiMisiSection />}
         {activeTab === 'berita' && <BeritaSection />}
@@ -58,6 +60,7 @@ function MainContent() {
         {activeTab === 'verifikasi' && isAdmin && <DonasiVerifikasi />}
         {activeTab === 'akun' && isAdmin && <AkunSection />}
         </Suspense>
+        </ErrorBoundary>
       </main>
 
       {/* Martial Arts Academy Footer */}
