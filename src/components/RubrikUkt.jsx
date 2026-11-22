@@ -38,16 +38,46 @@ export default function RubrikUkt({ candidates, onGrade, onDelete, area }) {
   const active = shown.find((x) => x.c.id === activeId) ?? shown[0] ?? null;
   const tpl = active && active.ti >= 0 ? TEMPLATE[active.ti] : null;
 
-  const tab = (key, label) => (
+  const tab = (key, label, color) => (
     <button
       key={String(key)}
       onClick={() => setFilter(key)}
-      className={`shrink-0 px-3.5 py-2 rounded-full border text-xs font-semibold whitespace-nowrap ${
+      aria-pressed={filter === key}
+      className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-semibold whitespace-nowrap ${
         filter === key ? 'bg-teal-700 border-teal-700 text-white' : 'bg-white border-slate-200 text-slate-600'
       }`}
     >
+      {color && <span className="w-2.5 h-2.5 rounded-full border border-slate-300" style={{ background: color }} />}
       {label}
     </button>
+  );
+
+  // Tab per sabuk tujuan + pencarian nama; dipakai bersama oleh "Input Penilaian" dan "Lihat Hasil".
+  const filterBar = (
+    <div className="space-y-3">
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {tab('all', `Semua (${items.length})`)}
+        {present.map((ti) =>
+          tab(ti, `${ti < 0 ? 'Tingkat tak dikenali' : TEMPLATE[ti].ke} (${items.filter((x) => x.ti === ti).length})`, ti < 0 ? null : TEMPLATE[ti].warnaKe),
+        )}
+      </div>
+      <div className="relative">
+        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <input
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Cari nama peserta"
+          aria-label="Cari nama peserta"
+          className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 focus:border-teal-600 outline-none"
+        />
+        {q && (
+          <button onClick={() => setQ('')} aria-label="Hapus pencarian" className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-slate-700">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
   );
 
   if (candidates.length === 0) {
@@ -68,6 +98,8 @@ export default function RubrikUkt({ candidates, onGrade, onDelete, area }) {
         ))}
       </div>
 
+      {filterBar}
+
       {view === 'hasil' ? (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-xs text-left">
@@ -75,7 +107,10 @@ export default function RubrikUkt({ candidates, onGrade, onDelete, area }) {
               <tr>{['Peserta', 'Kenaikan', 'I', 'II', 'III', 'IV', 'Status'].map((h) => <th key={h} className={`px-2.5 py-2 ${h === 'Status' ? 'hidden sm:table-cell' : ''}`}>{h}</th>)}</tr>
             </thead>
             <tbody>
-              {items.map(({ c, ti }) => (
+              {shown.length === 0 && (
+                <tr><td colSpan={7} className="px-2.5 py-6 text-center text-slate-500">Tidak ada peserta yang cocok.</td></tr>
+              )}
+              {shown.map(({ c, ti }) => (
                 <tr key={c.id} className="border-t border-slate-200 text-slate-800">
                   <td className="px-2.5 py-2 min-w-28"><b>{c.name}</b><div className="text-[11px] text-slate-500">{c.branch}</div></td>
                   <td className="px-2.5 py-2 whitespace-nowrap">{tingkatLabel(ti)}</td>
@@ -90,22 +125,6 @@ export default function RubrikUkt({ candidates, onGrade, onDelete, area }) {
         </div>
       ) : (
         <>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {tab('all', `Semua (${items.length})`)}
-            {present.map((ti) => tab(ti, `${tingkatLabel(ti)} (${items.filter((x) => x.ti === ti).length})`))}
-          </div>
-
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="search"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Cari nama, no. registrasi, atau ranting"
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 focus:border-teal-600 outline-none"
-            />
-          </div>
-
           <div className="space-y-2">
             <div className="flex justify-between items-baseline">
               <h3 className="text-sm font-bold text-slate-900">Daftar Peserta</h3>
