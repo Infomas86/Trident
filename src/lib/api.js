@@ -22,7 +22,7 @@ const fmtDate = (iso) =>
   new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
 export async function getProfile(userId) {
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+  const { data, error } = await supabase.from('profiles').select('id,full_name,role,belt,branch,reg_number,pac,photo_url').eq('id', userId).single();
   if (error) throw error;
   return data;
 }
@@ -45,7 +45,7 @@ export async function signUp(email, password, fullName, regCode) {
 
 // --- Kode pendaftaran (admin) ---
 export const listRegCodes = async () =>
-  ok(await supabase.from('registration_codes').select('code,pac,label,active,created_at').order('created_at', { ascending: false }));
+  ok(await supabase.from('registration_codes').select('code,pac,label,active,created_at').order('created_at', { ascending: false }).limit(200));
 export const createRegCode = async ({ code, pac, label }) =>
   hit(supabase.from('registration_codes').insert({ code: code.trim().toUpperCase(), pac: pac?.trim() || null, label: label?.trim() || null }));
 export const setRegCodeActive = async (code, active) =>
@@ -60,7 +60,8 @@ export async function listNews() {
     await supabase
       .from('news')
       .select('id,title,category,summary,content,image:image_url,tags,author:author_name,created_at')
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(100),
   );
   return rows.map(({ created_at, ...n }) => ({ ...n, date: fmtDate(created_at) }));
 }
@@ -75,7 +76,8 @@ export async function listAchievements() {
     await supabase
       .from('achievements')
       .select('id,athleteName:athlete_name,championship,scope,medal,category,year,notes,photo:photo_url')
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(100),
   );
 }
 export const addAchievement = async (input) =>
@@ -93,6 +95,7 @@ export async function listAgendas() {
       .from('agendas')
       .select('id,title,date,time:time_text,location,speaker,description')
       .order('created_at', { ascending: false })
+      .limit(100)
       .then(ok),
     supabase.from('agenda_rsvps_public').select('agenda_id,user_id,full_name,status').then(ok),
     uid ? supabase.from('agenda_rsvps').select('agenda_id,status,reason').eq('user_id', uid).then(ok) : [],
@@ -144,7 +147,7 @@ const CONTENT_MAP = {
 const HERO_MAP = { badge: 'hero_badge', titleMain: 'hero_title_main', titleHighlight: 'hero_title_highlight', subtitle: 'hero_subtitle' };
 
 export async function getSiteContent() {
-  const r = ok(await supabase.from('site_content').select('*').eq('id', 1).single());
+  const r = ok(await supabase.from('site_content').select('hero_badge,hero_title_main,hero_title_highlight,hero_subtitle,bank_name,bank_account,bank_holder,qris_image_url,secretariat_name,secretariat_address,secretariat_phone,secretariat_email').eq('id', 1).single());
   return {
     heroData: { badge: r.hero_badge, titleMain: r.hero_title_main, titleHighlight: r.hero_title_highlight, subtitle: r.hero_subtitle },
     bankName: r.bank_name,
@@ -215,6 +218,12 @@ const SUB_KEYS = {
   pos4: ['fightingCourage', 'techniqueApplication', 'emotionalControl'],
 };
 const STRUCT_KEYS = ['pp', 'pw', 'pc', 'pac', 'pr', 'par'];
+// Hanya kolom yang dipakai fromCandidateRow (bukan select('*')).
+const CANDIDATE_COLS = [
+  'id', 'reg_number', 'name', 'branch', 'current_belt', 'target_belt', 'photo_url', 'user_id', ...POS_KEYS,
+  'sub_scores', 'final_score', 'examiner_notes', 'examiner_name', 'exam_date', 'predikat', 'updated_at',
+  ...STRUCT_KEYS.map((k) => `struct_${k}`),
+].join(',');
 const DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80';
 
 const fromCandidateRow = (r) => ({
@@ -238,7 +247,7 @@ const fromCandidateRow = (r) => ({
 
 // eventId given → that UKT's participants (examiners/admins); none → whatever RLS allows (a member's own rows).
 export async function listCandidates(eventId, userId) {
-  let q = supabase.from('ukt_candidates').select('*').order('name');
+  let q = supabase.from('ukt_candidates').select(CANDIDATE_COLS).order('name').limit(500);
   if (eventId) q = q.eq('event_id', eventId);
   if (userId) q = q.eq('user_id', userId);
   return ok(await q).map(fromCandidateRow);
@@ -250,7 +259,7 @@ const genCode = () => {
   return Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => alphabet[b % alphabet.length]).join('');
 };
 export const listUktEvents = async () =>
-  ok(await supabase.from('ukt_events').select('id,pac,name,exam_date,location,examiner_code').order('exam_date', { ascending: false })).map(
+  ok(await supabase.from('ukt_events').select('id,pac,name,exam_date,location,examiner_code').order('exam_date', { ascending: false }).limit(100)).map(
     (e) => ({ id: e.id, pac: e.pac, name: e.name, examDate: e.exam_date, location: e.location, examinerCode: e.examiner_code }),
   );
 export const createUktEvent = async ({ name, examDate, location, pac }) =>
@@ -269,7 +278,7 @@ export async function joinUktByCode(code) {
 }
 
 export async function getCandidate(id) {
-  const r = ok(await supabase.from('ukt_candidates').select('*').eq('id', id).maybeSingle());
+  const r = ok(await supabase.from('ukt_candidates').select(CANDIDATE_COLS).eq('id', id).maybeSingle());
   return r && fromCandidateRow(r);
 }
 
@@ -351,9 +360,9 @@ export const DELETE_CAMPAIGN_BLOCKED = 'Program tidak bisa dihapus karena sudah 
 
 export async function listCampaigns() {
   const [camps, totals, recent] = await Promise.all([
-    supabase.from('campaigns').select('id,title,category,target_amount,deadline,description').order('created_at', { ascending: false }).then(ok),
+    supabase.from('campaigns').select('id,title,category,target_amount,deadline,description').order('created_at', { ascending: false }).limit(100).then(ok),
     supabase.from('campaign_totals').select('campaign_id,collected_amount,donors_count').then(ok),
-    supabase.from('public_donations').select('id,campaign_id,donor_name,amount,message,created_at').order('created_at', { ascending: false }).then(ok),
+    supabase.from('public_donations').select('id,campaign_id,donor_name,amount,message,created_at').order('created_at', { ascending: false }).limit(100).then(ok),
   ]);
   return camps.map((c) => {
     const t = totals.find((x) => x.campaign_id === c.id);
@@ -395,7 +404,7 @@ const fromDonationRow = (r) => ({
   proofPath: r.proof_path,
   timestamp: new Date(r.created_at).toLocaleString('id-ID'),
 });
-const DONATION_COLS = '*,campaigns(title)';
+const DONATION_COLS = 'id,ref_number,campaign_id,donor_name,amount,message,payment_method,status,proof_path,created_at,campaigns(title)';
 
 export async function submitDonation({ campaignId, amount, donorName, message, paymentMethod, proofFile }) {
   const n = Number(amount);
@@ -427,11 +436,11 @@ export async function listMyDonations() {
   const { data: sess } = await supabase.auth.getSession();
   const uid = sess.session?.user?.id;
   if (!uid) return [];
-  return ok(await supabase.from('donations').select(DONATION_COLS).eq('user_id', uid).order('created_at', { ascending: false })).map(fromDonationRow);
+  return ok(await supabase.from('donations').select(DONATION_COLS).eq('user_id', uid).order('created_at', { ascending: false }).limit(100)).map(fromDonationRow);
 }
 
 export async function listPendingDonations() {
-  const rows = ok(await supabase.from('donations').select(DONATION_COLS).eq('status', 'pending').order('created_at')).map(fromDonationRow);
+  const rows = ok(await supabase.from('donations').select(DONATION_COLS).eq('status', 'pending').order('created_at').limit(100)).map(fromDonationRow);
   return Promise.all(
     rows.map(async (d) => {
       const { data } = await supabase.storage.from('donation-proofs').createSignedUrl(d.proofPath, 600);

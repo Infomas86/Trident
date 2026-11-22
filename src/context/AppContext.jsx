@@ -333,8 +333,11 @@ export function AppProvider({ children }) {
   // Data tab disimpan di state context: pindah tab tidak mengambil ulang. Hanya dua kondisi yang memuat:
   // (1) sekali saat aplikasi dibuka untuk data publik, (2) sekali per akun/peran untuk data milik pengguna.
   const PUBLIC_LOADERS = ['news', 'achievements', 'stats', 'content', 'pillars', 'timeline', 'grounds'];
-  const USER_LOADERS = ['agendas', 'campaigns', 'myDonations', 'pendingDonations', 'events', 'candidates', 'myResult'];
-  const refresh = () => runLoaders([...PUBLIC_LOADERS, ...USER_LOADERS]); // muat ulang manual
+  const USER_LOADERS = ['pendingDonations', 'events', 'candidates', 'myResult'];
+  // Data tab yang berat dimuat saat tab pertama kali dibuka (bukan saat login), lalu di-cache sampai ganti akun.
+  const LAZY_TABS = { agenda: ['agendas'], donasi: ['campaigns', 'myDonations'] };
+  const lazyLoaded = useRef(new Set());
+  const refresh = () => runLoaders([...PUBLIC_LOADERS, ...USER_LOADERS, ...Object.values(LAZY_TABS).flat()]); // muat ulang manual
 
   useEffect(() => {
     runLoaders(PUBLIC_LOADERS);
@@ -347,9 +350,20 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (userScope === null) return;
     memoClear(); // cache tab lazy (Akun, Kode Daftar) milik akun sebelumnya tidak boleh terbawa
+    lazyLoaded.current = new Set();
     runLoaders(USER_LOADERS);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userScope]);
+
+  // Muat data tab saat pertama kali dibuka (setelah profil siap); buka ulang tab = tanpa request.
+  useEffect(() => {
+    if (userScope === null) return;
+    const names = (LAZY_TABS[activeTab] ?? []).filter((n) => !lazyLoaded.current.has(n));
+    if (!names.length) return;
+    names.forEach((n) => lazyLoaded.current.add(n));
+    runLoaders(names);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, userScope]);
 
   // Run an api call, toast the outcome, then reload the affected list.
   const mutate = async (call, list, okMsg, failMsg, okType = 'success') => {
