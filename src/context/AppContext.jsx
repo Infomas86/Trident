@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import { memoClear } from '../lib/memo';
 import * as api from '../lib/api';
 import { enqueueForUser, withoutUser, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearCaches, overlayQueued, mineScores, mergeKeys, storedAuthUserId } from '../lib/offline';
 
@@ -261,6 +262,7 @@ export function AppProvider({ children }) {
     }
     setOfflineUid(null);
     clearCaches();
+    memoClear();
     setOfflineQueue(withoutUser(queueRef.current, userId));
     setAllConflicts(withoutUser(conflictsRef.current, userId));
     showToast('Anda telah keluar dari akun.', 'info');
@@ -307,7 +309,7 @@ export function AppProvider({ children }) {
     },
     myResult: async () => {
       if (!userId) return setMyResult(null);
-      const own = (await api.listCandidates()).filter((c) => c.userId === userId);
+      const own = await api.listCandidates(undefined, userId);
       setMyResult(own[0] ?? null);
     },
   };
@@ -324,16 +326,30 @@ export function AppProvider({ children }) {
     loaders.candidates().catch(() => showToast('Gagal memuat peserta UKT', 'error'));
   }, [selectedEventId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const refresh = async () => {
-    const results = await Promise.allSettled(Object.values(loaders).map((load) => load()));
+  const runLoaders = async (names) => {
+    const results = await Promise.allSettled(names.map((n) => loaders[n]()));
     if (results.some((r) => r.status === 'rejected')) showToast('Sebagian data gagal dimuat', 'error');
   };
+  // Data tab disimpan di state context: pindah tab tidak mengambil ulang. Hanya dua kondisi yang memuat:
+  // (1) sekali saat aplikasi dibuka untuk data publik, (2) sekali per akun/peran untuk data milik pengguna.
+  const PUBLIC_LOADERS = ['news', 'achievements', 'stats', 'content', 'pillars', 'timeline', 'grounds'];
+  const USER_LOADERS = ['agendas', 'campaigns', 'myDonations', 'pendingDonations', 'events', 'candidates', 'myResult'];
+  const refresh = () => runLoaders([...PUBLIC_LOADERS, ...USER_LOADERS]); // muat ulang manual
 
-  // Load on mount and whenever the signed-in user changes (agendas need a session).
   useEffect(() => {
-    refresh();
+    runLoaders(PUBLIC_LOADERS);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, role, !!session]);
+  }, []);
+
+  // Data pengguna dimuat setelah profil (peran) siap, jadi tidak diulang saat sesi lalu profil datang bergantian.
+  // null = menunggu profil; 'guest' = belum masuk (hanya mengosongkan state, tanpa request).
+  const userScope = !userId ? 'guest' : profile || failedId === userId ? `${userId}:${role}` : null;
+  useEffect(() => {
+    if (userScope === null) return;
+    memoClear(); // cache tab lazy (Akun, Kode Daftar) milik akun sebelumnya tidak boleh terbawa
+    runLoaders(USER_LOADERS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userScope]);
 
   // Run an api call, toast the outcome, then reload the affected list.
   const mutate = async (call, list, okMsg, failMsg, okType = 'success') => {

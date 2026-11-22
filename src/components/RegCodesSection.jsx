@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import * as api from '../lib/api';
+import { memoGet, memoLoad } from '../lib/memo';
 
 const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none';
 const gen = () => Array.from({ length: 8 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
@@ -8,16 +9,16 @@ const gen = () => Array.from({ length: 8 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456
 // Admin membuat & membagikan kode pendaftaran; hanya pemegang kode yang bisa daftar mandiri.
 export default function RegCodesSection() {
   const { showToast, currentUser } = useApp();
-  const [codes, setCodes] = useState([]);
+  const [codes, setCodes] = useState(() => memoGet('regcodes') ?? []);
   const [form, setForm] = useState({ code: gen(), label: '', pac: currentUser?.pac ?? '' });
   const [busy, setBusy] = useState(false);
 
-  const load = () => api.listRegCodes().then(setCodes).catch(() => showToast('Gagal memuat kode', 'error'));
+  const load = (force = false) => memoLoad('regcodes', api.listRegCodes, force).then(setCodes).catch(() => showToast('Gagal memuat kode', 'error'));
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const run = async (call, ok) => {
     setBusy(true);
-    try { await call(); showToast(ok); await load(); return true; }
+    try { await call(); showToast(ok); await load(true); return true; }
     catch (e) { showToast(e instanceof api.UserError ? e.message : 'Operasi gagal', 'error'); return false; }
     finally { setBusy(false); }
   };

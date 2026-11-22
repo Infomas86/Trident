@@ -237,9 +237,10 @@ const fromCandidateRow = (r) => ({
 });
 
 // eventId given → that UKT's participants (examiners/admins); none → whatever RLS allows (a member's own rows).
-export async function listCandidates(eventId) {
+export async function listCandidates(eventId, userId) {
   let q = supabase.from('ukt_candidates').select('*').order('name');
   if (eventId) q = q.eq('event_id', eventId);
+  if (userId) q = q.eq('user_id', userId);
   return ok(await q).map(fromCandidateRow);
 }
 

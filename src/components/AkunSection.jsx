@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp, ROLES } from '../context/AppContext';
 import * as api from '../lib/api';
+import { memoGet, memoLoad } from '../lib/memo';
 import RegCodesSection from './RegCodesSection';
 
 const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none';
@@ -11,13 +12,14 @@ const blank = (v) => v.trim() || null;
 
 export default function AkunSection() {
   const { showToast, currentUser } = useApp();
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState(() => memoGet('users') ?? []);
   const [q, setQ] = useState('');
   const [form, setForm] = useState(EMPTY);
   const [edit, setEdit] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const load = () => api.listUsers().then(setUsers).catch((e) => {
+  // force=false: pakai cache bila sudah pernah dimuat; setelah perubahan data / muat ulang pakai force=true.
+  const load = (force = false) => memoLoad('users', api.listUsers, force).then(setUsers).catch((e) => {
     console.error(e);
     showToast(e instanceof api.UserError ? e.message : 'Gagal memuat akun', 'error');
   });
@@ -35,7 +37,7 @@ export default function AkunSection() {
       return false;
     }
     showToast(okMsg);
-    await load();
+    await load(true);
     setBusy(false);
     return true;
   };
@@ -109,7 +111,10 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
 
   return (
     <div className="space-y-8 py-6">
-      <h2 className="text-2xl font-extrabold text-slate-900 font-['Cinzel']">Kelola Akun</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-2xl font-extrabold text-slate-900 font-['Cinzel']">Kelola Akun</h2>
+        <button type="button" onClick={() => load(true)} className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold">Muat ulang</button>
+      </div>
 
       <div className="trident-card rounded-2xl p-5 border border-slate-200">
         <RegCodesSection />
