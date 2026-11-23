@@ -198,6 +198,10 @@ export function AppProvider({ children }) {
       showToast('Gagal masuk, periksa koneksi', 'error');
       return false;
     }
+    if (r === 'unconfirmed') {
+      showToast('Email belum dikonfirmasi. Cek email Anda dan klik link konfirmasi sebelum masuk.', 'error');
+      return false;
+    }
     if (r !== true) {
       showToast('Email atau kata sandi salah', 'error');
       return false;
@@ -211,7 +215,7 @@ export function AppProvider({ children }) {
   const signUp = async ({ fullName, email, password, regCode }) => {
     try {
       const { session: s } = await api.signUp(email, password, fullName, regCode);
-      showToast(s ? 'Akun berhasil dibuat. Selamat datang!' : 'Pendaftaran berhasil. Silakan masuk dengan akun Anda.', 'success');
+      showToast(s ? 'Akun berhasil dibuat. Selamat datang!' : 'Pendaftaran berhasil. Cek email Anda dan klik link konfirmasi sebelum bisa masuk.', 'success');
       if (s) setIsLoginModalOpen(false);
       return true;
     } catch (e) {

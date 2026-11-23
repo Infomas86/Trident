@@ -11,8 +11,8 @@ export class UserError extends Error {}
 
 // Login lewat Edge Function `login`, bukan langsung ke Supabase Auth: ini yang menerapkan
 // kunci 5x-gagal/15-menit per akun secara aman (lihat komentar di fungsi itu). Mengembalikan
-// 'locked' | 'bad_credentials' | 'network_error' saat gagal, atau true saat berhasil (sesi
-// sudah ditaruh di klien lewat supabase.auth.setSession).
+// 'locked' | 'unconfirmed' | 'bad_credentials' | 'network_error' saat gagal, atau true saat
+// berhasil (sesi sudah ditaruh di klien lewat supabase.auth.setSession).
 export async function signIn(email, password) {
   let res;
   try {
@@ -26,7 +26,7 @@ export async function signIn(email, password) {
   }
   if (res.status === 429) return 'locked';
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) return 'bad_credentials';
+  if (!res.ok) return body.error_code === 'email_not_confirmed' ? 'unconfirmed' : 'bad_credentials';
   const { error } = await supabase.auth.setSession({ access_token: body.access_token, refresh_token: body.refresh_token });
   return error ? 'bad_credentials' : true;
 }

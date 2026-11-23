@@ -48,8 +48,19 @@ async function handle(req: Request) {
   const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     method: 'POST', headers: { apikey: ANON_KEY, 'content-type': 'application/json' }, body: JSON.stringify({ email, password }),
   });
-  const body = await r.text();
+  let body = await r.text();
   await record(email, r.ok);
+
+  // GoTrue sengaja membalas "invalid_credentials" yang sama untuk password salah MAUPUN email
+  // belum dikonfirmasi (menghindari kebocoran status akun). Di sini kita beda-kan supaya pesan di
+  // aplikasi tepat ("cek email" vs "password salah") - akibatnya memang sedikit membocorkan bahwa
+  // email terdaftar tapi belum dikonfirmasi; untuk aplikasi komunitas kecil ini, trade-off itu wajar.
+  if (!r.ok && r.status === 400) {
+    const { data: confirmed } = await db.rpc('is_email_confirmed', { p_email: email });
+    if (confirmed === false) {
+      body = JSON.stringify({ error_code: 'email_not_confirmed', msg: 'Email belum dikonfirmasi. Cek email Anda dan klik link konfirmasi.' });
+    }
+  }
   return new Response(body, { status: r.status, headers: { 'content-type': 'application/json' } });
 }
 
