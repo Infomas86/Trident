@@ -9,6 +9,28 @@ const ok = ({ data, error }) => {
 // Errors whose Indonesian message is safe to show the user as-is.
 export class UserError extends Error {}
 
+// Login lewat Edge Function `login`, bukan langsung ke Supabase Auth: ini yang menerapkan
+// kunci 5x-gagal/15-menit per akun secara aman (lihat komentar di fungsi itu). Mengembalikan
+// 'locked' | 'bad_credentials' | 'network_error' saat gagal, atau true saat berhasil (sesi
+// sudah ditaruh di klien lewat supabase.auth.setSession).
+export async function signIn(email, password) {
+  let res;
+  try {
+    res = await fetch(`${supabase.supabaseUrl}/functions/v1/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', apikey: supabase.supabaseKey },
+      body: JSON.stringify({ email, password }),
+    });
+  } catch {
+    return 'network_error';
+  }
+  if (res.status === 429) return 'locked';
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) return 'bad_credentials';
+  const { error } = await supabase.auth.setSession({ access_token: body.access_token, refresh_token: body.refresh_token });
+  return error ? 'bad_credentials' : true;
+}
+
 export const NOT_ALLOWED = 'Tidak diizinkan atau data tidak ditemukan';
 // RLS-blocked update/delete returns no error and 0 rows; surface that as an error.
 const hit = async (query, keyColumn = 'id') => {

@@ -189,14 +189,16 @@ export function AppProvider({ children }) {
     : null;
 
   const signIn = async (email, password) => {
-    let error;
-    try {
-      ({ error } = await supabase.auth.signInWithPassword({ email, password }));
-    } catch {
+    const r = await api.signIn(email, password);
+    if (r === 'locked') {
+      showToast('Terlalu banyak percobaan gagal untuk akun ini. Coba lagi dalam 15 menit.', 'error');
+      return false;
+    }
+    if (r === 'network_error') {
       showToast('Gagal masuk, periksa koneksi', 'error');
       return false;
     }
-    if (error) {
+    if (r !== true) {
       showToast('Email atau kata sandi salah', 'error');
       return false;
     }
