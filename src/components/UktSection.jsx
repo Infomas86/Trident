@@ -111,7 +111,7 @@ export default function UktSection() {
         <form onSubmit={addParticipant} className="trident-card rounded-2xl p-4 border border-slate-200 space-y-3">
           <h3 className="text-sm font-bold text-slate-900">Tambah Peserta</h3>
           <div className="grid sm:grid-cols-2 gap-2">
-            <input className={input} required placeholder="N.I.A (mis. PNKB-2026-0001)" value={addForm.regNumber} onChange={(e) => setAddForm({ ...addForm, regNumber: e.target.value })} />
+            <input className={input} required placeholder="N.I.A (Nomor Induk Anggota)" value={addForm.regNumber} onChange={(e) => setAddForm({ ...addForm, regNumber: e.target.value })} />
             <input className={input} required placeholder="Nama lengkap" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} />
             <input className={input} placeholder="Ranting" value={addForm.branch} onChange={(e) => setAddForm({ ...addForm, branch: e.target.value })} />
             <select className={input} value={addForm.tingkat} onChange={(e) => setAddForm({ ...addForm, tingkat: Number(e.target.value) })}>
