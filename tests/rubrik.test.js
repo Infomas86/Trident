@@ -54,7 +54,7 @@ test('impor CSV: satu baris salah membatalkan semuanya, pesan memuat nomor baris
   const { rows, errors } = parseRubrikCsv(csv);
   assert.equal(rows.length, 0);
   assert.equal(errors.length, 2);
-  assert.match(errors[0], /baris 4.*No Registrasi/);
+  assert.match(errors[0], /baris 4.*N\.I\.A/);
   assert.match(errors[1], /baris 5.*Sabuk Target/);
 });
 
@@ -63,7 +63,7 @@ test('ekspor CSV memuat predikat; nama berawalan rumus diberi kutip agar aman di
     { regNumber: 'A-1', name: '=HYPERLINK("x")', branch: 'R', currentBelt: 'Strip Putih', targetBelt: 'Strip Kuning', predikat: { I: 'B', II: 'A' } },
   ]);
   const [head, row] = csv.split('\n');
-  assert.equal(head, 'No Registrasi,Nama Peserta,Ranting,Sabuk Saat Ini,Sabuk Target,I,II,III,IV');
+  assert.equal(head, 'N.I.A,Nama Peserta,Ranting,Sabuk Saat Ini,Sabuk Target,I,II,III,IV');
   assert.ok(row.includes(`"'=HYPERLINK(""x"")"`), row);
   assert.ok(row.endsWith(',"B","A","",""'));
 });

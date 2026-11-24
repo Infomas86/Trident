@@ -111,7 +111,7 @@ export default function UktSection() {
         <form onSubmit={addParticipant} className="trident-card rounded-2xl p-4 border border-slate-200 space-y-3">
           <h3 className="text-sm font-bold text-slate-900">Tambah Peserta</h3>
           <div className="grid sm:grid-cols-2 gap-2">
-            <input className={input} required placeholder="No. registrasi (mis. PNKB-2026-0001)" value={addForm.regNumber} onChange={(e) => setAddForm({ ...addForm, regNumber: e.target.value })} />
+            <input className={input} required placeholder="N.I.A (mis. PNKB-2026-0001)" value={addForm.regNumber} onChange={(e) => setAddForm({ ...addForm, regNumber: e.target.value })} />
             <input className={input} required placeholder="Nama lengkap" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} />
             <input className={input} placeholder="Ranting" value={addForm.branch} onChange={(e) => setAddForm({ ...addForm, branch: e.target.value })} />
             <select className={input} value={addForm.tingkat} onChange={(e) => setAddForm({ ...addForm, tingkat: Number(e.target.value) })}>
@@ -155,7 +155,7 @@ export default function UktSection() {
               <button onClick={() => setImportOpen(false)} aria-label="Tutup" className="p-1.5 rounded-lg bg-slate-100"><X className="w-4 h-4" /></button>
             </div>
             <p className="text-xs text-slate-500">
-              Kolom: No Registrasi, Nama Peserta, Ranting, Sabuk Saat Ini, Sabuk Target. Tanpa nilai: penguji mengisi predikat di aplikasi.
+              Kolom: N.I.A, Nama Peserta, Ranting, Sabuk Saat Ini, Sabuk Target. Tanpa nilai: penguji mengisi predikat di aplikasi.
               Sabuk Target harus Strip Kuning, Merah, Biru, Cokelat, atau Hitam.
             </p>
             <textarea

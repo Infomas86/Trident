@@ -105,7 +105,7 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
         {ROLE_OPTIONS.map(([val, label]) => <option key={val} value={val}>{label}</option>)}
       </select>
       <input className={input} placeholder="PAC (untuk admin UKT, kosong = pusat)" value={v.pac ?? ''} onChange={set('pac')} />
-      <input className={input} placeholder="No. registrasi peserta UKT (opsional)" value={v.reg_number} onChange={set('reg_number')} />
+      <input className={input} placeholder="N.I.A peserta UKT (opsional)" value={v.reg_number} onChange={set('reg_number')} />
     </>
   );
 
@@ -138,7 +138,7 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
       )}
 
       <div className="space-y-3">
-        <input className={input} placeholder="Cari nama, email, atau no. registrasi" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className={input} placeholder="Cari nama, email, atau N.I.A" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-xs text-left">
             <thead className="bg-slate-50 text-slate-500">

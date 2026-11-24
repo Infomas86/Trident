@@ -75,7 +75,7 @@ export function gradedCount(c) {
 }
 
 // ---- Impor / ekspor CSV peserta (tanpa nilai: nilai diisi penguji di aplikasi) ----
-export const IMPORT_HEADER = 'No Registrasi,Nama Peserta,Ranting,Sabuk Saat Ini,Sabuk Target';
+export const IMPORT_HEADER = 'N.I.A,Nama Peserta,Ranting,Sabuk Saat Ini,Sabuk Target';
 export const IMPORT_SAMPLE = `${IMPORT_HEADER}
 "PNKB-2026-0001","Ahmad Imam Wahyudi","Ranting Sei Beduk","Strip Putih","Strip Kuning"
 "PNKB-2026-0002","Rizki Pratama","Ranting Duriangkang","Strip Biru","Strip Cokelat"`;
@@ -86,7 +86,7 @@ export function parseRubrikCsv(text) {
   for (const { cols: raw, line } of splitCsv(String(text || '').replace(/^﻿/, '')).slice(1)) {
     const c = raw.map((v) => v.trim());
     const bad = [];
-    if (!c[0]) bad.push('No Registrasi wajib diisi');
+    if (!c[0]) bad.push('N.I.A wajib diisi');
     if (!c[1]) bad.push('Nama Peserta wajib diisi');
     if (templateIndex(c[4], c[3]) < 0) bad.push('Sabuk Target tidak dikenali (pakai Strip Kuning, Merah, Biru, Cokelat, atau Hitam)');
     if (bad.length) { errors.push(`baris ${line}: ${bad.join(', ')}`); continue; }
