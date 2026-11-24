@@ -5,7 +5,11 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 // Supabase dan melihat sendiri apakah percobaannya benar-benar gagal, sehingga tak seorang pun
 // bisa "melaporkan kegagalan" palsu untuk mengunci akun orang lain tanpa pernah mencoba
 // passwordnya (lihat catatan di migrasi login_guard_table).
+// Domain situs live ditulis langsung di sini (bukan hanya ALLOWED_ORIGINS) karena secret itu
+// ternyata belum pernah di-set - akibatnya login dari situs asli ditolak CORS browser dan
+// tampak seperti "gagal masuk" padahal akun & password benar.
 const ORIGINS = ['capacitor://localhost', 'https://localhost', 'http://localhost:5173', 'http://127.0.0.1:5173',
+  'https://trisula.pages.dev', 'https://trident-academy.pages.dev', 'https://pagarnusa-batam.pages.dev',
   ...(Deno.env.get('ALLOWED_ORIGINS') ?? '').split(',').map((s) => s.trim()).filter(Boolean)];
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;

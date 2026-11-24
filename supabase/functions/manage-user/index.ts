@@ -1,7 +1,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const ROLES = ['anggota', 'penguji', 'admin'];
+// Domain situs live ditulis langsung di sini (bukan hanya ALLOWED_ORIGINS) karena secret itu
+// ternyata belum pernah di-set - akibatnya Kelola Akun (dan fitur admin lain lewat fungsi ini)
+// ditolak CORS browser dari situs asli sejak awal fungsi ini dibuat.
 const ORIGINS = ['capacitor://localhost', 'https://localhost', 'http://localhost:5173', 'http://127.0.0.1:5173',
+  'https://trisula.pages.dev', 'https://trident-academy.pages.dev', 'https://pagarnusa-batam.pages.dev',
   ...(Deno.env.get('ALLOWED_ORIGINS') ?? '').split(',').map((s) => s.trim()).filter(Boolean)];
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   { auth: { persistSession: false, autoRefreshToken: false } });
