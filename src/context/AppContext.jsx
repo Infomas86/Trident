@@ -600,22 +600,6 @@ export function AppProvider({ children }) {
     return true;
   };
 
-  // Import Candidates (rows = CandidateInput[] from parseCandidatesCsv)
-  const handleImportCandidates = async (rows) => {
-    let count;
-    try {
-      if (!selectedEventId) throw new api.UserError('Pilih atau buat UKT terlebih dahulu');
-      count = await api.upsertCandidates(rows, selectedEventId);
-    } catch (e) {
-      console.error(e);
-      showToast(e.message === api.NOT_ALLOWED || e instanceof api.UserError ? e.message : 'Gagal mengimpor peserta', 'error');
-      return false;
-    }
-    showToast(`Berhasil mengimpor ${count} peserta Ujian Kenaikan Tingkat!`, 'success');
-    loaders.candidates().catch(() => showToast('Gagal menyegarkan data', 'error'));
-    return true;
-  };
-
   const handleDeleteCandidate = (id) =>
     mutate(() => api.deleteCandidate(id), 'candidates', 'Peserta berhasil dihapus.', 'Gagal menghapus peserta', 'info');
 
@@ -743,7 +727,6 @@ export function AppProvider({ children }) {
         discardQueued,
         syncNow,
         resolveConflict,
-        handleImportCandidates,
         handleSetPredikat,
         handleImportParticipants,
         handleDeleteCandidate,

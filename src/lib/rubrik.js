@@ -1,6 +1,32 @@
 // Rubrik penilaian UKT resmi: materi berbeda per tingkat, predikat huruf per materi (tanpa angka).
 // Murni (tanpa React/DOM) agar bisa diuji. Isi materi disalin dari lembar nilai resmi PAC.
-import { splitCsv } from './ukt.js';
+// Pecah teks CSV jadi record { cols, line }; menangani kutip, "" dan baris baru dalam kutip.
+// Dipindah dari lib/ukt.js (sudah dihapus - modul lama tanpa pemakai lain, hanya splitCsv yang
+// masih dibutuhkan).
+function splitCsv(text) {
+  const records = [];
+  let cols = [], cur = '', inQ = false, line = 1, start = 1;
+  const endRecord = () => {
+    cols.push(cur);
+    if (cols.length > 1 || cols[0].trim() !== '') records.push({ cols, line: start });
+    cols = []; cur = '';
+  };
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"' && text[i + 1] === '"') { cur += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else { if (ch === '\n') line++; cur += ch; }
+    } else if (ch === '"') inQ = true;
+    else if (ch === ',') { cols.push(cur); cur = ''; }
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      endRecord(); line++; start = line;
+    } else cur += ch;
+  }
+  endRecord();
+  return records;
+}
 
 export const GRADES = ['A', 'B', 'C', 'D', 'E'];
 
@@ -57,7 +83,19 @@ export const TEMPLATE = [
 
 const TARGET_WORDS = [['kuning'], ['merah'], ['biru'], ['cokelat', 'coklat'], ['hitam']];
 const CURRENT_WORDS = [['putih'], ['kuning'], ['merah'], ['biru'], ['cokelat', 'coklat']];
-const find = (words, text) => words.findIndex((ws) => ws.some((w) => text.includes(w)));
+// Kata utuh (bukan substring), dan kemunculan PALING AWAL di teks yang menang - bukan urutan daftar
+// warna di atas. Tanpa ini, "Strip Biru (dari Merah)" salah terbaca Merah karena merah dicek duluan.
+const find = (words, text) => {
+  let bestIdx = -1;
+  let bestPos = Infinity;
+  words.forEach((ws, i) => {
+    ws.forEach((w) => {
+      const m = new RegExp(`\\b${w}\\b`).exec(text);
+      if (m && m.index < bestPos) { bestPos = m.index; bestIdx = i; }
+    });
+  });
+  return bestIdx;
+};
 
 // Tingkat dikenali dari sabuk target ("Strip Merah" -> 1); bila tak dikenali, dari sabuk saat ini. -1 = tidak dikenali.
 export function templateIndex(targetBelt = '', currentBelt = '') {

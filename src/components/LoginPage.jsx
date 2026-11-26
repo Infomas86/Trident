@@ -55,9 +55,7 @@ export default function LoginPage() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // A bare username (no "@") is a test-domain account, e.g. "admin" → admin@trident.test.
-    const id = email.trim();
-    run(() => signIn(id.includes('@') ? id : `${id}@trident.test`, password));
+    run(() => signIn(email.trim(), password));
   };
 
   const handleRegister = (e) => {
@@ -116,13 +114,13 @@ export default function LoginPage() {
         {mode === 'login' ? (
           <form onSubmit={handleLogin} className="space-y-4 relative z-10">
             <div>
-              <Label>Email / Nama Pengguna</Label>
+              <Label>Email</Label>
               <input
-                type="text"
+                type="email"
                 autoCapitalize="none"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@email.com atau admin"
+                placeholder="nama@email.com"
                 autoComplete="username"
                 className={inputCls}
                 required

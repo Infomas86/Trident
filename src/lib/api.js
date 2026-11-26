@@ -234,12 +234,6 @@ export const deleteTrainingGround = async (id) => hit(supabase.from('training_gr
 
 // --- UKT ---
 const POS_KEYS = ['pos1', 'pos2', 'pos3', 'pos4'];
-const SUB_KEYS = {
-  pos1: ['stamina', 'physicalEndurance', 'agility'],
-  pos2: ['jurusPrecision', 'strikeAccuracy', 'stancesStability'],
-  pos3: ['theory', 'history', 'ethicsRespect'],
-  pos4: ['fightingCourage', 'techniqueApplication', 'emotionalControl'],
-};
 const STRUCT_KEYS = ['pp', 'pw', 'pc', 'pac', 'pr', 'par'];
 // Hanya kolom yang dipakai fromCandidateRow (bukan select('*')).
 const CANDIDATE_COLS = [
@@ -337,23 +331,6 @@ export async function upsertParticipants(rows, eventId) {
   const payload = rows.map((r) => ({
     event_id: eventId, reg_number: r.regNumber, name: r.name, branch: r.branch,
     current_belt: r.currentBelt, target_belt: r.targetBelt,
-  }));
-  ok(await supabase.from('ukt_candidates').upsert(payload, { onConflict: 'event_id,reg_number' }));
-  return payload.length;
-}
-
-export async function upsertCandidates(rows, eventId) {
-  const payload = rows.map((r) => ({
-    event_id: eventId,
-    reg_number: r.regNumber,
-    name: r.name,
-    branch: r.branch,
-    current_belt: r.currentBelt,
-    target_belt: r.targetBelt,
-    ...Object.fromEntries(POS_KEYS.map((k) => [k, r[k]])),
-    sub_scores: Object.fromEntries(POS_KEYS.map((k) => [k, Object.fromEntries(SUB_KEYS[k].map((s) => [s, r[k]]))])),
-    examiner_notes: r.examinerNotes,
-    ...Object.fromEntries(STRUCT_KEYS.map((k) => [`struct_${k}`, r.structure?.[k] ?? ''])),
   }));
   ok(await supabase.from('ukt_candidates').upsert(payload, { onConflict: 'event_id,reg_number' }));
   return payload.length;

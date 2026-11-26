@@ -20,6 +20,12 @@ test('tingkat dikenali dari sabuk target, ejaan coklat/cokelat sama', () => {
   assert.equal(templateIndex('Strip Hitam', 'Strip Cokelat'), 4);
 });
 
+test('kata warna yang disebut lebih dulu di teks yang menang, bukan prioritas daftar tetap', () => {
+  // Dulu salah terbaca Merah (dicek lebih dulu di daftar) meski Biru disebut lebih awal di teks.
+  assert.equal(templateIndex('Strip Biru (dari Merah)', ''), 2);
+  assert.equal(templateIndex('', 'Strip Biru (dari Merah)'), 3); // CURRENT_WORDS: biru di indeks 3, beda urutan dari TARGET_WORDS
+});
+
 test('sabuk target tak dikenali memakai sabuk saat ini; keduanya tak dikenali = -1', () => {
   assert.equal(templateIndex('', 'Strip Biru'), 3);
   assert.equal(templateIndex('Sabuk Hijau (Tingkat 2)', 'Sabuk Ungu'), -1);
