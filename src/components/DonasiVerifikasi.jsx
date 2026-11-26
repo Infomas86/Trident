@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import LaporanDonasi from './LaporanDonasi';
 
 const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none';
 
@@ -64,6 +65,10 @@ export default function DonasiVerifikasi() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="trident-card rounded-2xl p-5 border border-slate-200">
+        <LaporanDonasi />
       </div>
     </div>
   );

@@ -58,10 +58,22 @@ export const listDonationReport = async () =>
 - [ ] Non-admin tidak bisa mengakses (baik lewat UI maupun langsung query `donation_report` — diuji RLS-nya).
 - [ ] Build dan tes unit tetap lulus.
 
-## Pertanyaan Terbuka
-- Format ekspor: CSV cukup, atau perlu PDF/cetak langsung?
-- Perlu grafik (chart) atau tabel angka saja cukup untuk kebutuhan sekarang?
-- Apakah donasi yang `rejected` perlu ditampilkan di laporan (sebagai perbandingan), atau cukup `accepted` saja?
+## Keputusan (26 Nov 2026)
+- Lengkap: CSV + grafik + tabel angka, ketiganya sekaligus.
+- Hanya status `accepted` yang dihitung sebagai pemasukan (konsisten dengan tujuan laporan: uang yang benar-benar diterima).
+
+## Koreksi Penting Saat Implementasi
+Draf awal spec ini salah menyebut `security_invoker` sebagai default Postgres untuk view — **itu keliru**. Default Postgres (termasuk versi 17 yang dipakai proyek ini) adalah view berjalan dengan hak akses PEMILIK view, bukan pemanggil, kecuali `with (security_invoker = true)` diset eksplisit. Tanpa ini, `donation_report` akan melewati RLS tabel `donations` dan membocorkan agregat seluruh donasi ke siapa pun yang `authenticated`, bukan cuma miliknya/admin. Sudah diperbaiki sebelum diterapkan ke database, dan **diverifikasi nyata**: dibuat 2 akun uji (donatur sungguhan vs yang tidak pernah donasi) — akun yang tidak donasi tetap melihat array kosong, akun donatur hanya melihat donasinya sendiri. Akun & data uji sudah dibersihkan dari database setelahnya.
+
+## Status: Selesai diimplementasikan
+- Migrasi `20261126000021_donation_report.sql`: view `donation_report` (agregat per bulan × program, `security_invoker = true`, grant eksplisit ke `authenticated` saja).
+- `src/lib/api.js`: `listDonationReport`.
+- `src/components/LaporanDonasi.jsx` (baru): 2 kartu statistik (total diterima, jumlah transaksi), grafik batang SVG per bulan (satu seri, tanpa library tambahan — dibangun mengikuti skill dataviz: batang tipis bersudut bulat, tooltip saat hover, warna teal sesuai brand, tanpa legenda karena satu seri), tabel rinci per bulan×program, filter per program, tombol Muat Ulang dan Ekspor CSV.
+- Dipasang di `DonasiVerifikasi.jsx` (tab Verifikasi, admin-only).
+- Diuji lewat simulasi browser dengan data tiruan — angka tervalidasi otomatis (total & jumlah transaksi cocok dengan penjumlahan manual), tampilan diperiksa lewat screenshot.
+
+## Temuan Sampingan
+Ditemukan satu kampanye donasi nyata di database berjudul "df" (dibuat 23 Nov) dengan satu donasi Rp 50.000 — pola ini ciri khas data uji, bukan kampanye sungguhan, tapi **tidak dihapus** karena ini database produksi dan tidak bisa dipastikan bukan milik pengguna. Perlu diputuskan pengguna: hapus atau biarkan.
 
 ## Estimasi Kasar
 Kecil–menengah: 1 view SQL, 1 fungsi API, 1 komponen UI baru + loader. Tidak ada perubahan ke alur donasi yang sudah ada.

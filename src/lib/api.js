@@ -466,6 +466,19 @@ export async function submitDonation({ campaignId, amount, donorName, message, p
   return fromDonationRow(ins.data);
 }
 
+// Admin-only (RLS mengizinkan non-admin melihat baris agregat yang terbentuk dari donasinya
+// sendiri, tapi tidak dipakai begitu di UI - fitur ini hanya ditampilkan ke admin).
+export async function listDonationReport() {
+  const rows = ok(await supabase.from('donation_report').select('*').order('period_month', { ascending: true }));
+  return rows.map((r) => ({
+    campaignId: r.campaign_id,
+    campaignTitle: r.campaign_title,
+    periodMonth: r.period_month,
+    donorsCount: r.donors_count,
+    totalAmount: Number(r.total_amount),
+  }));
+}
+
 export async function listMyDonations() {
   const { data: sess } = await supabase.auth.getSession();
   const uid = sess.session?.user?.id;
