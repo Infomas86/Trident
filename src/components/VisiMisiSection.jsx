@@ -532,7 +532,7 @@ export default function VisiMisiSection() {
               <span>Anak Ranting (PAR) / Rayon</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
-              Info Tempat Latihan & Kontak Pelatih Resmi
+              Informasi Tempat Latihan & Kontak Pelatih Resmi
             </h2>
             <p className="text-xs sm:text-sm text-slate-500">
               Temukan lokasi latihan terdekat, jadwal mingguan, dan hubungi langsung pelatih pembina ranting via WhatsApp.
