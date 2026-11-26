@@ -1,4 +1,5 @@
 const KEYS = ['trident_offline_queue', 'trident_cache_candidates', 'trident_cache_profile', 'trident_offline_conflicts'];
+const PREDIKAT_QUEUE_KEY = 'trident_offline_predikat_queue';
 const ls = () => (typeof localStorage !== 'undefined' ? localStorage : null);
 
 // posKeys: posts this examiner changed (quick-pos), null = full evaluation (all posts).
@@ -65,3 +66,13 @@ export function clearCaches() {
 }
 // User id of the session auth-js keeps in storage (kept even when an offline refresh fails).
 export const storedAuthUserId = (storageKey) => loadCache(storageKey)?.user?.id ?? null;
+
+// Antrean offline untuk predikat rubrik. Lebih sederhana dari antrean skor lama (enqueueScore
+// dkk di atas): set_predikat sudah atomik per materi di database (penguji lain tidak tertimpa),
+// jadi tidak perlu baseUpdatedAt/resolusi konflik - ketuk ulang materi yang sama saat offline
+// cukup menimpa item lamanya (hasil akhir yang dikirim nanti), kunci (candidateId, materi, userId).
+export const loadPredikatQueue = () => loadCache(PREDIKAT_QUEUE_KEY, []);
+export const savePredikatQueue = (q) => saveCache(PREDIKAT_QUEUE_KEY, q);
+const samePredikatItem = (a, b) => a.candidateId === b.candidateId && a.materi === b.materi && a.userId === b.userId;
+export const enqueuePredikat = (queue, item) => [...queue.filter((q) => !samePredikatItem(q, item)), item];
+export const removePredikatItem = (queue, item) => queue.filter((q) => !samePredikatItem(q, item));

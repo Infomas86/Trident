@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, X, FileText, Trash2 } from 'lucide-react';
+import { Search, X, FileText, Trash2, CloudOff } from 'lucide-react';
 import { TEMPLATE, GRADES, templateIndex, gradedCount } from '../lib/rubrik';
 import SertifikatUkt from './SertifikatUkt';
+import { useApp } from '../context/AppContext';
 
 const tingkatLabel = (ti, short = true) => {
   if (ti < 0) return 'Tingkat tak dikenali';
@@ -21,6 +22,7 @@ function Progress({ c }) {
 
 // Penilaian UKT model rubrik: pilih peserta, beri predikat A-E per materi. Tersimpan otomatis tiap ketukan.
 export default function RubrikUkt({ candidates, onGrade, onDelete, area }) {
+  const { predikatQueueCount } = useApp();
   const [view, setView] = useState('input'); // 'input' | 'hasil'
   const [filter, setFilter] = useState('all');
   const [q, setQ] = useState('');
@@ -86,6 +88,12 @@ export default function RubrikUkt({ candidates, onGrade, onDelete, area }) {
 
   return (
     <div className="space-y-4">
+      {predikatQueueCount > 0 && (
+        <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+          <CloudOff className="w-4 h-4 shrink-0" />
+          <span>{predikatQueueCount} predikat tersimpan di HP ini, menunggu sinyal untuk dikirim otomatis.</span>
+        </div>
+      )}
       <div className="flex gap-2">
         {[['input', 'Input Penilaian'], ['hasil', 'Lihat Hasil']].map(([k, label]) => (
           <button

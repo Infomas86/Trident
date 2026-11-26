@@ -4,7 +4,7 @@ import { memoClear } from '../lib/memo';
 import { isTabEnabled } from '../config';
 import { ttlGet, ttlSet } from '../lib/ttlCache';
 import * as api from '../lib/api';
-import { enqueueForUser, withoutUser, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearCaches, overlayQueued, mineScores, mergeKeys, storedAuthUserId } from '../lib/offline';
+import { enqueueForUser, withoutUser, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearCaches, overlayQueued, mineScores, mergeKeys, storedAuthUserId, loadPredikatQueue, savePredikatQueue, enqueuePredikat, removePredikatItem } from '../lib/offline';
 
 const PROFILE_TIMEOUT_MS = 8000;
 
@@ -68,14 +68,23 @@ export function AppProvider({ children }) {
   const [isOnline, setIsOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
   const [offlineQueue, setOfflineQueueState] = useState(loadQueue);
   const [allConflicts, setAllConflictsState] = useState(loadConflicts);
+  const [predikatQueue, setPredikatQueueState] = useState(loadPredikatQueue);
   const queueRef = useRef(offlineQueue);
   const conflictsRef = useRef(allConflicts);
+  const predikatQueueRef = useRef(predikatQueue);
   const syncing = useRef(false);
+  const syncingPredikat = useRef(false);
   const syncRef = useRef(() => {});
+  const syncPredikatRef = useRef(() => {});
   const setOfflineQueue = (q) => {
     queueRef.current = q;
     setOfflineQueueState(q);
     saveQueue(q);
+  };
+  const setPredikatQueue = (q) => {
+    predikatQueueRef.current = q;
+    setPredikatQueueState(q);
+    savePredikatQueue(q);
   };
 
   // Persist like the queue; accepts a value or an updater.
@@ -90,6 +99,7 @@ export function AppProvider({ children }) {
     const on = () => {
       setIsOnline(true);
       syncRef.current();
+      syncPredikatRef.current();
     };
     const off = () => setIsOnline(false);
     window.addEventListener('online', on);
@@ -142,6 +152,7 @@ export function AppProvider({ children }) {
   const userId = session?.user?.id ?? offlineUid;
   // Only this user's items are shown or synced; other users' items wait for their next sign-in.
   const offlineQueueMine = offlineQueue.filter((i) => i.userId === userId);
+  const predikatQueueMine = predikatQueue.filter((i) => i.userId === userId);
   const conflicts = allConflicts.filter((c) => c.userId === userId);
   useEffect(() => {
     if (!userId) return;
@@ -261,7 +272,8 @@ export function AppProvider({ children }) {
     mutate(() => api.deleteUktEvent(id), 'events', 'UKT dihapus beserta seluruh pesertanya.', 'Gagal menghapus UKT', 'info');
 
   const signOut = async () => {
-    const pending = queueRef.current.filter((i) => i.userId === userId).length + conflictsRef.current.filter((i) => i.userId === userId).length;
+    const pending = queueRef.current.filter((i) => i.userId === userId).length + conflictsRef.current.filter((i) => i.userId === userId).length
+      + predikatQueueRef.current.filter((i) => i.userId === userId).length;
     if (pending && !window.confirm(`Ada ${pending} nilai belum terkirim. Keluar dan buang?`)) return;
     const { error } = await supabase.auth.signOut({ scope: 'local' });
     // 'local' drops this device's session even offline; the error is then only the failed revoke request.
@@ -274,6 +286,7 @@ export function AppProvider({ children }) {
     memoClear();
     setOfflineQueue(withoutUser(queueRef.current, userId));
     setAllConflicts(withoutUser(conflictsRef.current, userId));
+    setPredikatQueue(withoutUser(predikatQueueRef.current, userId));
     showToast('Anda telah keluar dari akun.', 'info');
   };
 
@@ -484,7 +497,10 @@ export function AppProvider({ children }) {
 
   // Sync when the app opens signed in (profile ready).
   useEffect(() => {
-    if (profile && session) syncRef.current();
+    if (profile && session) {
+      syncRef.current();
+      syncPredikatRef.current();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id, !!session]);
 
@@ -570,7 +586,10 @@ export function AppProvider({ children }) {
     return true;
   };
 
-  // Predikat huruf per materi (UKT model rubrik). Tampil langsung (optimistis); gagal = kembalikan dari server.
+  // Predikat huruf per materi (UKT model rubrik). Tampil langsung (optimistis). Gagal karena
+  // jaringan -> disimpan di HP dan diantre (set_predikat atomik per materi, jadi aman dikirim
+  // belakangan tanpa menimpa penguji lain); ditolak server (UserError, bukan soal jaringan) ->
+  // tampilan dikembalikan dari server, tidak diantre (akan gagal lagi kalau dicoba ulang).
   const handleSetPredikat = async (candidateId, materi, grade) => {
     setCandidatesList((list) => list.map((c) => {
       if (c.id !== candidateId) return c;
@@ -578,14 +597,55 @@ export function AppProvider({ children }) {
       if (grade) predikat[materi] = grade; else delete predikat[materi];
       return { ...c, predikat };
     }));
+    if (navigator.onLine && session) {
+      try {
+        await api.setPredikat(candidateId, materi, grade);
+        setPredikatQueue(removePredikatItem(predikatQueueRef.current, { candidateId, materi, userId }));
+        return;
+      } catch (e) {
+        console.error(e);
+        if (e instanceof api.UserError) {
+          showToast(e.message, 'error');
+          refreshCandidates();
+          return;
+        }
+        // bukan penolakan server, kemungkinan jaringan -> lanjut diantre di bawah
+      }
+    }
+    setPredikatQueue(enqueuePredikat(predikatQueueRef.current, { userId, candidateId, materi, grade, savedAt: new Date().toISOString() }));
+    showToast('Disimpan di HP ini, dikirim saat sinyal kembali', 'info');
+  };
+
+  // Kirim antrean predikat yang tertunda; satu per satu, dalam urutan diketuk.
+  const syncPredikatNow = async () => {
+    const mine = predikatQueueRef.current.filter((i) => i.userId === userId);
+    if (syncingPredikat.current || !session || !navigator.onLine || !mine.length) return;
+    syncingPredikat.current = true;
+    let sent = 0;
     try {
-      await api.setPredikat(candidateId, materi, grade);
-    } catch (e) {
-      console.error(e);
-      showToast(e instanceof api.UserError ? e.message : 'Predikat gagal disimpan, periksa koneksi', 'error');
-      refreshCandidates();
+      for (const item of mine) {
+        try {
+          await api.setPredikat(item.candidateId, item.materi, item.grade);
+          setPredikatQueue(removePredikatItem(predikatQueueRef.current, item));
+          sent++;
+        } catch (e) {
+          if (e instanceof api.UserError) {
+            setPredikatQueue(removePredikatItem(predikatQueueRef.current, item));
+            showToast(`Satu predikat ditolak server: ${e.message}`, 'error');
+            continue; // bukan soal jaringan, lanjutkan yang lain
+          }
+          break; // masih gagal jaringan, hentikan dan coba lagi lain kali
+        }
+      }
+    } finally {
+      if (sent) {
+        showToast(`${sent} predikat terkirim`, 'success');
+        refreshCandidates();
+      }
+      syncingPredikat.current = false;
     }
   };
+  syncPredikatRef.current = syncPredikatNow;
 
   // Impor peserta model rubrik (rows dari parseRubrikCsv atau form tambah peserta).
   const handleImportParticipants = async (rows) => {
@@ -736,6 +796,7 @@ export function AppProvider({ children }) {
         serverCandidatesList: candidatesList,
         handleUpdateCandidateScores,
         isOnline,
+        predikatQueueCount: predikatQueueMine.length,
         offlineQueue: offlineQueueMine,
         conflicts,
         discardQueued,
