@@ -43,6 +43,7 @@ export function AppProvider({ children }) {
   const [myDonations, setMyDonations] = useState([]);
   const [pendingDonations, setPendingDonations] = useState([]);
   const [siteContent, setSiteContent] = useState({});
+  const [officials, setOfficials] = useState([]);
 
   const [candidatesList, setCandidatesList] = useState([]);
   // UKT events visible to this user (own-PAC admin, pusat admin, or joined examiner) and the one being worked on.
@@ -297,6 +298,8 @@ export function AppProvider({ children }) {
     campaigns: () => (userId ? api.listCampaigns().then(setCampaignList) : setCampaignList([])),
     myDonations: () => (userId ? api.listMyDonations().then(setMyDonations) : setMyDonations([])),
     pendingDonations: () => (isAdmin ? api.listPendingDonations().then(setPendingDonations) : setPendingDonations([])),
+    // Admin melihat semua (termasuk nonaktif, untuk bisa diaktifkan lagi); publik hanya yang aktif.
+    officials: () => (isAdmin ? api.listOfficialsAdmin() : api.listOfficials()).then(setOfficials),
     pillars: (c) => loadPublic('pillars', api.listPillars, setPillars, c),
     timeline: (c) => loadPublic('timeline', api.listTimeline, setTimeline, c),
     grounds: (c) => loadPublic('grounds', api.listTrainingGrounds, setTrainingGrounds, c),
@@ -349,7 +352,7 @@ export function AppProvider({ children }) {
   // Data tab disimpan di state context: pindah tab tidak mengambil ulang. Hanya dua kondisi yang memuat:
   // (1) sekali saat aplikasi dibuka untuk data publik, (2) sekali per akun/peran untuk data milik pengguna.
   const PUBLIC_LOADERS = ['news', 'achievements', 'stats', 'content', 'pillars', 'timeline', 'grounds'].filter((n) => n !== 'achievements' || isTabEnabled('prestasi')); // prestasi nonaktif: datanya tidak diambil
-  const USER_LOADERS = ['pendingDonations', 'events', 'candidates', 'myResult'];
+  const USER_LOADERS = ['pendingDonations', 'events', 'candidates', 'myResult', 'officials'];
   // Data tab yang berat dimuat saat tab pertama kali dibuka (bukan saat login), lalu di-cache sampai ganti akun.
   const LAZY_TABS = { agenda: ['agendas'], donasi: ['campaigns', 'myDonations'] };
   const lazyLoaded = useRef(new Set());
@@ -648,6 +651,13 @@ export function AppProvider({ children }) {
   const handleDeleteTrainingGround = (id) =>
     mutate(() => api.deleteTrainingGround(id), 'grounds', 'Tempat Latihan berhasil dihapus dari daftar!', 'Gagal menghapus tempat latihan', 'info');
 
+  const handleAddOfficial = (o) =>
+    mutate(() => api.addOfficial(o), 'officials', 'Pengurus berhasil ditambahkan!', 'Gagal menambahkan pengurus');
+  const handleUpdateOfficial = (id, o) =>
+    mutate(() => api.updateOfficial(id, o), 'officials', 'Data pengurus berhasil diperbarui!', 'Gagal memperbarui pengurus');
+  const handleDeleteOfficial = (id) =>
+    mutate(() => api.deleteOfficial(id), 'officials', 'Pengurus berhasil dihapus.', 'Gagal menghapus pengurus', 'info');
+
   const handleUpdateSiteContent = (patch, okMsg = 'Konten situs berhasil diperbarui!') =>
     mutate(() => api.updateSiteContent(patch), 'content', okMsg, 'Gagal memperbarui konten situs');
   const handleUpdateHero = (h) =>
@@ -718,6 +728,10 @@ export function AppProvider({ children }) {
         handleVerifyDonation,
         siteContent,
         handleUpdateSiteContent,
+        officials,
+        handleAddOfficial,
+        handleUpdateOfficial,
+        handleDeleteOfficial,
         candidatesList: overlayQueued(candidatesList, offlineQueueMine),
         serverCandidatesList: candidatesList,
         handleUpdateCandidateScores,

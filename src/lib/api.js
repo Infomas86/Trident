@@ -232,6 +232,37 @@ export const addTrainingGround = async (input) => ok(await supabase.from('traini
 export const updateTrainingGround = async (id, patch) => hit(supabase.from('training_grounds').update(toRow(patch, GROUND_MAP)).eq('id', id));
 export const deleteTrainingGround = async (id) => hit(supabase.from('training_grounds').delete().eq('id', id));
 
+// --- Direktori Pengurus PAC/Ranting ---
+const OFFICIAL_MAP = {
+  level: 'level', pac: 'pac', branch: 'branch', fullName: 'full_name', position: 'position',
+  photoUrl: 'photo_url', phone: 'phone', period: 'period', active: 'active',
+};
+
+// Publik hanya lihat yang aktif (dijaga juga oleh RLS); admin memakai listOfficialsAdmin untuk lihat semua.
+export const listOfficials = async () =>
+  ok(
+    await supabase
+      .from('officials')
+      .select('id,level,pac,branch,fullName:full_name,position,photoUrl:photo_url,phone,period')
+      .eq('active', true)
+      .order('level')
+      .order('sort_order'),
+  );
+export const listOfficialsAdmin = async () =>
+  ok(
+    await supabase
+      .from('officials')
+      .select('id,level,pac,branch,fullName:full_name,position,photoUrl:photo_url,phone,period,active')
+      .order('level')
+      .order('sort_order'),
+  );
+export async function addOfficial(input) {
+  const last = ok(await supabase.from('officials').select('sort_order').order('sort_order', { ascending: false }).limit(1));
+  return ok(await supabase.from('officials').insert({ ...toRow(input, OFFICIAL_MAP), sort_order: (last[0]?.sort_order ?? 0) + 1 }));
+}
+export const updateOfficial = async (id, patch) => hit(supabase.from('officials').update(toRow(patch, OFFICIAL_MAP)).eq('id', id));
+export const deleteOfficial = async (id) => hit(supabase.from('officials').delete().eq('id', id));
+
 // --- UKT ---
 const POS_KEYS = ['pos1', 'pos2', 'pos3', 'pos4'];
 const STRUCT_KEYS = ['pp', 'pw', 'pc', 'pac', 'pr', 'par'];

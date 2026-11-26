@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { ORGANIZATIONAL_HIERARCHY } from '../data/static';
 import { waNumber } from '../lib/phone';
+import OfficialsSection from './OfficialsSection';
 import {
   Shield,
   Zap,
@@ -520,6 +521,8 @@ export default function VisiMisiSection() {
           );
         })()}
       </section>
+
+      <OfficialsSection />
 
       {/* ========================================================================= */}
       {/* SECTION: INFO TEMPAT LATIHAN (PAR) & KONTAK PELATIH RESMI               */}

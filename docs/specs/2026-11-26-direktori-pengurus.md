@@ -61,10 +61,17 @@ Nomor telepon pengurus akan publik (seperti nomor pelatih di Tempat Latihan seka
 - [ ] Non-admin tidak bisa insert/update/delete lewat API langsung (diuji lewat RLS, pola sama seperti audit OWASP yang sudah dilakukan untuk tabel lain).
 - [ ] Build dan tes unit tetap lulus.
 
-## Pertanyaan Terbuka
-- Satu PAC (Batam) atau akan ada beberapa PAC di masa depan? Kalau cuma satu PAC untuk selamanya, kolom `level`/`scope_name` bisa disederhanakan jadi cukup `level` saja ('PAC' vs 'Ranting') tanpa nama PAC eksplisit.
-- Apakah perlu foto wajib, atau opsional seperti sekarang (pelatih tanpa foto baru-baru ini malah dihapus tampilannya atas permintaan Anda — mungkin pengurus juga sebaiknya tanpa foto, cek konsistensi preferensi ini dulu).
-- Urutan tampil: berdasarkan jabatan (Ketua dulu) atau abjad nama?
+## Keputusan (26 Nov 2026)
+- PAC setara kecamatan di Batam — bisa ada banyak PAC. Kolom `pac` dipertahankan sebagai teks bebas (konsisten dengan `profiles.pac`/`ukt_events.pac` yang sudah ada), bukan tabel referensi terpisah.
+- Tanpa foto (konsisten dengan keputusan menghapus foto pelatih di kartu kontak tempat latihan).
+- Urutan tampil: `sort_order` (urutan tambah), dikelompokkan per PAC/Ranting.
+
+## Status: Selesai diimplementasikan
+- Migrasi `20261126000020_officials.sql`: tabel `officials` + RLS (baca publik untuk yang `active`, tulis admin saja, admin tetap bisa baca yang nonaktif).
+- `src/lib/api.js`: `listOfficials`, `listOfficialsAdmin`, `addOfficial`, `updateOfficial`, `deleteOfficial`.
+- `src/context/AppContext.jsx`: loader `officials` role-aware (admin lihat semua termasuk nonaktif, publik hanya yang aktif), handler mutasi.
+- `src/components/OfficialsSection.jsx` (baru): tampilan publik dikelompokkan per PAC/Ranting dengan tombol WhatsApp, panel kelola admin (tambah/ubah/nonaktifkan/hapus), disisipkan di `VisiMisiSection.jsx` setelah bagan hierarki.
+- Diuji lewat simulasi browser (tambah, label grup, hapus) sebelum deploy — build dan 18 tes unit tetap lulus.
 
 ## Estimasi Kasar
 Kecil–menengah: 1 migrasi SQL (tabel + RLS), beberapa fungsi API, 1 seksi UI publik + 1 form admin. Pola implementasinya sudah berulang 3× di proyek ini (pillars, timeline, training_grounds), jadi risiko rendah.
