@@ -17,3 +17,11 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 )
+
+// PWA installable: service worker minimal (public/sw.js), tanpa cache data, hanya memenuhi syarat
+// "Tambahkan ke Layar Utama" di Chrome.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}

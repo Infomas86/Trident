@@ -63,10 +63,16 @@ Pakai `vite-plugin-pwa` (populer, banyak dipakai, bukan dependensi eksotis) alih
 - [ ] Dibuka dari ikon home screen, tidak ada address bar browser (mode `standalone`).
 - [ ] `npm run build` tetap sukses, 18 tes tetap lulus.
 
-## Pertanyaan Terbuka
-- Siapa yang menyiapkan aset ikon 512×512 persegi yang proper?
-- Perlu service worker (`vite-plugin-pwa`) untuk prompt instalasi otomatis, atau cukup manifest + instalasi manual lewat menu browser?
-- Nama aplikasi di layar utama: "Pagar Nusa" (short_name) sudah cukup, atau mau nama lain?
+## Keputusan (26 Nov 2026)
+- Ikon dirender dari `src/assets/logo.webp` (artwork trisula asli, transparan) ke atas latar putih, bukan upscale paksa `logo-pagarnusa.png` yang resolusinya kecil.
+- Service worker minimal ditambahkan (`public/sw.js`, tanpa cache data) supaya Chrome bisa menampilkan prompt instalasi otomatis, tanpa menambah dependensi (`vite-plugin-pwa` tidak dipakai).
+- Nama aplikasi: "Pagar Nusa Kota Batam" (name) / "Pagar Nusa" (short_name).
+
+## Status: Selesai diimplementasikan
+- `public/manifest.json`, `public/icon-192.png`, `public/icon-512.png`, `public/icon-512-maskable.png`, `public/sw.js` ditambahkan.
+- `index.html`: `<link rel="manifest">`, `<meta name="theme-color">`, `<link rel="apple-touch-icon">`.
+- `src/main.jsx`: registrasi service worker.
+- Build dan 18 tes unit tetap lulus.
 
 ## Estimasi Kasar
 Kecil: 1 file manifest, beberapa baris di `index.html`, ikon baru. Lebih besar kalau menambah service worker lewat `vite-plugin-pwa`.
