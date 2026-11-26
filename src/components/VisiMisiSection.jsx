@@ -633,11 +633,6 @@ export default function VisiMisiSection() {
                   {/* Trainer Profile Card */}
                   <div className="p-3.5 rounded-xl bg-gradient-to-r from-teal-50 via-slate-100 to-white border border-teal-200 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <img
-                        src={ground.trainerPhoto}
-                        alt={ground.trainerName}
-                        className="w-12 h-12 rounded-xl object-cover border-2 border-amber-500/50 shadow-md shrink-0"
-                      />
                       <div>
                         <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-semibold">
                           Pelatih Pembina PAR:
