@@ -5,6 +5,7 @@ import RubrikUkt from './RubrikUkt';
 import SertifikatUkt from './SertifikatUkt';
 import { TEMPLATE, templateFor, parseRubrikCsv, buildRubrikCsv, IMPORT_SAMPLE } from '../lib/rubrik';
 import { GraduationCap, Lock, Upload, Download, UserPlus, X } from 'lucide-react';
+import RevealTitle from './RevealTitle';
 
 const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-teal-600 outline-none';
 const EMPTY = { regNumber: '', name: '', branch: '', tingkat: 0 };
@@ -35,7 +36,7 @@ export default function UktSection() {
           <Lock className="w-10 h-10 text-amber-500" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Ujian Kenaikan Tingkat Terkunci</h2>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Ujian Kenaikan Tingkat Terkunci</RevealTitle>
           <p className="text-sm text-slate-500 max-w-md mx-auto">
             Hasil UKT hanya dapat dilihat anggota yang sudah masuk. Penilaian hanya untuk penguji dan admin.
           </p>
@@ -83,7 +84,7 @@ export default function UktSection() {
             <GraduationCap className="w-3.5 h-3.5" />
             <span>Evaluasi Tingkatan</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Ujian Kenaikan Tingkat</h2>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Ujian Kenaikan Tingkat</RevealTitle>
           <p className="text-xs sm:text-sm text-slate-500">Penilaian predikat per materi sesuai rubrik resmi tiap tingkatan.</p>
         </div>
 
@@ -148,7 +149,7 @@ export default function UktSection() {
       ) : null}
 
       {importOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 overflow-y-auto">
+        <div data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 overflow-y-auto">
           <div className="w-full max-w-lg bg-white rounded-2xl p-5 space-y-3 my-auto">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">Impor Peserta (CSV)</h3>

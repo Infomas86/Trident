@@ -24,7 +24,7 @@ export default function ReceiptModal() {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-md animate-fadeIn">
       
       {/* Outer Container */}
-      <div className="relative w-full max-w-xl bg-slate-50 border border-amber-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl flex flex-col max-h-[92vh] overflow-y-auto">
+      <div data-lenis-prevent className="relative w-full max-w-xl bg-slate-50 border border-amber-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl flex flex-col max-h-[92vh] overflow-y-auto">
         
         {/* Action Header (No Print) */}
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 no-print">

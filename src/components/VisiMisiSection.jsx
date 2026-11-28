@@ -31,6 +31,8 @@ import {
   X,
   Save,
 } from 'lucide-react';
+import RevealTitle from './RevealTitle';
+import MotionCard from './MotionCard';
 
 export default function VisiMisiSection() {
   const {
@@ -269,7 +271,7 @@ export default function VisiMisiSection() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="trident-card rounded-2xl p-5 border border-teal-200 shadow-lg relative overflow-hidden group">
+          <MotionCard className="trident-card rounded-2xl p-5 border border-teal-200 shadow-lg relative overflow-hidden group">
             <div className="w-10 h-10 rounded-xl bg-teal-600/20 text-teal-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
               <Users className="w-5 h-5" />
             </div>
@@ -279,9 +281,9 @@ export default function VisiMisiSection() {
             <div className="text-xs font-medium text-slate-500 mt-1">
               Anggota & Pesilat Aktif
             </div>
-          </div>
+          </MotionCard>
 
-          <div className="trident-card rounded-2xl p-5 border border-amber-900/40 shadow-lg relative overflow-hidden group">
+          <MotionCard className="trident-card rounded-2xl p-5 border border-amber-900/40 shadow-lg relative overflow-hidden group">
             <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
               <Trophy className="w-5 h-5" />
             </div>
@@ -291,9 +293,9 @@ export default function VisiMisiSection() {
             <div className="text-xs font-medium text-slate-500 mt-1">
               Medali Kejuaraan Resmi
             </div>
-          </div>
+          </MotionCard>
 
-          <div className="trident-card rounded-2xl p-5 border border-teal-200 shadow-lg relative overflow-hidden group">
+          <MotionCard className="trident-card rounded-2xl p-5 border border-teal-200 shadow-lg relative overflow-hidden group">
             <div className="w-10 h-10 rounded-xl bg-teal-600/20 text-teal-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
               <Building2 className="w-5 h-5" />
             </div>
@@ -303,9 +305,9 @@ export default function VisiMisiSection() {
             <div className="text-xs font-medium text-slate-500 mt-1">
               Dojo & Perguruan Daerah
             </div>
-          </div>
+          </MotionCard>
 
-          <div className="trident-card rounded-2xl p-5 border border-emerald-900/40 shadow-lg relative overflow-hidden group">
+          <MotionCard className="trident-card rounded-2xl p-5 border border-emerald-900/40 shadow-lg relative overflow-hidden group">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
               <MapPin className="w-5 h-5" />
             </div>
@@ -315,7 +317,7 @@ export default function VisiMisiSection() {
             <div className="text-xs font-medium text-slate-500 mt-1">
               Tempat Latihan Aktif
             </div>
-          </div>
+          </MotionCard>
 
         </div>
       </section>
@@ -328,9 +330,7 @@ export default function VisiMisiSection() {
               <Shield className="w-3.5 h-3.5" />
               <span>Fondasi Nilai Luhur</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
-              Pilar Visi & Misi Perguruan
-            </h2>
+            <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Pilar Visi & Misi Perguruan</RevealTitle>
             <p className="text-xs sm:text-sm text-slate-500">
               Nilai dasar etika kesatria yang dipegang teguh oleh setiap murid, pendekar, dan dewan penguji perguruan.
             </p>
@@ -351,9 +351,9 @@ export default function VisiMisiSection() {
           {pillars.map((pillar) => {
             const Icon = getPillarIcon(pillar.icon);
             return (
-              <div
+              <MotionCard
                 key={pillar.id}
-                className="trident-card rounded-2xl p-6 border border-slate-200 hover:border-teal-300 transition-all duration-300 relative group flex flex-col justify-between"
+                className="trident-card rounded-2xl p-6 border border-slate-200 hover:border-teal-300 transition-colors duration-300 relative group flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -395,7 +395,7 @@ export default function VisiMisiSection() {
                   <span>Pilar #{pillars.indexOf(pillar) + 1}</span>
                   <span className="text-teal-600 font-semibold group-hover:translate-x-1 transition-transform">Doktrin Perguruan</span>
                 </div>
-              </div>
+              </MotionCard>
             );
           })}
         </div>
@@ -411,9 +411,7 @@ export default function VisiMisiSection() {
             <Network className="w-3.5 h-3.5" />
             <span>Tata Kelola Organisasi Terpadu</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
-            Bagan Struktur Organisasi Perguruan
-          </h2>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Bagan Struktur Organisasi Perguruan</RevealTitle>
           <p className="text-xs sm:text-sm text-slate-500">
             Garis koordinasi dan hierarki komando dari Pimpinan Pusat hingga Tempat Latihan akar rumput (Pimpinan Anak Ranting).
           </p>
@@ -534,9 +532,7 @@ export default function VisiMisiSection() {
               <MapPin className="w-3.5 h-3.5" />
               <span>Anak Ranting (PAR) / Rayon</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
-              Informasi Tempat Latihan & Kontak Pelatih Resmi
-            </h2>
+            <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Informasi Tempat Latihan & Kontak Pelatih Resmi</RevealTitle>
             <p className="text-xs sm:text-sm text-slate-500">
               Temukan lokasi latihan terdekat, jadwal mingguan, dan hubungi langsung pelatih pembina ranting via WhatsApp.
             </p>
@@ -563,9 +559,9 @@ export default function VisiMisiSection() {
             const waLink = `https://wa.me/${cleanPhone}?text=Salam%20Persaudaraan%20Pelatih%20${encodeURIComponent(ground.trainerName)},%20saya%20ingin%20menanyakan%20informasi%20pendaftaran%20di%20${encodeURIComponent(ground.name)}.`;
 
             return (
-              <div
+              <MotionCard
                 key={ground.id}
-                className="trident-card rounded-2xl p-6 border border-slate-200 hover:border-amber-500/40 transition-all duration-300 flex flex-col justify-between space-y-5 relative group"
+                className="trident-card rounded-2xl p-6 border border-slate-200 hover:border-amber-500/40 transition-colors duration-300 flex flex-col justify-between space-y-5 relative group"
               >
                 <div className="space-y-4">
                   
@@ -663,7 +659,7 @@ export default function VisiMisiSection() {
                   <span>Kontak: <strong className="text-slate-700 font-mono">{ground.trainerPhone}</strong></span>
                   <span className="text-teal-600 font-semibold">{ground.activeStudents || 40}+ Pesilat Aktif</span>
                 </div>
-              </div>
+              </MotionCard>
             );
           })}
         </div>
@@ -676,9 +672,7 @@ export default function VisiMisiSection() {
             <Calendar className="w-3.5 h-3.5" />
             <span>Rekam Jejak Historis</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
-            Sejarah Perjalanan Perguruan
-          </h2>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Sejarah Perjalanan Perguruan</RevealTitle>
           <p className="text-xs sm:text-sm text-slate-500">
             Dari perguruan sederhana di pelosok desa hingga transformasi digital modern berstandar internasional.
           </p>
@@ -701,7 +695,7 @@ export default function VisiMisiSection() {
             <div key={item.id ?? idx} className="relative group">
               <div className="absolute -left-[31px] md:-left-[47px] top-1.5 w-6 h-6 rounded-full bg-white border-4 border-amber-400 group-hover:scale-125 transition-transform shadow-lg shadow-amber-500/30" />
 
-              <div className="trident-card rounded-2xl p-6 border border-slate-200 hover:border-amber-500/40 transition-all duration-300">
+              <MotionCard className="trident-card rounded-2xl p-6 border border-slate-200 hover:border-amber-500/40 transition-colors duration-300">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl font-black text-amber-500 font-['Cinzel']">
@@ -745,7 +739,7 @@ export default function VisiMisiSection() {
                 <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                   {item.desc}
                 </p>
-              </div>
+              </MotionCard>
             </div>
           ))}
         </div>
@@ -1029,7 +1023,7 @@ export default function VisiMisiSection() {
       {/* 4. Modal Edit / Add Training Ground (Admin) */}
       {(editingTrainingGround || isAddGroundOpen) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-lg bg-slate-50 border border-amber-500/40 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div data-lenis-prevent className="w-full max-w-lg bg-slate-50 border border-amber-500/40 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-slate-900 font-['Cinzel'] mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-amber-500" />
               {editingTrainingGround ? 'Edit Info Tempat Latihan & Pelatih' : 'Tambah Tempat Latihan (PAR) Baru'}

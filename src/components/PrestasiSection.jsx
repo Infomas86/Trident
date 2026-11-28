@@ -14,6 +14,8 @@ import {
   Sparkles,
   Trash2,
 } from 'lucide-react';
+import RevealTitle from './RevealTitle';
+import MotionCard from './MotionCard';
 
 export default function PrestasiSection() {
   const { achievementsList, handleAddAchievement, handleDeleteAchievement, isStaff } = useApp();
@@ -103,9 +105,7 @@ export default function PrestasiSection() {
             <Trophy className="w-3.5 h-3.5" />
             <span>Etalase Juara & Kebanggaan</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
-            Galeri Prestasi Atlet
-          </h2>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Galeri Prestasi Atlet</RevealTitle>
           <p className="text-xs sm:text-sm text-slate-500">
             Rekam jejak perjuangan para pesilat di gelanggang kejuaraan daerah, nasional, dan internasional.
           </p>
@@ -151,9 +151,9 @@ export default function PrestasiSection() {
         {filteredAchievements.map((item) => {
           const badgeStyle = getMedalBadge(item.medal);
           return (
-            <div
+            <MotionCard
               key={item.id}
-              className="trident-card rounded-2xl overflow-hidden border border-slate-200 hover:border-amber-500/40 transition-all duration-300 flex flex-col group"
+              className="trident-card rounded-2xl overflow-hidden border border-slate-200 hover:border-amber-500/40 transition-colors duration-300 flex flex-col group"
             >
               {/* Photo & Badge Banner */}
               <div className="relative h-52 bg-white overflow-hidden">
@@ -226,7 +226,7 @@ export default function PrestasiSection() {
                   </span>
                 </div>
               </div>
-            </div>
+            </MotionCard>
           );
         })}
       </div>
@@ -234,7 +234,7 @@ export default function PrestasiSection() {
       {/* Modal Tambah Prestasi Baru (Examiner only) */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div data-lenis-prevent className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
               <h3 className="text-lg font-bold text-slate-900 font-['Cinzel'] flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-amber-500" />

@@ -13,6 +13,8 @@ import {
   X,
   Trash2,
 } from 'lucide-react';
+import RevealTitle from './RevealTitle';
+import MotionCard from './MotionCard';
 
 export default function BeritaSection() {
   const { newsList, handleAddNews, handleDeleteNews, isStaff } = useApp();
@@ -74,9 +76,7 @@ export default function BeritaSection() {
             <Newspaper className="w-3.5 h-3.5" />
             <span>Kanal Informasi Resmi</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
-            Warta & Berita Perguruan
-          </h2>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Warta & Berita Perguruan</RevealTitle>
           <p className="text-xs sm:text-sm text-slate-500">
             Pengumuman ujian tingkatan, liputan turnamen, dan jadwal kegiatan Pagar Nusa Kota Batam.
           </p>
@@ -150,9 +150,9 @@ export default function BeritaSection() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNews.map((item) => (
-            <article
+            <MotionCard as="article"
               key={item.id}
-              className="trident-card rounded-2xl overflow-hidden border border-slate-200 hover:border-teal-300 transition-all duration-300 flex flex-col group cursor-pointer"
+              className="trident-card rounded-2xl overflow-hidden border border-slate-200 hover:border-teal-300 transition-colors duration-300 flex flex-col group cursor-pointer"
               onClick={() => setActiveArticle(item)}
             >
               {/* Image banner */}
@@ -212,7 +212,7 @@ export default function BeritaSection() {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
-            </article>
+            </MotionCard>
           ))}
         </div>
       )}
@@ -243,7 +243,7 @@ export default function BeritaSection() {
             </div>
 
             {/* Body */}
-            <div className="p-6 overflow-y-auto space-y-4">
+            <div data-lenis-prevent className="p-6 overflow-y-auto space-y-4">
               <div className="flex items-center gap-3 text-xs text-slate-500 border-b border-slate-200 pb-3">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-teal-600" />
@@ -300,7 +300,7 @@ export default function BeritaSection() {
       {/* Modal Publish Berita Baru (Examiner only) */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div data-lenis-prevent className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
               <h3 className="text-lg font-bold text-slate-900 font-['Cinzel'] flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-amber-500" />

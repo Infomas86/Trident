@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import LaporanDonasi from './LaporanDonasi';
+import RevealTitle from './RevealTitle';
 
 const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none';
 
@@ -27,7 +28,7 @@ export default function DonasiVerifikasi() {
 
   return (
     <div className="space-y-8 py-6">
-      <h2 className="text-2xl font-extrabold text-slate-900 font-['Cinzel']">Verifikasi Donasi</h2>
+      <RevealTitle className="text-2xl font-extrabold text-slate-900 font-['Cinzel']">Verifikasi Donasi</RevealTitle>
 
       <form onSubmit={save} className="trident-card rounded-2xl p-5 border border-slate-200 space-y-3">
         <h3 className="text-sm font-bold text-slate-900">Info Rekening & QRIS</h3>

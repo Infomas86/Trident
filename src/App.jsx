@@ -1,5 +1,8 @@
 import { isTabEnabled } from './config';
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
+import { MotionConfig } from 'motion/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { initSmoothScroll } from './lib/scroll';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
@@ -19,6 +22,13 @@ import { CheckCircle, Info, AlertCircle } from 'lucide-react';
 
 function MainContent() {
   const { activeTab, toast, isAdmin } = useApp();
+
+  useEffect(() => initSmoothScroll(), []);
+  // Tinggi halaman berubah saat tab/data baru tampil: hitung ulang posisi pemicu judul.
+  useEffect(() => {
+    const id = setTimeout(() => ScrollTrigger.refresh(), 400);
+    return () => clearTimeout(id);
+  }, [activeTab]);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900 selection:bg-amber-500 selection:text-slate-950">
@@ -75,7 +85,9 @@ function MainContent() {
 export default function App() {
   return (
     <AppProvider>
-      <MainContent />
+      <MotionConfig reducedMotion="user">
+        <MainContent />
+      </MotionConfig>
     </AppProvider>
   );
 }

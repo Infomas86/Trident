@@ -252,7 +252,7 @@ export default function RubrikUkt({ candidates, onGrade, onDelete, area }) {
       )}
 
       {showCert && active && tpl && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 overflow-y-auto p-3 sm:p-6" onClick={() => setShowCert(false)}>
+        <div data-lenis-prevent className="fixed inset-0 z-50 bg-slate-900/60 overflow-y-auto p-3 sm:p-6" onClick={() => setShowCert(false)}>
           <div className="max-w-xl mx-auto" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setShowCert(false)} aria-label="Tutup" className="ml-auto mb-2 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white text-slate-800 text-xs font-bold">
               <X className="w-4 h-4" /> Tutup

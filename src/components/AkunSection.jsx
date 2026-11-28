@@ -3,6 +3,7 @@ import { useApp, ROLES } from '../context/AppContext';
 import * as api from '../lib/api';
 import { memoGet, memoLoad } from '../lib/memo';
 import RegCodesSection from './RegCodesSection';
+import RevealTitle from './RevealTitle';
 
 const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none';
 const ROLE_OPTIONS = [[ROLES.MEMBER, 'Anggota'], [ROLES.EXAMINER, 'Penguji'], [ROLES.ADMIN, 'Admin'], ['super', 'Super Admin']];
@@ -124,7 +125,7 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
   return (
     <div className="space-y-8 py-6">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-2xl font-extrabold text-slate-900 font-['Cinzel']">Kelola Akun</h2>
+        <RevealTitle className="text-2xl font-extrabold text-slate-900 font-['Cinzel']">Kelola Akun</RevealTitle>
         <button type="button" onClick={() => load(true)} className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold">Muat ulang</button>
       </div>
 

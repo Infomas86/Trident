@@ -12,6 +12,8 @@ import {
   KeyRound,
   Trash2,
 } from 'lucide-react';
+import RevealTitle from './RevealTitle';
+import MotionCard from './MotionCard';
 
 export default function AgendaSection() {
   const {
@@ -44,9 +46,7 @@ export default function AgendaSection() {
           <Lock className="w-10 h-10 text-amber-500 animate-pulse" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
-            Agenda Kegiatan Khusus Anggota & Penguji
-          </h2>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Agenda Kegiatan Khusus Anggota & Penguji</RevealTitle>
           <p className="text-sm text-slate-500 max-w-md mx-auto">
             Jadwal kegiatan resmi, latihan gabungan, dan agenda ujian perguruan hanya dapat diakses oleh anggota dan pengurus perguruan.
           </p>
@@ -95,9 +95,7 @@ export default function AgendaSection() {
             <Calendar className="w-3.5 h-3.5" />
             <span>Kanal Informasi Jadwal & Kegiatan</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
-            Agenda Kegiatan Perguruan
-          </h2>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Agenda Kegiatan Perguruan</RevealTitle>
           <p className="text-xs sm:text-sm text-slate-500">
             Informasi lengkap jadwal latihan gabungan, persiapan ujian kenaikan tingkat, dan kegiatan resmi perguruan.
           </p>
@@ -123,9 +121,9 @@ export default function AgendaSection() {
           </div>
         )}
         {agendaList.map((agenda) => (
-          <div
+          <MotionCard
             key={agenda.id}
-            className="trident-card rounded-2xl p-6 border border-slate-200 hover:border-teal-300 transition-all duration-300 relative flex flex-col md:flex-row md:items-center justify-between gap-6"
+            className="trident-card rounded-2xl p-6 border border-slate-200 hover:border-teal-300 transition-colors duration-300 relative flex flex-col md:flex-row md:items-center justify-between gap-6"
           >
             {/* Left Side: Info */}
             <div className="space-y-3 flex-1">
@@ -185,14 +183,14 @@ export default function AgendaSection() {
                 Wajib dihadiri seluruh pesilat sesuai jadwal
               </p>
             </div>
-          </div>
+          </MotionCard>
         ))}
       </div>
 
       {/* Modal Tambah Agenda Baru (Examiner only) */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div data-lenis-prevent className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
               <h3 className="text-lg font-bold text-slate-900 font-['Cinzel'] flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-amber-500" />

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Users, Phone, Pencil, Trash2, Save, EyeOff } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { waNumber } from '../lib/phone';
+import RevealTitle from './RevealTitle';
 
 const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-teal-600 outline-none';
 const EMPTY = { level: 'PAC', pac: '', branch: '', fullName: '', position: '', phone: '', period: '', active: true };
@@ -46,7 +47,7 @@ export default function OfficialsSection() {
           <Users className="w-3.5 h-3.5" />
           <span>Direktori Pengurus</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Pengurus PAC & Ranting</h2>
+        <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Pengurus PAC & Ranting</RevealTitle>
         <p className="text-xs sm:text-sm text-slate-500">Nama dan jabatan pengurus aktif di tiap Pimpinan Anak Cabang dan Ranting.</p>
       </div>
 

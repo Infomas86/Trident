@@ -83,7 +83,7 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/85 backdrop-blur-md animate-fadeIn overflow-y-auto">
+    <div data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/85 backdrop-blur-md animate-fadeIn overflow-y-auto">
       <div className="w-full max-w-md bg-gradient-to-b from-slate-50 via-slate-100 to-white border border-amber-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-5 my-auto">
         <div className="absolute top-0 right-0 w-80 h-80 bg-teal-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
