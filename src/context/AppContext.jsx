@@ -192,6 +192,7 @@ export function AppProvider({ children }) {
         name: profile.full_name,
         email: session?.user?.email,
         role: profile.role,
+        isSuper: profile.is_super === true,
         belt: profile.belt,
         branch: profile.branch,
         regNumber: profile.reg_number,

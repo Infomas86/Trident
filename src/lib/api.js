@@ -45,7 +45,7 @@ const fmtDate = (iso) =>
   new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
 export async function getProfile(userId) {
-  const { data, error } = await supabase.from('profiles').select('id,full_name,role,belt,branch,reg_number,pac,photo_url').eq('id', userId).single();
+  const { data, error } = await supabase.from('profiles').select('id,full_name,role,is_super,belt,branch,reg_number,pac,photo_url').eq('id', userId).single();
   if (error) throw error;
   return data;
 }

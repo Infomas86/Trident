@@ -26,12 +26,23 @@ async function handle(req: Request) {
   const { data: u, error: ue } = await db.auth.getUser(jwt);
   if (ue || !u.user) throw new HttpError(401, 'token tidak valid');
   const me = u.user.id;
-  const { data: prof } = await db.from('profiles').select('role').eq('id', me).maybeSingle();
+  const { data: prof } = await db.from('profiles').select('role,is_super').eq('id', me).maybeSingle();
   if (prof?.role !== 'admin') throw new HttpError(403, 'bukan admin');
+  const isSuper = prof.is_super === true;
 
   const b = await req.json().catch(() => { throw bad('JSON tidak valid'); });
   const uid = b.user_id;
   if (b.action !== 'create' && b.action !== 'list' && typeof uid !== 'string') throw bad('user_id wajib');
+
+  // Aturan super admin (database juga menjaganya lewat trigger guard_admin_role):
+  // hanya super admin yang boleh membuat/mengangkat/menurunkan admin dan mengubah akun admin lain.
+  const SUPER_ONLY = 'Hanya super admin yang boleh mengelola akun admin';
+  if (b.action !== 'create' && b.action !== 'list' && uid !== me && !isSuper) {
+    const { data: t } = await db.from('profiles').select('role,is_super').eq('id', uid).maybeSingle();
+    if (t?.role === 'admin' || t?.is_super) throw new HttpError(403, SUPER_ONLY);
+  }
+  if (!isSuper && b.role === 'admin') throw new HttpError(403, 'Hanya super admin yang boleh mengangkat admin');
+  if (b.action === 'update_profile' && uid === me && b.role !== undefined && b.role !== 'admin') throw bad('tidak bisa menurunkan peran sendiri');
 
   switch (b.action) {
     case 'create': {
@@ -67,8 +78,8 @@ async function handle(req: Request) {
     }
     case 'update_profile': {
       checkRole(b.role);
-      if (uid === me && b.role !== undefined && b.role !== 'admin') throw bad('tidak bisa menurunkan peran sendiri');
       const patch = pick(b);
+      if (uid === me && !isSuper && patch.role !== undefined) delete patch.role; // admin biasa tidak mengubah perannya sendiri
       if (Object.keys(patch).length) {
         const { error } = await db.from('profiles').update(patch).eq('id', uid);
         if (error) throw bad(error.message);
@@ -90,7 +101,7 @@ async function handle(req: Request) {
           return {
             id: a.id, email: a.email, full_name: p?.full_name ?? null, role: p?.role ?? null,
             belt: p?.belt ?? null, branch: p?.branch ?? null, reg_number: p?.reg_number ?? null,
-            pac: p?.pac ?? null,
+            pac: p?.pac ?? null, is_super: p?.is_super === true,
             active: !(a.banned_until && new Date(a.banned_until) > new Date()),
           };
         }),
