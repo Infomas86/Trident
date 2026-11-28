@@ -6,3 +6,7 @@ export const FEATURES = {
 };
 
 export const isTabEnabled = (tab) => FEATURES[tab] !== false;
+
+// Kunci situs (publik, aman ditaruh di kode) widget Cloudflare Turnstile untuk login/daftar.
+// Verifikasinya dipaksa di sisi Supabase Auth, jadi tanpa token valid login langsung ke API pun ditolak.
+export const TURNSTILE_SITE_KEY = '0x4AAAAAAGW2EkP1G4CsVhAu';

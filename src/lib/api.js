@@ -13,13 +13,13 @@ export class UserError extends Error {}
 // kunci 5x-gagal/15-menit per akun secara aman (lihat komentar di fungsi itu). Mengembalikan
 // 'locked' | 'unconfirmed' | 'bad_credentials' | 'network_error' saat gagal, atau true saat
 // berhasil (sesi sudah ditaruh di klien lewat supabase.auth.setSession).
-export async function signIn(email, password) {
+export async function signIn(email, password, captchaToken) {
   let res;
   try {
     res = await fetch(`${supabase.supabaseUrl}/functions/v1/login`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', apikey: supabase.supabaseKey },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, captchaToken }),
     });
   } catch {
     return 'network_error';
@@ -52,11 +52,11 @@ export async function getProfile(userId) {
 
 // --- Daftar mandiri ---
 // Self sign-up always creates an 'anggota' profile (DB trigger); the name travels as metadata.
-export async function signUp(email, password, fullName, regCode) {
+export async function signUp(email, password, fullName, regCode, captchaToken) {
   // Hanya anggota yang punya kode pendaftaran dari admin yang boleh daftar.
   const { data: valid } = await supabase.rpc('registration_code_valid', { p_code: regCode });
   if (!valid) throw new UserError('Kode pendaftaran salah atau tidak aktif. Minta kode ke admin perguruan.');
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName, reg_code: regCode } } });
+  const { data, error } = await supabase.auth.signUp({ email, password, options: { captchaToken, data: { full_name: fullName, reg_code: regCode } } });
   if (error) {
     if (/registered|exists/i.test(error.message)) throw new UserError('Email sudah terdaftar, silakan masuk');
     if (/password/i.test(error.message)) throw new UserError('Kata sandi terlalu lemah (minimal 8 karakter)');

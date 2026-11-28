@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import Turnstile from './Turnstile';
 import { X, Lock, Sparkles, Eye, EyeOff, UserPlus } from 'lucide-react';
 
 const inputCls =
@@ -41,6 +42,8 @@ export default function LoginPage() {
   const [fullName, setFullName] = useState('');
   const [regCode, setRegCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [captcha, setCaptcha] = useState(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   if (!isLoginModalOpen) return null;
 
@@ -49,19 +52,21 @@ export default function LoginPage() {
     try {
       if (await fn()) setPassword('');
     } finally {
+      setCaptcha(null);
+      setCaptchaKey((k) => k + 1); // token sekali pakai
       setSubmitting(false);
     }
   };
 
   const handleLogin = (e) => {
     e.preventDefault();
-    run(() => signIn(email.trim(), password));
+    run(() => signIn(email.trim(), password, captcha));
   };
 
   const handleRegister = (e) => {
     e.preventDefault();
     run(() =>
-      signUp({ fullName: fullName.trim(), email: email.trim(), regCode: regCode.trim(), password }),
+      signUp({ fullName: fullName.trim(), email: email.trim(), regCode: regCode.trim(), password, captchaToken: captcha }),
     );
   };
 
@@ -130,9 +135,10 @@ export default function LoginPage() {
               <Label>Kata Sandi</Label>
               <PasswordInput value={password} onChange={setPassword} autoComplete="current-password" />
             </div>
+            <Turnstile key={mode} resetKey={captchaKey} onToken={setCaptcha} />
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || !captcha}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-60 disabled:cursor-not-allowed text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 transition-all"
             >
               <Lock className="w-4 h-4" />
@@ -183,9 +189,10 @@ export default function LoginPage() {
               <Label>Kata Sandi (minimal 8 karakter)</Label>
               <PasswordInput value={password} onChange={setPassword} autoComplete="new-password" minLength={8} />
             </div>
+            <Turnstile key={mode} resetKey={captchaKey} onToken={setCaptcha} />
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || !captcha}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-60 disabled:cursor-not-allowed text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 transition-all"
             >
               <UserPlus className="w-4 h-4" />

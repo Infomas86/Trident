@@ -42,6 +42,7 @@ async function handle(req: Request) {
   const b = await req.json().catch(() => { throw new HttpError(400, 'JSON tidak valid'); });
   const email = typeof b.email === 'string' ? b.email.trim() : '';
   const password = typeof b.password === 'string' ? b.password : '';
+  const captchaToken = typeof b.captchaToken === 'string' ? b.captchaToken : undefined;
   if (!email || !password) throw new HttpError(400, 'email dan password wajib diisi');
 
   // Pembersihan ringan: baris lebih tua dari sehari tidak lagi relevan untuk jendela 15 menit.
@@ -50,7 +51,7 @@ async function handle(req: Request) {
   if ((await recentFails(email)) >= MAX_FAILS) throw new HttpError(429, LOCKED_MSG);
 
   const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-    method: 'POST', headers: { apikey: ANON_KEY, 'content-type': 'application/json' }, body: JSON.stringify({ email, password }),
+    method: 'POST', headers: { apikey: ANON_KEY, 'content-type': 'application/json' }, body: JSON.stringify({ email, password, gotrue_meta_security: { captcha_token: captchaToken } }),
   });
   let body = await r.text();
   await record(email, r.ok);

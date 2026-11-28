@@ -200,8 +200,8 @@ export function AppProvider({ children }) {
       }
     : null;
 
-  const signIn = async (email, password) => {
-    const r = await api.signIn(email, password);
+  const signIn = async (email, password, captchaToken) => {
+    const r = await api.signIn(email, password, captchaToken);
     if (r === 'locked') {
       showToast('Terlalu banyak percobaan gagal untuk akun ini. Coba lagi dalam 15 menit.', 'error');
       return false;
@@ -224,9 +224,9 @@ export function AppProvider({ children }) {
   };
 
   // Self sign-up always creates an anggota account.
-  const signUp = async ({ fullName, email, password, regCode }) => {
+  const signUp = async ({ fullName, email, password, regCode, captchaToken }) => {
     try {
-      const { session: s } = await api.signUp(email, password, fullName, regCode);
+      const { session: s } = await api.signUp(email, password, fullName, regCode, captchaToken);
       showToast(s ? 'Akun berhasil dibuat. Selamat datang!' : 'Pendaftaran berhasil. Cek email Anda dan klik link konfirmasi sebelum bisa masuk.', 'success');
       if (s) setIsLoginModalOpen(false);
       return true;
