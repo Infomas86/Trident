@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const ROLES = ['anggota', 'penguji', 'admin'];
+// 'super' = peran admin + is_super (hanya dibuat/diatur super admin; tidak disimpan sebagai role).
+const ROLES = ['anggota', 'penguji', 'admin', 'super'];
 // Domain situs live ditulis langsung di sini (bukan hanya ALLOWED_ORIGINS) karena secret itu
 // ternyata belum pernah di-set - akibatnya Kelola Akun (dan fitur admin lain lewat fungsi ini)
 // ditolak CORS browser dari situs asli sejak awal fungsi ini dibuat.
@@ -16,6 +17,7 @@ const bad = (msg: string) => new HttpError(400, msg);
 const PROFILE_FIELDS = ['full_name', 'role', 'belt', 'branch', 'reg_number', 'pac'] as const;
 const pick = (b: Record<string, unknown>) =>
   Object.fromEntries(PROFILE_FIELDS.filter((k) => b[k] !== undefined).map((k) => [k, b[k]]));
+const roleFields = (r: unknown) => (r === undefined ? {} : r === 'super' ? { role: 'admin', is_super: true } : { role: r, is_super: false });
 const checkRole = (r: unknown) => { if (r !== undefined && !ROLES.includes(r as string)) throw bad('role tidak valid'); };
 const checkPassword = (p: unknown) => { if (typeof p !== 'string' || p.length < 8) throw bad('sandi minimal 8 karakter'); };
 const must = <T>(r: { data: T; error: { message: string } | null }) => { if (r.error) throw new Error(r.error.message); return r.data; };
@@ -41,7 +43,7 @@ async function handle(req: Request) {
     const { data: t } = await db.from('profiles').select('role,is_super').eq('id', uid).maybeSingle();
     if (t?.role === 'admin' || t?.is_super) throw new HttpError(403, SUPER_ONLY);
   }
-  if (!isSuper && b.role === 'admin') throw new HttpError(403, 'Hanya super admin yang boleh mengangkat admin');
+  if (!isSuper && (b.role === 'admin' || b.role === 'super')) throw new HttpError(403, 'Hanya super admin yang boleh mengangkat admin');
   if (b.action === 'update_profile' && uid === me && b.role !== undefined && b.role !== 'admin') throw bad('tidak bisa menurunkan peran sendiri');
 
   switch (b.action) {
@@ -54,7 +56,7 @@ async function handle(req: Request) {
       // admin_created menandai akun ini dibuat admin, bukan daftar mandiri -> trigger lewati cek kode pendaftaran.
       const { data, error } = await db.auth.admin.createUser({ email, password: b.password, email_confirm: true, app_metadata: { admin_created: true } });
       if (error) throw bad(error.message);
-      const { error: pe } = await db.from('profiles').upsert({ id: data.user.id, ...pick(b) }, { onConflict: 'id' });
+      const { error: pe } = await db.from('profiles').upsert({ id: data.user.id, ...pick(b), ...roleFields(b.role) }, { onConflict: 'id' });
       if (pe) {
         await db.auth.admin.deleteUser(data.user.id);
         throw bad(pe.message);
@@ -80,8 +82,10 @@ async function handle(req: Request) {
     }
     case 'update_profile': {
       checkRole(b.role);
-      const patch = pick(b);
-      if (uid === me && !isSuper && patch.role !== undefined) delete patch.role; // admin biasa tidak mengubah perannya sendiri
+      // Mengubah peran diri sendiri tidak diizinkan (mencegah tidak ada super admin / admin kehilangan akses).
+      if (uid === me && b.role !== undefined && !(b.role === 'super' ? isSuper : b.role === 'admin' && !isSuper)) throw bad('tidak bisa mengubah peran sendiri');
+      const patch: Record<string, unknown> = { ...pick(b), ...roleFields(b.role) };
+      if (uid === me) { delete patch.role; delete patch.is_super; }
       if (Object.keys(patch).length) {
         const { error } = await db.from('profiles').update(patch).eq('id', uid);
         if (error) throw bad(error.message);

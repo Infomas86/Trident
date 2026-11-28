@@ -73,6 +73,8 @@ export const createRegCode = async ({ code, pac, label }) =>
   hit(supabase.from('registration_codes').insert({ code: code.trim().toUpperCase(), pac: pac?.trim() || null, label: label?.trim() || null }), 'code');
 export const setRegCodeActive = async (code, active) =>
   hit(supabase.from('registration_codes').update({ active }).eq('code', code), 'code');
+export const updateRegCode = async (code, { pac, label }) =>
+  hit(supabase.from('registration_codes').update({ pac: pac?.trim() || null, label: label?.trim() || null }).eq('code', code), 'code');
 export const deleteRegCode = async (code) => hit(supabase.from('registration_codes').delete().eq('code', code), 'code');
 
 // --- Berita ---

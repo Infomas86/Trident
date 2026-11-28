@@ -5,8 +5,9 @@ import { memoGet, memoLoad } from '../lib/memo';
 import RegCodesSection from './RegCodesSection';
 
 const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none';
-const ROLE_OPTIONS = [[ROLES.MEMBER, 'Anggota'], [ROLES.EXAMINER, 'Penguji'], [ROLES.ADMIN, 'Admin']];
-const roleLabel = (u) => (u.is_super ? 'Super Admin' : ROLE_OPTIONS.find(([v]) => v === u.role)?.[1] ?? '-');
+const ROLE_OPTIONS = [[ROLES.MEMBER, 'Anggota'], [ROLES.EXAMINER, 'Penguji'], [ROLES.ADMIN, 'Admin'], ['super', 'Super Admin']];
+const roleValue = (u) => (u.is_super ? 'super' : u.role ?? ROLES.MEMBER);
+const roleLabel = (u) => (ROLE_OPTIONS.find(([v]) => v === roleValue(u))?.[1] ?? '-');
 // Sandi sementara acak per reset (tanpa huruf/angka yang mirip), 10 karakter > minimal 8 Supabase.
 const tempPassword = () => {
   const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
@@ -111,8 +112,8 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
       )}
       <input className={input} required placeholder="Nama lengkap" value={v.full_name} onChange={set('full_name')} />
       <select className={input} value={v.role} onChange={set('role')}>
-        {ROLE_OPTIONS.filter(([val]) => (val !== ROLES.EXAMINER || v.role === ROLES.EXAMINER) && (val !== ROLES.ADMIN || currentUser?.isSuper || v.role === ROLES.ADMIN)).map(([val, label]) => (
-          <option key={val} value={val} disabled={val === ROLES.ADMIN && !currentUser?.isSuper}>{val === ROLES.ADMIN ? 'Admin (khusus super admin)' : label}</option>
+        {ROLE_OPTIONS.filter(([val]) => (val !== ROLES.EXAMINER || v.role === ROLES.EXAMINER) && (currentUser?.isSuper || (val !== ROLES.ADMIN && val !== 'super') || v.role === val)).map(([val, label]) => (
+          <option key={val} value={val} disabled={!currentUser?.isSuper && (val === ROLES.ADMIN || val === 'super')}>{label}</option>
         ))}
       </select>
       <input className={input} placeholder="PAC (untuk admin UKT, kosong = pusat)" value={v.pac ?? ''} onChange={set('pac')} />
@@ -178,7 +179,7 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
                       <span className="text-slate-400">Dikelola super admin</span>
                     ) : (
                       <>
-                        <button disabled={busy} onClick={() => setEdit({ id: u.id, full_name: u.full_name ?? '', role: u.role ?? ROLES.MEMBER, reg_number: u.reg_number ?? '', pac: u.pac ?? '' })} className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200">Ubah</button>
+                        <button disabled={busy} onClick={() => setEdit({ id: u.id, full_name: u.full_name ?? '', role: roleValue(u), reg_number: u.reg_number ?? '', pac: u.pac ?? '' })} className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200">Ubah</button>
                         <button disabled={busy} onClick={() => reset(u)} className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200">Reset Sandi</button>
                         <button disabled={busy} onClick={() => toggle(u)} className={`px-2 py-1 rounded text-slate-900 ${u.active ? 'bg-rose-700 hover:bg-rose-600' : 'bg-emerald-600 hover:bg-emerald-500'}`}>{u.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
                         {u.id !== currentUser?.id && (
