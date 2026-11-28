@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import logoPagarNusa from '../assets/logo-pagarnusa.png';
 import {
   Shield,
   CheckCircle,
@@ -8,7 +9,6 @@ import {
   QrCode,
   Sparkles,
   Download,
-  Sword,
 } from 'lucide-react';
 
 export default function ReceiptModal() {
@@ -57,26 +57,19 @@ export default function ReceiptModal() {
           
           {/* Subtle Watermark */}
           <div className="absolute right-0 bottom-0 translate-x-8 translate-y-8 opacity-5 pointer-events-none">
-            <Sword className="w-72 h-72 text-amber-500" />
+            <img src={logoPagarNusa} alt="" className="w-72 h-72 object-contain grayscale" />
           </div>
 
           {/* Header of Receipt */}
           <div className="flex items-center justify-between border-b border-slate-200 pb-5">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-700 to-amber-600 p-[2px]">
-                <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
-                  <Sword className="w-6 h-6 text-amber-500" />
-                </div>
-              </div>
+              <img src={logoPagarNusa} alt="Logo Pagar Nusa" className="w-14 h-14 object-contain" />
               <div>
                 <h2 className="text-xl font-black text-amber-500 font-['Cinzel'] tracking-wide">
                   PAGAR NUSA KOTA BATAM
                 </h2>
                 <p className="text-[11px] text-slate-500">
-                  Yayasan Perguruan Agung Seni Bela Diri Kesatria
-                </p>
-                <p className="text-[10px] text-slate-500">
-                  SK Kemenkumham RI No. AHU-0019284.AH.01.07.2026
+                  Pencak Silat Nahdlatul Ulama
                 </p>
               </div>
             </div>
@@ -100,7 +93,7 @@ export default function ReceiptModal() {
               BUKTI RESI GOTONG ROYONG DIGITAL
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Tanda Terima Donasi Sarana Perguruan
+              Tanda Terima Donasi Sarana Organisasi
             </p>
           </div>
 
@@ -118,19 +111,21 @@ export default function ReceiptModal() {
               </span>
             </div>
 
-            <div className="flex justify-between items-center py-1 border-b border-slate-200/80">
-              <span className="text-slate-500">Metode Pembayaran</span>
-              <span className="font-medium text-slate-800">
-                {selectedReceipt.paymentMethod || 'QRIS Dinamis / Bank Transfer'}
-              </span>
-            </div>
+            {selectedReceipt.paymentMethod && (
+              <div className="flex justify-between items-center py-1 border-b border-slate-200/80">
+                <span className="text-slate-500">Metode Pembayaran</span>
+                <span className="font-medium text-slate-800">{selectedReceipt.paymentMethod}</span>
+              </div>
+            )}
 
-            <div className="flex justify-between items-center py-1 border-b border-slate-200/80">
-              <span className="text-slate-500">Pesan / Doa Keberkahan</span>
-              <span className="italic text-slate-700 text-right max-w-[280px]">
-                "{selectedReceipt.message}"
-              </span>
-            </div>
+            {selectedReceipt.message?.trim() && (
+              <div className="flex justify-between items-center py-1 border-b border-slate-200/80">
+                <span className="text-slate-500">Pesan / Doa Keberkahan</span>
+                <span className="italic text-slate-700 text-right max-w-[280px]">
+                  "{selectedReceipt.message}"
+                </span>
+              </div>
+            )}
 
             <div className="flex justify-between items-center pt-2">
               <span className="text-sm font-bold text-amber-500">Total Nilai Donasi</span>
@@ -140,7 +135,7 @@ export default function ReceiptModal() {
             </div>
           </div>
 
-          {/* Footer & QR Verification */}
+          {/* Footer */}
           <div className="flex items-center justify-between pt-4 border-t border-slate-200 text-[11px] text-slate-500">
             <div className="space-y-1">
               <p className="text-slate-700 font-semibold">
@@ -149,16 +144,6 @@ export default function ReceiptModal() {
               <p className="text-slate-500">
                 Dicetak secara otomatis & sah melalui Sistem Informasi Perguruan
               </p>
-            </div>
-
-            <div className="text-center flex flex-col items-center">
-              <div className="w-14 h-14 bg-white p-1 rounded-lg">
-                {/* Simulated QR Code matrix */}
-                <div className="w-full h-full bg-white flex items-center justify-center text-slate-900 text-[9px] font-mono text-center p-0.5">
-                  QRIS VERIFIED
-                </div>
-              </div>
-              <span className="text-[9px] text-slate-500 mt-1">E-Verify Code</span>
             </div>
           </div>
 
