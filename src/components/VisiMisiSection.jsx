@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { ORGANIZATIONAL_HIERARCHY } from '../data/static';
 import { waNumber } from '../lib/phone';
 import OfficialsSection from './OfficialsSection';
+import { isTabEnabled } from '../config';
 import {
   Shield,
   Zap,
@@ -520,7 +521,7 @@ export default function VisiMisiSection() {
         })()}
       </section>
 
-      <OfficialsSection />
+      {isTabEnabled('pengurus') && <OfficialsSection />}
 
       {/* ========================================================================= */}
       {/* SECTION: INFO TEMPAT LATIHAN (PAR) & KONTAK PELATIH RESMI               */}

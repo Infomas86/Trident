@@ -365,11 +365,10 @@ export async function uploadPublicImage(file, folder) {
 export const MIN_DONATION = 1000;
 export const MAX_DONATION = 1_000_000_000_000;
 export const AMOUNT_ERROR = 'Nominal donasi harus bilangan bulat antara Rp 1.000 dan Rp 1.000.000.000.000';
-export const DELETE_CAMPAIGN_BLOCKED = 'Program tidak bisa dihapus karena sudah ada donasi';
 
 export async function listCampaigns() {
   const [camps, totals, recent] = await Promise.all([
-    supabase.from('campaigns').select('id,title,category,target_amount,deadline,description').order('created_at', { ascending: false }).limit(100).then(ok),
+    supabase.from('campaigns').select('id,title,category,target_amount,deadline,description').is('deleted_at', null).order('created_at', { ascending: false }).limit(100).then(ok),
     supabase.from('campaign_totals').select('campaign_id,collected_amount,donors_count').then(ok),
     supabase.from('public_donations').select('id,campaign_id,donor_name,amount,message,created_at').order('created_at', { ascending: false }).limit(100).then(ok),
   ]);
@@ -394,11 +393,8 @@ export async function listCampaigns() {
 }
 export const addCampaign = async (input) => ok(await supabase.from('campaigns').insert(toRow(input, CAMPAIGN_MAP)));
 export const updateCampaign = async (id, patch) => hit(supabase.from('campaigns').update(toRow(patch, CAMPAIGN_MAP)).eq('id', id));
-export async function deleteCampaign(id) {
-  const { data, error } = await supabase.from('campaigns').delete().eq('id', id).select('id');
-  if (error) throw error.code === '23503' ? new UserError(DELETE_CAMPAIGN_BLOCKED) : error;
-  if (!data.length) throw new Error(NOT_ALLOWED);
-}
+// "Hapus" = sembunyikan program (soft delete): donasinya tetap tercatat dan tetap ada di Laporan Donasi.
+export const deleteCampaign = async (id) => hit(supabase.from('campaigns').update({ deleted_at: new Date().toISOString() }).eq('id', id).is('deleted_at', null));
 
 const fromDonationRow = (r) => ({
   id: r.id,

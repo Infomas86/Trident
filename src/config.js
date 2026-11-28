@@ -3,6 +3,7 @@
 export const FEATURES = {
   agenda: false,
   prestasi: false,
+  pengurus: false, // Direktori Pengurus PAC & Ranting (bagian di Visi & Sejarah)
 };
 
 export const isTabEnabled = (tab) => FEATURES[tab] !== false;

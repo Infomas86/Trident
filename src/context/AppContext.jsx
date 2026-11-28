@@ -352,7 +352,7 @@ export function AppProvider({ children }) {
   // Data tab disimpan di state context: pindah tab tidak mengambil ulang. Hanya dua kondisi yang memuat:
   // (1) sekali saat aplikasi dibuka untuk data publik, (2) sekali per akun/peran untuk data milik pengguna.
   const PUBLIC_LOADERS = ['news', 'achievements', 'stats', 'content', 'pillars', 'timeline', 'grounds'].filter((n) => n !== 'achievements' || isTabEnabled('prestasi')); // prestasi nonaktif: datanya tidak diambil
-  const USER_LOADERS = ['pendingDonations', 'events', 'candidates', 'myResult', 'officials'];
+  const USER_LOADERS = ['pendingDonations', 'events', 'candidates', 'myResult', 'officials'].filter((n) => n !== 'officials' || isTabEnabled('pengurus')); // pengurus nonaktif: datanya tidak diambil
   // Data tab yang berat dimuat saat tab pertama kali dibuka (bukan saat login), lalu di-cache sampai ganti akun.
   const LAZY_TABS = { agenda: ['agendas'], donasi: ['campaigns', 'myDonations'] };
   const lazyLoaded = useRef(new Set());

@@ -153,7 +153,7 @@ export default function DonasiSection() {
   };
 
   const confirmDeleteCampaign = (c) => {
-    if (window.confirm(`Hapus program "${c.title}"?`)) handleDeleteCampaign(c.id);
+    if (window.confirm(`Hapus program "${c.title}"? Program hilang dari halaman ini, tetapi donasinya tetap tercatat di Laporan Donasi.`)) handleDeleteCampaign(c.id);
   };
 
   const handleSubmitNewCampaign = async (e) => {
