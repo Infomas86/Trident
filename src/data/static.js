@@ -7,7 +7,7 @@ export const TRIDENT_BELT_LEVELS = [
   "Sabuk Hijau Strip Hitam",
 ];
 
-// Hierarki Struktural Resmi Organisasi Perguruan:
+// Hierarki Struktural Resmi Organisasi:
 // Pimpinan Pusat ➔ Pimpinan Wilayah ➔ Pimpinan Cabang ➔ Pimpinan Anak Cabang ➔ Ranting ➔ Anak Ranting (Tempat Latihan)
 export const ORGANIZATIONAL_HIERARCHY = [
   {

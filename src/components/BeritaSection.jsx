@@ -30,10 +30,10 @@ export default function BeritaSection() {
     summary: '',
     content: '',
     image: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&w=800&q=80',
-    tags: 'UKT, Perguruan',
+    tags: 'UKT, Organisasi',
   });
 
-  const categories = ['Semua', 'Pengumuman', 'Prestasi', 'Perguruan'];
+  const categories = ['Semua', 'Pengumuman', 'Prestasi', 'Organisasi'];
 
   const filteredNews = newsList.filter((item) => {
     const matchesCategory =
@@ -61,7 +61,7 @@ export default function BeritaSection() {
       summary: '',
       content: '',
       image: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&w=800&q=80',
-      tags: 'UKT, Perguruan',
+      tags: 'UKT, Organisasi',
     });
     setIsAddModalOpen(false);
   };
@@ -76,7 +76,7 @@ export default function BeritaSection() {
             <Newspaper className="w-3.5 h-3.5" />
             <span>Kanal Informasi Resmi</span>
           </div>
-          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Warta & Berita Perguruan</RevealTitle>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Warta & Berita Organisasi</RevealTitle>
           <p className="text-xs sm:text-sm text-slate-500">
             Pengumuman ujian tingkatan, liputan turnamen, dan jadwal kegiatan Pagar Nusa Kota Batam.
           </p>
@@ -304,7 +304,7 @@ export default function BeritaSection() {
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
               <h3 className="text-lg font-bold text-slate-900 font-['Cinzel'] flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-amber-500" />
-                Publikasikan Warta Perguruan
+                Publikasikan Warta Organisasi
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
@@ -341,7 +341,7 @@ export default function BeritaSection() {
                   >
                     <option value="Pengumuman">Pengumuman</option>
                     <option value="Prestasi">Prestasi</option>
-                    <option value="Perguruan">Perguruan</option>
+                    <option value="Organisasi">Organisasi</option>
                   </select>
                 </div>
 

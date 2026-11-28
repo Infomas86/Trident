@@ -1,7 +1,7 @@
 {
   "name": "Pagar Nusa Kota Batam",
   "short_name": "Pagar Nusa",
-  "description": "Platform manajemen perguruan dan Ujian Kenaikan Tingkat Pagar Nusa Cabang Batam",
+  "description": "Platform manajemen organisasi dan Ujian Kenaikan Tingkat Pagar Nusa Cabang Batam",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

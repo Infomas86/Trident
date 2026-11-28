@@ -201,7 +201,7 @@ export default function VisiMisiSection() {
           <div className="flex items-center justify-center gap-3">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-semibold tracking-wider uppercase">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>{heroData?.badge || 'Perguruan Pencak Silat Pagar Nusa'}</span>
+              <span>{heroData?.badge || 'Organisasi Pencak Silat Pagar Nusa'}</span>
             </div>
 
             {isAdmin && (
@@ -236,7 +236,7 @@ export default function VisiMisiSection() {
               onClick={() => navigateToTab('berita')}
               className="px-6 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 font-semibold text-sm flex items-center gap-2 transition-all"
             >
-              <span>Warta Perguruan Terkini</span>
+              <span>Warta Organisasi Terkini</span>
               <ChevronRight className="w-4 h-4 text-slate-500" />
             </button>
           </div>
@@ -249,10 +249,10 @@ export default function VisiMisiSection() {
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-['Cinzel'] flex items-center gap-2.5">
               <TrendingUp className="w-5 h-5 text-amber-500" />
-              Statistik Real-Time Perguruan
+              Statistik Real-Time Organisasi
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Data akumulasi anggota, prestasi, dan jangkauan perguruan di Kota Batam
+              Data akumulasi anggota, prestasi, dan jangkauan organisasi di Kota Batam
             </p>
           </div>
 
@@ -300,10 +300,10 @@ export default function VisiMisiSection() {
               <Building2 className="w-5 h-5" />
             </div>
             <div className="text-3xl font-extrabold text-slate-900 font-['Cinzel'] tracking-tight">
-              {stats.padepokanBranches} Cabang
+              {stats.padepokanBranches} Pimpinan Anak Ranting
             </div>
             <div className="text-xs font-medium text-slate-500 mt-1">
-              Dojo & Perguruan Daerah
+              Dojo & Organisasi Daerah
             </div>
           </MotionCard>
 
@@ -330,9 +330,9 @@ export default function VisiMisiSection() {
               <Shield className="w-3.5 h-3.5" />
               <span>Fondasi Nilai Luhur</span>
             </div>
-            <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Pilar Visi & Misi Perguruan</RevealTitle>
+            <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Pilar Visi & Misi Organisasi</RevealTitle>
             <p className="text-xs sm:text-sm text-slate-500">
-              Nilai dasar etika kesatria yang dipegang teguh oleh setiap murid, pendekar, dan dewan penguji perguruan.
+              Nilai dasar etika kesatria yang dipegang teguh oleh setiap murid, pendekar, dan dewan penguji organisasi.
             </p>
           </div>
 
@@ -393,7 +393,7 @@ export default function VisiMisiSection() {
 
                 <div className="mt-5 pt-3 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500">
                   <span>Pilar #{pillars.indexOf(pillar) + 1}</span>
-                  <span className="text-teal-600 font-semibold group-hover:translate-x-1 transition-transform">Doktrin Perguruan</span>
+                  <span className="text-teal-600 font-semibold group-hover:translate-x-1 transition-transform">Doktrin Organisasi</span>
                 </div>
               </MotionCard>
             );
@@ -402,7 +402,7 @@ export default function VisiMisiSection() {
       </section>
 
       {/* ========================================================================= */}
-      {/* BAGAN STRUKTURAL ORGANISASI RESMI PERGURUAN (6 TINGKATAN)                */}
+      {/* BAGAN STRUKTURAL ORGANISASI RESMI ORGANISASI (6 TINGKATAN)                */}
       {/* PP ➔ PW ➔ PC ➔ PAC ➔ PR ➔ PAR (Tempat Latihan)                         */}
       {/* ========================================================================= */}
       <section className="space-y-8">
@@ -411,7 +411,7 @@ export default function VisiMisiSection() {
             <Network className="w-3.5 h-3.5" />
             <span>Tata Kelola Organisasi Terpadu</span>
           </div>
-          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Bagan Struktur Organisasi Perguruan</RevealTitle>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Bagan Struktur Organisasi</RevealTitle>
           <p className="text-xs sm:text-sm text-slate-500">
             Garis koordinasi dan hierarki komando dari Pimpinan Pusat hingga Tempat Latihan akar rumput (Pimpinan Anak Ranting).
           </p>
@@ -494,7 +494,7 @@ export default function VisiMisiSection() {
                 {/* Flow Breadcrumb */}
                 <div className="shrink-0 bg-white/80 p-4 rounded-xl border border-slate-200 text-xs space-y-2">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-semibold">
-                    Alur Struktural Perguruan:
+                    Alur Struktural Organisasi:
                   </span>
                   <div className="flex flex-wrap items-center gap-1.5 font-bold font-mono text-[11px]">
                     <span className={currentTier.level === 1 ? 'text-amber-500 underline font-extrabold' : 'text-slate-500'}>PP</span>
@@ -672,9 +672,9 @@ export default function VisiMisiSection() {
             <Calendar className="w-3.5 h-3.5" />
             <span>Rekam Jejak Historis</span>
           </div>
-          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Sejarah Perjalanan Perguruan</RevealTitle>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Sejarah Perjalanan Organisasi</RevealTitle>
           <p className="text-xs sm:text-sm text-slate-500">
-            Dari perguruan sederhana di pelosok desa hingga transformasi digital modern berstandar internasional.
+            Dari organisasi sederhana di pelosok desa hingga transformasi digital modern berstandar internasional.
           </p>
           {isAdmin && (
             <button
@@ -755,7 +755,7 @@ export default function VisiMisiSection() {
           <div className="w-full max-w-md bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-slate-900 font-['Cinzel'] mb-4 flex items-center gap-2">
               <Edit3 className="w-5 h-5 text-amber-500" />
-              Pembaruan Counter Statistik Perguruan
+              Pembaruan Counter Statistik Organisasi
             </h3>
             
             <form onSubmit={handleStatsSubmit} className="space-y-4">
@@ -782,7 +782,7 @@ export default function VisiMisiSection() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-700 font-medium block mb-1">Jumlah Cabang Perguruan</label>
+                <label className="text-xs text-slate-700 font-medium block mb-1">Jumlah Pimpinan Anak Ranting</label>
                 <input
                   type="number"
                   value={statsForm.padepokanBranches}
@@ -857,7 +857,7 @@ export default function VisiMisiSection() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-700 font-medium block mb-1">Deskripsi Slogan Perguruan</label>
+                <label className="text-xs text-slate-700 font-medium block mb-1">Deskripsi Slogan Organisasi</label>
                 <textarea
                   rows="3"
                   value={heroForm.subtitle}
@@ -898,7 +898,7 @@ export default function VisiMisiSection() {
             <form onSubmit={handleSaveTimeline} className="space-y-4">
               {[
                 ['year', 'Tahun', 'Contoh: 1984'],
-                ['title', 'Judul', 'Contoh: Pendirian Perguruan Utama'],
+                ['title', 'Judul', 'Contoh: Pendirian Organisasi Utama'],
                 ['badge', 'Label', 'Contoh: Akar Tradisi'],
               ].map(([key, label, ph]) => (
                 <div key={key}>

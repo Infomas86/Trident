@@ -220,7 +220,7 @@ export default function PrestasiSection() {
                 </div>
 
                 <div className="pt-3 border-t border-slate-200 text-[11px] text-slate-500 flex items-center justify-between">
-                  <span>Kontingen Perguruan</span>
+                  <span>Kontingen Organisasi</span>
                   <span className="text-amber-500 font-semibold flex items-center gap-1">
                     <Sparkles className="w-3 h-3" /> Terverifikasi
                   </span>
@@ -238,7 +238,7 @@ export default function PrestasiSection() {
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
               <h3 className="text-lg font-bold text-slate-900 font-['Cinzel'] flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-amber-500" />
-                Catat Prestasi Atlet Perguruan
+                Catat Prestasi Atlet Organisasi
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}

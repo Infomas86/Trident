@@ -60,7 +60,7 @@ export async function signUp(email, password, fullName, regCode, captchaToken) {
     if (/registered|exists/i.test(error.message)) throw new UserError('Email sudah terdaftar, silakan masuk');
     if (/password/i.test(error.message)) throw new UserError('Kata sandi terlalu lemah (minimal 8 karakter)');
     if (/captcha/i.test(error.message)) throw new UserError('Verifikasi gagal, muat ulang halaman lalu coba lagi');
-    if (/Database error|KODE_PENDAFTARAN/i.test(error.message)) throw new UserError('Kode pendaftaran salah atau tidak aktif. Minta kode ke admin perguruan.');
+    if (/Database error|KODE_PENDAFTARAN/i.test(error.message)) throw new UserError('Kode pendaftaran salah atau tidak aktif. Minta kode ke admin organisasi.');
     throw error;
   }
   return data;

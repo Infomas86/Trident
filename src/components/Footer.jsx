@@ -8,7 +8,7 @@ export default function Footer() {
   const { navigateToTab, siteContent, isAdmin, handleUpdateSiteContent } = useApp();
   const [secForm, setSecForm] = useState(null); // null = closed
   const sec = {
-    name: siteContent.secretariatName || 'Sekretariat Perguruan',
+    name: siteContent.secretariatName || 'Sekretariat Organisasi',
     address: siteContent.secretariatAddress || '',
     phone: siteContent.secretariatPhone || '',
     email: siteContent.secretariatEmail || '',
@@ -45,18 +45,18 @@ export default function Footer() {
             </div>
             
             <p className="text-xs text-slate-500 leading-relaxed max-w-md">
-              Perguruan Pencak Silat Nahdlatul Ulama Pagar Nusa yang berlandaskan keluhuran budi pekerti, ketangguhan fisik terukur, serta evaluasi kenaikan tingkat transparan berbasis 4 Pos Penilaian standar internasional.
+              Organisasi Pencak Silat Nahdlatul Ulama Pagar Nusa yang berlandaskan keluhuran budi pekerti, ketangguhan fisik terukur, serta evaluasi kenaikan tingkat transparan berbasis 4 Pos Penilaian standar internasional.
             </p>
 
             <div className="text-[11px] text-slate-500 font-mono">
-              Sistem Manajemen Perguruan & Evaluasi UKT
+              Sistem Manajemen Organisasi & Evaluasi UKT
             </div>
           </div>
 
           {/* Quick Links */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-['Cinzel']">
-              Modul Perguruan
+              Modul Organisasi
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
@@ -64,7 +64,7 @@ export default function Footer() {
                   onClick={() => navigateToTab('visi')}
                   className="hover:text-amber-500 transition-colors"
                 >
-                  Visi, Misi & Sejarah Perguruan
+                  Visi, Misi & Sejarah Organisasi
                 </button>
               </li>
               <li>

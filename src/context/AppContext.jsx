@@ -543,7 +543,7 @@ export function AppProvider({ children }) {
 
   // Examiner additions
   const handleAddNews = (n) =>
-    mutate(() => api.addNews({ ...n, author: currentUser?.name }), 'news', 'Berita perguruan baru berhasil dipublikasikan!', 'Gagal menerbitkan berita');
+    mutate(() => api.addNews({ ...n, author: currentUser?.name }), 'news', 'Berita organisasi baru berhasil dipublikasikan!', 'Gagal menerbitkan berita');
   const handleDeleteNews = (id) => mutate(() => api.deleteNews(id), 'news', 'Berita berhasil dihapus.', 'Gagal menghapus berita', 'info');
 
   const handleAddAchievement = (a) =>
@@ -556,14 +556,14 @@ export function AppProvider({ children }) {
   const handleDeleteAgenda = (id) => mutate(() => api.deleteAgenda(id), 'agendas', 'Agenda berhasil dihapus.', 'Gagal menghapus agenda', 'info');
 
   const handleAddCampaign = (c) =>
-    mutate(() => api.addCampaign(c), 'campaigns', 'Program donasi perguruan baru berhasil diluncurkan!', 'Gagal membuat program donasi');
+    mutate(() => api.addCampaign(c), 'campaigns', 'Program donasi organisasi baru berhasil diluncurkan!', 'Gagal membuat program donasi');
   const handleUpdateCampaign = (id, c) =>
     mutate(() => api.updateCampaign(id, c), 'campaigns', 'Program donasi berhasil diperbarui.', 'Gagal memperbarui program donasi');
   const handleDeleteCampaign = (id) =>
     mutate(() => api.deleteCampaign(id), 'campaigns', 'Program donasi berhasil dihapus.', 'Gagal menghapus program donasi', 'info');
 
   const handleUpdateStats = (n) =>
-    mutate(() => api.updateSiteStats(n), 'stats', 'Statistik perguruan berhasil diperbarui!', 'Gagal memperbarui statistik');
+    mutate(() => api.updateSiteStats(n), 'stats', 'Statistik organisasi berhasil diperbarui!', 'Gagal memperbarui statistik');
 
   // ADMIN CMS MUTATORS (Pilar Visi Misi, Hero, Info Tempat Latihan)
   const handleUpdatePillar = (id, p) =>
@@ -596,7 +596,7 @@ export function AppProvider({ children }) {
   const handleUpdateSiteContent = (patch, okMsg = 'Konten situs berhasil diperbarui!') =>
     mutate(() => api.updateSiteContent(patch), 'content', okMsg, 'Gagal memperbarui konten situs');
   const handleUpdateHero = (h) =>
-    handleUpdateSiteContent({ heroData: h }, 'Slogan & Teks Hero Perguruan berhasil diperbarui!');
+    handleUpdateSiteContent({ heroData: h }, 'Slogan & Teks Hero Organisasi berhasil diperbarui!');
 
   return (
     <AppContext.Provider

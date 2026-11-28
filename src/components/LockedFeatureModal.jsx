@@ -31,7 +31,7 @@ export default function LockedFeatureModal() {
         <h3 className="text-xl font-bold text-slate-900 font-['Cinzel'] tracking-wide">Akses Fitur Terkunci</h3>
 
         <p className="text-sm text-slate-700 mt-2">
-          Fitur <span className="font-semibold text-amber-500">"{lockedModal.featureName}"</span> hanya untuk anggota Perguruan yang sudah masuk.
+          Fitur <span className="font-semibold text-amber-500">"{lockedModal.featureName}"</span> hanya untuk anggota Organisasi yang sudah masuk.
         </p>
 
         <button

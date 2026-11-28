@@ -33,7 +33,7 @@ export default function AgendaSection() {
     title: '',
     date: new Date().toISOString().slice(0, 10),
     time: '16:00 - 18:30 WIB',
-    location: 'Perguruan Pusat - Dojo Cakra Bhakti',
+    location: 'Organisasi Pusat - Dojo Cakra Bhakti',
     speaker: 'Dewan Pelatih Utama',
     description: '',
   });
@@ -48,7 +48,7 @@ export default function AgendaSection() {
         <div className="space-y-2">
           <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Agenda Kegiatan Khusus Anggota & Penguji</RevealTitle>
           <p className="text-sm text-slate-500 max-w-md mx-auto">
-            Jadwal kegiatan resmi, latihan gabungan, dan agenda ujian perguruan hanya dapat diakses oleh anggota dan pengurus perguruan.
+            Jadwal kegiatan resmi, latihan gabungan, dan agenda ujian organisasi hanya dapat diakses oleh anggota dan pengurus organisasi.
           </p>
         </div>
         <div className="pt-2 flex items-center justify-center">
@@ -78,7 +78,7 @@ export default function AgendaSection() {
       title: '',
       date: new Date().toISOString().slice(0, 10),
       time: '16:00 - 18:30 WIB',
-      location: 'Perguruan Pusat - Dojo Cakra Bhakti',
+      location: 'Organisasi Pusat - Dojo Cakra Bhakti',
       speaker: 'Dewan Pelatih Utama',
       description: '',
     });
@@ -95,9 +95,9 @@ export default function AgendaSection() {
             <Calendar className="w-3.5 h-3.5" />
             <span>Kanal Informasi Jadwal & Kegiatan</span>
           </div>
-          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Agenda Kegiatan Perguruan</RevealTitle>
+          <RevealTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">Agenda Kegiatan Organisasi</RevealTitle>
           <p className="text-xs sm:text-sm text-slate-500">
-            Informasi lengkap jadwal latihan gabungan, persiapan ujian kenaikan tingkat, dan kegiatan resmi perguruan.
+            Informasi lengkap jadwal latihan gabungan, persiapan ujian kenaikan tingkat, dan kegiatan resmi organisasi.
           </p>
         </div>
 
@@ -250,11 +250,11 @@ export default function AgendaSection() {
 
               <div>
                 <label className="text-xs text-slate-700 font-semibold block mb-1">
-                  Lokasi Perguruan / Gedung
+                  Lokasi Organisasi / Gedung
                 </label>
                 <input
                   type="text"
-                  placeholder="Contoh: Perguruan Pusat - Dojo Cakra Bhakti"
+                  placeholder="Contoh: Organisasi Pusat - Dojo Cakra Bhakti"
                   value={newAgendaForm.location}
                   onChange={(e) => setNewAgendaForm({ ...newAgendaForm, location: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"

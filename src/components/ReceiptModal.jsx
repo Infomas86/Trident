@@ -139,10 +139,10 @@ export default function ReceiptModal() {
           <div className="flex items-center justify-between pt-4 border-t border-slate-200 text-[11px] text-slate-500">
             <div className="space-y-1">
               <p className="text-slate-700 font-semibold">
-                Bendahara Kas Perguruan
+                Bendahara Kas Organisasi
               </p>
               <p className="text-slate-500">
-                Dicetak secara otomatis & sah melalui Sistem Informasi Perguruan
+                Dicetak secara otomatis & sah melalui Sistem Informasi Organisasi
               </p>
             </div>
           </div>

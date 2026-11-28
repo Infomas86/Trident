@@ -99,7 +99,7 @@ export default function LoginPage() {
         <div className="text-center space-y-2 relative z-10 pt-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[11px] font-bold tracking-wider uppercase">
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Akun Resmi Perguruan</span>
+            <span>Akun Resmi Organisasi</span>
           </div>
           <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Cinzel']">
             Portal <span className="text-green-600">PAGAR NUSA</span>
@@ -107,7 +107,7 @@ export default function LoginPage() {
           <p className="text-xs sm:text-sm text-slate-500">
             {mode === 'login'
               ? 'Masuk untuk membuka Agenda, Donasi, dan Ujian Kenaikan Tingkat.'
-              : 'Daftar sebagai anggota perguruan.'}
+              : 'Daftar sebagai anggota organisasi.'}
           </p>
         </div>
 
@@ -179,7 +179,7 @@ export default function LoginPage() {
                 autoCapitalize="characters"
                 value={regCode}
                 onChange={(e) => setRegCode(e.target.value.toUpperCase())}
-                placeholder="Kode dari admin perguruan"
+                placeholder="Kode dari admin organisasi"
                 className={`${inputCls} font-mono tracking-widest`}
                 required
               />
