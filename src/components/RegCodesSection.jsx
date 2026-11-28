@@ -48,7 +48,7 @@ export default function RegCodesSection() {
 
       <form onSubmit={create} className="grid sm:grid-cols-4 gap-2 items-start">
         <div className="flex gap-1">
-          <input className={`${input} font-mono tracking-widest`} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} />
+          <input className={`${input} font-mono tracking-widest`} value={form.code} readOnly title="Kode dibuat acak supaya tidak bisa ditebak; klik Acak untuk kode lain" />
           <button type="button" onClick={() => setForm({ ...form, code: gen() })} className="shrink-0 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs text-slate-700">Acak</button>
         </div>
         <input className={input} placeholder="Label (opsional, mis. Angkatan 2026)" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} />

@@ -31,7 +31,7 @@ function corsHeaders(origin: string | null) {
 async function recentFails(email: string): Promise<number> {
   const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
   const { count, error } = await db.from('login_guard').select('*', { count: 'exact', head: true })
-    .ilike('email', email).eq('success', false).gte('attempted_at', since);
+    .eq('email', email).eq('success', false).gte('attempted_at', since);
   if (error) throw new Error(error.message);
   return count ?? 0;
 }
@@ -40,7 +40,7 @@ const record = (email: string, success: boolean) => db.from('login_guard').inser
 
 async function handle(req: Request) {
   const b = await req.json().catch(() => { throw new HttpError(400, 'JSON tidak valid'); });
-  const email = typeof b.email === 'string' ? b.email.trim() : '';
+  const email = typeof b.email === 'string' ? b.email.trim().toLowerCase() : '';
   const password = typeof b.password === 'string' ? b.password : '';
   const captchaToken = typeof b.captchaToken === 'string' ? b.captchaToken : undefined;
   if (!email || !password) throw new HttpError(400, 'email dan password wajib diisi');
@@ -54,13 +54,15 @@ async function handle(req: Request) {
     method: 'POST', headers: { apikey: ANON_KEY, 'content-type': 'application/json' }, body: JSON.stringify({ email, password, gotrue_meta_security: { captcha_token: captchaToken } }),
   });
   let body = await r.text();
-  await record(email, r.ok);
+  const code = (JSON.parse(body || '{}') as { error_code?: string }).error_code;
+  // Kegagalan captcha bukan percobaan sandi: jangan dihitung (kalau dihitung, siapa pun bisa
+  // mengunci akun orang lain tanpa captcha) dan jangan bocorkan status akun ke permintaan tanpa captcha.
+  if (r.ok || code === 'invalid_credentials') await record(email, r.ok);
 
   // GoTrue sengaja membalas "invalid_credentials" yang sama untuk password salah MAUPUN email
   // belum dikonfirmasi (menghindari kebocoran status akun). Di sini kita beda-kan supaya pesan di
-  // aplikasi tepat ("cek email" vs "password salah") - akibatnya memang sedikit membocorkan bahwa
-  // email terdaftar tapi belum dikonfirmasi; untuk aplikasi komunitas kecil ini, trade-off itu wajar.
-  if (!r.ok && r.status === 400) {
+  // aplikasi tepat ("cek email" vs "password salah"); hanya untuk percobaan yang lolos captcha.
+  if (code === 'invalid_credentials') {
     const { data: confirmed } = await db.rpc('is_email_confirmed', { p_email: email });
     if (confirmed === false) {
       body = JSON.stringify({ error_code: 'email_not_confirmed', msg: 'Email belum dikonfirmasi. Cek email Anda dan klik link konfirmasi.' });

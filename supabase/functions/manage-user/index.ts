@@ -28,9 +28,11 @@ async function handle(req: Request) {
   const { data: u, error: ue } = await db.auth.getUser(jwt);
   if (ue || !u.user) throw new HttpError(401, 'token tidak valid');
   const me = u.user.id;
-  const { data: prof } = await db.from('profiles').select('role,is_super').eq('id', me).maybeSingle();
+  const { data: prof } = await db.from('profiles').select('role,is_super,pac').eq('id', me).maybeSingle();
   if (prof?.role !== 'admin') throw new HttpError(403, 'bukan admin');
   const isSuper = prof.is_super === true;
+  // Admin ber-PAC hanya mengelola akun PAC-nya; admin pusat (tanpa PAC) dan super admin semuanya.
+  const myPac: string | null = isSuper ? null : (prof.pac ?? null);
 
   const b = await req.json().catch(() => { throw bad('JSON tidak valid'); });
   const uid = b.user_id;
@@ -40,9 +42,11 @@ async function handle(req: Request) {
   // hanya super admin yang boleh membuat/mengangkat/menurunkan admin dan mengubah akun admin lain.
   const SUPER_ONLY = 'Hanya super admin yang boleh mengelola akun admin';
   if (b.action !== 'create' && b.action !== 'list' && uid !== me && !isSuper) {
-    const { data: t } = await db.from('profiles').select('role,is_super').eq('id', uid).maybeSingle();
+    const { data: t } = await db.from('profiles').select('role,is_super,pac').eq('id', uid).maybeSingle();
     if (t?.role === 'admin' || t?.is_super) throw new HttpError(403, SUPER_ONLY);
+    if (myPac && t?.pac !== myPac) throw new HttpError(403, 'Akun ini bukan dari PAC Anda');
   }
+  if (myPac && (b.action === 'create' || b.action === 'update_profile')) b.pac = myPac; // tidak bisa memindahkan/membuat di PAC lain
   if (!isSuper && (b.role === 'admin' || b.role === 'super')) throw new HttpError(403, 'Hanya super admin yang boleh mengangkat admin');
   if (b.action === 'update_profile' && uid === me && b.role !== undefined && b.role !== 'admin') throw bad('tidak bisa menurunkan peran sendiri');
 
@@ -102,7 +106,7 @@ async function handle(req: Request) {
       }
       const profiles = new Map(must(await db.from('profiles').select('*')).map((p) => [p.id, p]));
       return {
-        users: users.map((a) => {
+        users: users.filter((a) => !myPac || profiles.get(a.id)?.pac === myPac).map((a) => {
           const p = profiles.get(a.id);
           return {
             id: a.id, email: a.email, full_name: p?.full_name ?? null, role: p?.role ?? null,

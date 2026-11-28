@@ -374,12 +374,12 @@ test('manage-user: update_profile dan list; admin tak bisa nonaktif/turun diri',
 
 test('gerbang kode pendaftaran: RPC validasi + PAC anggota ikut kode', async () => {
   const code = `RC${RUN}`.toUpperCase();
-  // kode belum ada -> RPC menolak (gerbang aplikasi menolak pendaftaran)
-  assert.equal((await anonClient().rpc('registration_code_valid', { p_code: 'SALAH99' })).data, false);
+  // Pemeriksaan kode tidak lagi publik (mencegah tebak kode); gerbangnya trigger saat daftar.
+  // CATATAN: signUp di bawah butuh captcha Supabase dimatikan (atau pakai token uji Turnstile).
+  assert.ok((await anonClient().rpc('registration_code_valid', { p_code: 'SALAH99' })).error, 'RPC tidak boleh bisa dipanggil publik');
 
   // admin buat kode untuk sebuah PAC
   assert.ifError((await admin.from('registration_codes').insert({ code, pac: 'Batam Kota', label: `T-rc-${RUN}` })).error);
-  assert.equal((await anonClient().rpc('registration_code_valid', { p_code: code })).data, true);
 
   // daftar dengan kode -> profil anggota, PAC dari kode, no. registrasi otomatis
   const good = await anonClient().auth.signUp({ email: `u${RUN}-withcode@test.trident.local`, password: 'Sandi-Mandiri-1', options: { data: { full_name: 'Pendaftar Mandiri', reg_code: code } } });
@@ -389,9 +389,10 @@ test('gerbang kode pendaftaran: RPC validasi + PAC anggota ikut kode', async () 
   assert.equal(p.pac, 'Batam Kota');
   assert.match(p.reg_number, /^PNKB-\d{4}-\d{4}$/);
 
-  // kode dinonaktifkan -> RPC menolak
+  // kode dinonaktifkan -> pendaftaran ditolak trigger
   assert.ifError((await admin.from('registration_codes').update({ active: false }).eq('code', code)).error);
-  assert.equal((await anonClient().rpc('registration_code_valid', { p_code: code })).data, false);
+  const bad = await anonClient().auth.signUp({ email: `u${RUN}-nocode@test.trident.local`, password: 'Sandi-Mandiri-1', options: { data: { full_name: 'Tanpa Kode', reg_code: code } } });
+  assert.ok(bad.error, 'kode nonaktif tidak boleh dipakai daftar');
 });
 
 test('anggota biasa tidak bisa membaca/menulis kode pendaftaran', async () => {

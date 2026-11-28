@@ -26,6 +26,7 @@ export async function signIn(email, password, captchaToken) {
   }
   if (res.status === 429) return 'locked';
   const body = await res.json().catch(() => ({}));
+  if (body.error_code === 'captcha_failed') return 'captcha';
   if (!res.ok) return body.error_code === 'email_not_confirmed' ? 'unconfirmed' : 'bad_credentials';
   const { error } = await supabase.auth.setSession({ access_token: body.access_token, refresh_token: body.refresh_token });
   return error ? 'bad_credentials' : true;
@@ -53,13 +54,12 @@ export async function getProfile(userId) {
 // --- Daftar mandiri ---
 // Self sign-up always creates an 'anggota' profile (DB trigger); the name travels as metadata.
 export async function signUp(email, password, fullName, regCode, captchaToken) {
-  // Hanya anggota yang punya kode pendaftaran dari admin yang boleh daftar.
-  const { data: valid } = await supabase.rpc('registration_code_valid', { p_code: regCode });
-  if (!valid) throw new UserError('Kode pendaftaran salah atau tidak aktif. Minta kode ke admin perguruan.');
+  // Kode pendaftaran diperiksa trigger di database saat akun dibuat (tidak ada pemeriksaan publik terpisah).
   const { data, error } = await supabase.auth.signUp({ email, password, options: { captchaToken, data: { full_name: fullName, reg_code: regCode } } });
   if (error) {
     if (/registered|exists/i.test(error.message)) throw new UserError('Email sudah terdaftar, silakan masuk');
     if (/password/i.test(error.message)) throw new UserError('Kata sandi terlalu lemah (minimal 8 karakter)');
+    if (/captcha/i.test(error.message)) throw new UserError('Verifikasi gagal, muat ulang halaman lalu coba lagi');
     if (/Database error|KODE_PENDAFTARAN/i.test(error.message)) throw new UserError('Kode pendaftaran salah atau tidak aktif. Minta kode ke admin perguruan.');
     throw error;
   }
@@ -325,32 +325,6 @@ export async function joinUktByCode(code) {
   const { data, error } = await supabase.rpc('join_ukt_by_code', { p_code: code });
   if (error) throw new UserError(error.message.includes('tidak valid') ? 'Kode penguji tidak valid atau UKT sudah berakhir' : error.message);
   return data;
-}
-
-export async function getCandidate(id) {
-  const r = ok(await supabase.from('ukt_candidates').select(CANDIDATE_COLS).eq('id', id).maybeSingle());
-  return r && fromCandidateRow(r);
-}
-
-const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); // YYYY-MM-DD
-
-// Returns 'conflict' when the row changed since baseUpdatedAt (unless force); network/other errors throw.
-export async function saveCandidateScores(id, posScores, notes, { baseUpdatedAt, force = false } = {}) {
-  const { data: sess } = await supabase.auth.getSession();
-  const uid = sess.session?.user?.id;
-  const { data: prof } = await supabase.from('profiles').select('full_name').eq('id', uid).single();
-  const patch = {
-    ...Object.fromEntries(POS_KEYS.map((k) => [k, posScores[k].score])),
-    sub_scores: Object.fromEntries(POS_KEYS.map((k) => [k, posScores[k].sub])),
-    examiner_notes: notes,
-    examiner_id: uid,
-    examiner_name: prof?.full_name ?? null,
-    exam_date: today(),
-  };
-  let q = supabase.from('ukt_candidates').update(patch).eq('id', id);
-  if (!force) q = q.eq('updated_at', baseUpdatedAt);
-  const rows = ok(await q.select('id'));
-  return rows.length ? 'ok' : 'conflict';
 }
 
 // Predikat huruf satu materi (grade null = hapus). Atomik di database: penguji lain tidak tertimpa.

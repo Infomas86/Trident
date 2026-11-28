@@ -4,7 +4,7 @@ import { memoClear } from '../lib/memo';
 import { isTabEnabled } from '../config';
 import { ttlGet, ttlSet } from '../lib/ttlCache';
 import * as api from '../lib/api';
-import { enqueueForUser, withoutUser, syncQueue, loadQueue, saveQueue, loadConflicts, saveConflicts, loadCache, saveCache, clearCaches, overlayQueued, mineScores, mergeKeys, storedAuthUserId, loadPredikatQueue, savePredikatQueue, enqueuePredikat, removePredikatItem } from '../lib/offline';
+import { withoutUser, loadCache, saveCache, clearCaches, storedAuthUserId, loadPredikatQueue, savePredikatQueue, enqueuePredikat, removePredikatItem } from '../lib/offline';
 
 const PROFILE_TIMEOUT_MS = 8000;
 
@@ -64,41 +64,21 @@ export function AppProvider({ children }) {
     }, 4500);
   };
 
-  // Offline state: online flag, persisted score queue, conflicts awaiting the examiner's choice
+  // Offline state: online flag and the persisted predikat queue
   const [isOnline, setIsOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
-  const [offlineQueue, setOfflineQueueState] = useState(loadQueue);
-  const [allConflicts, setAllConflictsState] = useState(loadConflicts);
   const [predikatQueue, setPredikatQueueState] = useState(loadPredikatQueue);
-  const queueRef = useRef(offlineQueue);
-  const conflictsRef = useRef(allConflicts);
   const predikatQueueRef = useRef(predikatQueue);
-  const syncing = useRef(false);
   const syncingPredikat = useRef(false);
-  const syncRef = useRef(() => {});
   const syncPredikatRef = useRef(() => {});
-  const setOfflineQueue = (q) => {
-    queueRef.current = q;
-    setOfflineQueueState(q);
-    saveQueue(q);
-  };
   const setPredikatQueue = (q) => {
     predikatQueueRef.current = q;
     setPredikatQueueState(q);
     savePredikatQueue(q);
   };
 
-  // Persist like the queue; accepts a value or an updater.
-  const setAllConflicts = (u) => {
-    const next = typeof u === 'function' ? u(conflictsRef.current) : u;
-    conflictsRef.current = next;
-    setAllConflictsState(next);
-    saveConflicts(next);
-  };
-
   useEffect(() => {
     const on = () => {
       setIsOnline(true);
-      syncRef.current();
       syncPredikatRef.current();
     };
     const off = () => setIsOnline(false);
@@ -151,9 +131,7 @@ export function AppProvider({ children }) {
 
   const userId = session?.user?.id ?? offlineUid;
   // Only this user's items are shown or synced; other users' items wait for their next sign-in.
-  const offlineQueueMine = offlineQueue.filter((i) => i.userId === userId);
   const predikatQueueMine = predikatQueue.filter((i) => i.userId === userId);
-  const conflicts = allConflicts.filter((c) => c.userId === userId);
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
@@ -212,6 +190,10 @@ export function AppProvider({ children }) {
     const r = await api.signIn(email, password, captchaToken);
     if (r === 'locked') {
       showToast('Terlalu banyak percobaan gagal untuk akun ini. Coba lagi dalam 15 menit.', 'error');
+      return false;
+    }
+    if (r === 'captcha') {
+      showToast('Verifikasi gagal, muat ulang halaman lalu coba lagi', 'error');
       return false;
     }
     if (r === 'network_error') {
@@ -280,8 +262,7 @@ export function AppProvider({ children }) {
     mutate(() => api.deleteUktEvent(id), 'events', 'UKT dihapus beserta seluruh pesertanya.', 'Gagal menghapus UKT', 'info');
 
   const signOut = async () => {
-    const pending = queueRef.current.filter((i) => i.userId === userId).length + conflictsRef.current.filter((i) => i.userId === userId).length
-      + predikatQueueRef.current.filter((i) => i.userId === userId).length;
+    const pending = predikatQueueRef.current.filter((i) => i.userId === userId).length;
     if (pending && !window.confirm(`Ada ${pending} nilai belum terkirim. Keluar dan buang?`)) return;
     const { error } = await supabase.auth.signOut({ scope: 'local' });
     // 'local' drops this device's session even offline; the error is then only the failed revoke request.
@@ -292,8 +273,6 @@ export function AppProvider({ children }) {
     setOfflineUid(null);
     clearCaches();
     memoClear();
-    setOfflineQueue(withoutUser(queueRef.current, userId));
-    setAllConflicts(withoutUser(conflictsRef.current, userId));
     setPredikatQueue(withoutUser(predikatQueueRef.current, userId));
     showToast('Anda telah keluar dari akun.', 'info');
   };
@@ -474,125 +453,13 @@ export function AppProvider({ children }) {
 
   const refreshCandidates = () => loaders.candidates().catch(() => showToast('Gagal menyegarkan data', 'error'));
 
-  // Send the whole queue; one run at a time. Network errors keep items queued, conflicts go to the panel.
-  const syncNow = async () => {
-    const snapshot = queueRef.current.filter((i) => i.userId === userId);
-    // needs a real session: without one (offline fallback) saves would run as a guest and look like conflicts
-    if (syncing.current || !session || !navigator.onLine || !snapshot.length) return;
-    syncing.current = true;
-    try {
-      const r = await syncQueue(
-        snapshot,
-        (item) => api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt }),
-        { online: () => navigator.onLine },
-      );
-      // others' items untouched; mine: replaced by the remaining version (may be marked failed), new/changed-while-syncing kept
-      const sent = (i) => snapshot.some((s) => s.candidateId === i.candidateId && s.savedAt === i.savedAt);
-      setOfflineQueue(
-        queueRef.current.flatMap((i) => (i.userId !== userId || !sent(i) ? [i] : r.remaining.filter((x) => x.candidateId === i.candidateId))),
-      );
-      if (r.conflicts.length) {
-        setAllConflicts((prev) => [...prev.filter((c) => c.userId !== userId || !r.conflicts.some((x) => x.candidateId === c.candidateId)), ...r.conflicts]);
-        showToast(`${r.conflicts.length} nilai bentrok dengan penguji lain, pilih di panel Nilai bentrok`, 'error');
-      }
-      if (r.synced) showToast(`${r.synced} nilai terkirim`, 'success');
-      if (r.synced || r.conflicts.length) await refreshCandidates();
-    } finally {
-      syncing.current = false;
-    }
-  };
-  syncRef.current = syncNow;
-
   // Sync when the app opens signed in (profile ready).
   useEffect(() => {
     if (profile && session) {
-      syncRef.current();
       syncPredikatRef.current();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id, !!session]);
-
-  const resolveConflict = async (candidateId, choice) => {
-    const item = conflicts.find((c) => c.candidateId === candidateId);
-    if (!item) return;
-    if (choice === 'mine') {
-      if (!session) {
-        showToast('Gagal mengirim nilai, periksa koneksi', 'error');
-        return;
-      }
-      let r;
-      try {
-        if (item.posKeys == null) {
-          // full evaluation: my whole sheet wins
-          r = await api.saveCandidateScores(item.candidateId, item.posScores, item.notes, { baseUpdatedAt: item.baseUpdatedAt, force: true });
-        } else {
-          // quick-pos: put only my posts into the fresh row, guarded by its updated_at
-          const fresh = await api.getCandidate(item.candidateId);
-          r = fresh ? await api.saveCandidateScores(item.candidateId, mineScores(fresh, item), fresh.examinerNotes, { baseUpdatedAt: fresh.updatedAt }) : 'gone';
-        }
-      } catch (e) {
-        console.error(e);
-        showToast('Gagal mengirim nilai, periksa koneksi', 'error');
-        return;
-      }
-      if (r === 'conflict') {
-        showToast('Nilai baru saja diubah lagi oleh penguji lain, coba lagi', 'error');
-        refreshCandidates();
-        return;
-      }
-      if (r !== 'ok') {
-        showToast('Nilai tidak bisa dikirim (ditolak server atau peserta dihapus)', 'error');
-        return;
-      }
-      showToast(`Nilai ${item.candidateName ?? 'peserta'} dikirim`, 'success');
-    }
-    setAllConflicts((prev) => prev.filter((c) => c.userId !== userId || c.candidateId !== candidateId));
-    refreshCandidates();
-  };
-
-  // Drop a stuck queued item (after confirm).
-  const discardQueued = (candidateId) => {
-    if (!window.confirm('Buang nilai yang belum terkirim ini?')) return;
-    setOfflineQueue(queueRef.current.filter((i) => i.userId !== userId || i.candidateId !== candidateId));
-  };
-
-  // UKT Candidate Score Update. baseUpdatedAt = updatedAt of the snapshot the examiner edited.
-  // posKeys = posts changed (quick-pos), null = full evaluation. newPosScores already includes my queued posts.
-  // Always resolves true: the score is saved on the server, queued on the phone, or parked as a conflict.
-  const handleUpdateCandidateScores = async (candidateId, newPosScores, notes, baseUpdatedAt, posKeys = null) => {
-    const target = candidatesList.find((c) => c.id === candidateId);
-    const queued = offlineQueueMine.find((q) => q.candidateId === candidateId);
-    // newPosScores carries the queued posts, so guard against the server version they were based on.
-    const base = queued?.baseUpdatedAt ?? baseUpdatedAt;
-    const item = {
-      userId, candidateId, candidateName: target?.name, posScores: newPosScores, notes, baseUpdatedAt: base,
-      posKeys: queued ? mergeKeys(queued.posKeys, posKeys) : posKeys, savedAt: new Date().toISOString(),
-    };
-    let result;
-    if (navigator.onLine && session) {
-      try {
-        result = await api.saveCandidateScores(candidateId, newPosScores, notes, { baseUpdatedAt: base });
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    if (!result) {
-      setOfflineQueue(enqueueForUser(queueRef.current, userId, item));
-      showToast('Disimpan di HP ini, dikirim saat sinyal kembali', 'info');
-      return true;
-    }
-    setOfflineQueue(queueRef.current.filter((q) => q.userId !== userId || q.candidateId !== candidateId));
-    setAllConflicts((prev) => prev.filter((c) => c.userId !== userId || c.candidateId !== candidateId));
-    if (result === 'conflict') {
-      setAllConflicts((prev) => [...prev, item]);
-      showToast('Nilai sudah diubah penguji lain, pilih di panel Nilai bentrok', 'error');
-      refreshCandidates();
-      return true;
-    }
-    showToast(`Nilai UKT ${target?.name ?? 'Peserta UKT'} berhasil disimpan!`, 'success');
-    refreshCandidates();
-    return true;
-  };
 
   // Predikat huruf per materi (UKT model rubrik). Tampil langsung (optimistis). Gagal karena
   // jaringan -> disimpan di HP dan diantre (set_predikat atomik per materi, jadi aman dikirim
@@ -801,16 +668,9 @@ export function AppProvider({ children }) {
         handleAddOfficial,
         handleUpdateOfficial,
         handleDeleteOfficial,
-        candidatesList: overlayQueued(candidatesList, offlineQueueMine),
-        serverCandidatesList: candidatesList,
-        handleUpdateCandidateScores,
+        candidatesList,
         isOnline,
         predikatQueueCount: predikatQueueMine.length,
-        offlineQueue: offlineQueueMine,
-        conflicts,
-        discardQueued,
-        syncNow,
-        resolveConflict,
         handleSetPredikat,
         handleImportParticipants,
         handleDeleteCandidate,
