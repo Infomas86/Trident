@@ -301,10 +301,10 @@ export default function VisiMisiSection() {
               <Building2 className="w-5 h-5" />
             </div>
             <div className="text-3xl font-extrabold text-slate-900 font-['Cinzel'] tracking-tight">
-              {stats.padepokanBranches} Pimpinan Anak Ranting
+              {stats.padepokanBranches}
             </div>
             <div className="text-xs font-medium text-slate-500 mt-1">
-              Dojo & Organisasi Daerah
+              Pimpinan Anak Ranting
             </div>
           </MotionCard>
 
