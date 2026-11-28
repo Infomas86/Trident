@@ -45,7 +45,7 @@ export default function Footer() {
             </div>
             
             <p className="text-xs text-slate-500 leading-relaxed max-w-md">
-              Organisasi Pencak Silat Nahdlatul Ulama Pagar Nusa yang berlandaskan keluhuran budi pekerti, ketangguhan fisik terukur, serta evaluasi kenaikan tingkat transparan berbasis 4 Pos Penilaian standar internasional.
+              Pencak Silat Nahdlatul Ulama Pagar Nusa yang berlandaskan keluhuran budi pekerti, ketangguhan fisik terukur, serta evaluasi kenaikan tingkat transparan berbasis 4 Pos Penilaian standar internasional.
             </p>
 
             <div className="text-[11px] text-slate-500 font-mono">
