@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { ORGANIZATIONAL_HIERARCHY } from '../data/static';
 import { waNumber } from '../lib/phone';
 import OfficialsSection from './OfficialsSection';
+import UnitNavigator from './UnitNavigator';
 import { isTabEnabled } from '../config';
 import {
   Shield,
@@ -42,6 +43,9 @@ export default function VisiMisiSection() {
     heroData,
     handleUpdateHero,
     trainingGrounds,
+    trainingUnits,
+    handleAddTrainingUnit,
+    handleDeleteTrainingUnit,
     handleUpdateTrainingGround,
     handleAddTrainingGround,
     handleDeleteTrainingGround,
@@ -91,6 +95,9 @@ export default function VisiMisiSection() {
   // Admin CMS: Edit / Add Training Ground Modal
   const [editingTrainingGround, setEditingTrainingGround] = useState(null); // null or ground object
   const [isAddGroundOpen, setIsAddGroundOpen] = useState(false);
+  const [nav, setNav] = useState({}); // { pacId, rantingId } penelusuran PAC -> Ranting
+  const navPac = trainingUnits.find((u) => u.id === nav.pacId);
+  const navRanting = trainingUnits.find((u) => u.id === nav.rantingId);
   const [groundForm, setGroundForm] = useState({
     name: '',
     tier: 'Anak Ranting (PAR)',
@@ -163,6 +170,8 @@ export default function VisiMisiSection() {
       ...groundForm,
       facilities,
       activeStudents: 30,
+      rantingId: nav.rantingId,
+      parentPR: `${navRanting?.name ?? ''} - ${navPac?.name ?? ''}`,
     });
     setIsAddGroundOpen(false);
     setGroundForm({
@@ -539,7 +548,7 @@ export default function VisiMisiSection() {
             </p>
           </div>
 
-          {isAdmin && (
+          {isAdmin && nav.rantingId && (
             <button
               onClick={() => setIsAddGroundOpen(true)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all shrink-0"
@@ -550,12 +559,17 @@ export default function VisiMisiSection() {
           )}
         </div>
 
-        {/* Training Grounds Grid */}
-        {trainingGrounds.length === 0 && (
-          <p className="text-center text-sm font-semibold text-slate-500 py-10">Belum ada tempat latihan</p>
+        <UnitNavigator
+          units={trainingUnits} grounds={trainingGrounds} isAdmin={isAdmin} pacId={nav.pacId} rantingId={nav.rantingId}
+          onSelect={setNav} onAdd={handleAddTrainingUnit} onDelete={handleDeleteTrainingUnit}
+        />
+
+        {/* Training Grounds Grid (Anak Ranting dari Ranting yang dipilih) */}
+        {nav.rantingId && trainingGrounds.filter((g) => g.rantingId === nav.rantingId).length === 0 && (
+          <p className="text-center text-sm font-semibold text-slate-500 py-10">Belum ada tempat latihan di ranting ini</p>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {trainingGrounds.map((ground) => {
+          {(nav.rantingId ? trainingGrounds.filter((g) => g.rantingId === nav.rantingId) : []).map((ground) => {
             const cleanPhone = waNumber(ground.trainerPhone);
             const waLink = `https://wa.me/${cleanPhone}?text=Salam%20Persaudaraan%20Pelatih%20${encodeURIComponent(ground.trainerName)},%20saya%20ingin%20menanyakan%20informasi%20pendaftaran%20di%20${encodeURIComponent(ground.name)}.`;
 
@@ -1048,11 +1062,9 @@ export default function VisiMisiSection() {
                   <label className="text-xs text-slate-700 font-medium block mb-1">Ranting / PAC</label>
                   <input
                     type="text"
-                    value={groundForm.parentPR}
-                    onChange={(e) => setGroundForm({ ...groundForm, parentPR: e.target.value })}
-                    placeholder="Contoh: PR Tanjung Piayu - PAC Sungai Beduk"
-                    className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none"
-                    required
+                    value={editingTrainingGround ? groundForm.parentPR : `${navRanting?.name ?? ''} - ${navPac?.name ?? ''}`}
+                    readOnly
+                    className="w-full px-3 py-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 text-xs outline-none"
                   />
                 </div>
                 <div>

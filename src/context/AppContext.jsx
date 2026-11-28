@@ -34,6 +34,7 @@ export function AppProvider({ children }) {
   const [stats, setStats] = useState({ activeMembers: 0, medalsCount: 0, padepokanBranches: 0, uktPassRate: 0, masterCouncil: 0 });
   const [heroData, setHeroData] = useState({});
   const [trainingGrounds, setTrainingGrounds] = useState([]);
+  const [trainingUnits, setTrainingUnits] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [pillars, setPillars] = useState([]);
   const [newsList, setNewsList] = useState([]);
@@ -303,6 +304,7 @@ export function AppProvider({ children }) {
     pillars: (c) => loadPublic('pillars', api.listPillars, setPillars, c),
     timeline: (c) => loadPublic('timeline', api.listTimeline, setTimeline, c),
     grounds: (c) => loadPublic('grounds', api.listTrainingGrounds, setTrainingGrounds, c),
+    units: (c) => loadPublic('units', api.listTrainingUnits, setTrainingUnits, c),
     events: async () => {
       if (!userId) return setUktEvents([]);
       try {
@@ -351,7 +353,7 @@ export function AppProvider({ children }) {
   };
   // Data tab disimpan di state context: pindah tab tidak mengambil ulang. Hanya dua kondisi yang memuat:
   // (1) sekali saat aplikasi dibuka untuk data publik, (2) sekali per akun/peran untuk data milik pengguna.
-  const PUBLIC_LOADERS = ['news', 'achievements', 'stats', 'content', 'pillars', 'timeline', 'grounds'].filter((n) => n !== 'achievements' || isTabEnabled('prestasi')); // prestasi nonaktif: datanya tidak diambil
+  const PUBLIC_LOADERS = ['news', 'achievements', 'stats', 'content', 'pillars', 'timeline', 'grounds', 'units'].filter((n) => n !== 'achievements' || isTabEnabled('prestasi')); // prestasi nonaktif: datanya tidak diambil
   const USER_LOADERS = ['pendingDonations', 'events', 'candidates', 'myResult', 'officials'].filter((n) => n !== 'officials' || isTabEnabled('pengurus')); // pengurus nonaktif: datanya tidak diambil
   // Data tab yang berat dimuat saat tab pertama kali dibuka (bukan saat login), lalu di-cache sampai ganti akun.
   const LAZY_TABS = { agenda: ['agendas'], donasi: ['campaigns', 'myDonations'] };
@@ -583,6 +585,10 @@ export function AppProvider({ children }) {
     mutate(() => api.updateTrainingGround(id, g), 'grounds', 'Info Tempat Latihan & Kontak Pelatih berhasil diperbarui!', 'Gagal memperbarui tempat latihan');
   const handleAddTrainingGround = (g) =>
     mutate(() => api.addTrainingGround(g), 'grounds', 'Tempat Latihan (PAR) baru berhasil didaftarkan!', 'Gagal menambahkan tempat latihan');
+  const handleAddTrainingUnit = (u) =>
+    mutate(() => api.addTrainingUnit(u), 'units', u.level === 'PAC' ? 'PAC baru ditambahkan' : 'Ranting baru ditambahkan', 'Gagal menambahkan (nama mungkin sudah ada)');
+  const handleDeleteTrainingUnit = (id) =>
+    mutate(() => api.deleteTrainingUnit(id), 'units', 'Berhasil dihapus', 'Gagal menghapus', 'info');
   const handleDeleteTrainingGround = (id) =>
     mutate(() => api.deleteTrainingGround(id), 'grounds', 'Tempat Latihan berhasil dihapus dari daftar!', 'Gagal menghapus tempat latihan', 'info');
 
@@ -633,6 +639,9 @@ export function AppProvider({ children }) {
         heroData,
         handleUpdateHero,
         trainingGrounds,
+        trainingUnits,
+        handleAddTrainingUnit,
+        handleDeleteTrainingUnit,
         handleUpdateTrainingGround,
         handleAddTrainingGround,
         handleDeleteTrainingGround,

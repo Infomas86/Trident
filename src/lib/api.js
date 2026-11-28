@@ -220,19 +220,30 @@ export const deleteTimelineEvent = async (id) => hit(supabase.from('timeline_eve
 const GROUND_MAP = {
   name: 'name', tier: 'tier', parentPR: 'parent_pr', address: 'address', trainerName: 'trainer_name', trainerBelt: 'trainer_belt',
   trainerPhone: 'trainer_phone', trainerPhoto: 'trainer_photo_url', schedule: 'schedule', facilities: 'facilities',
-  activeStudents: 'active_students', badge: 'badge', description: 'description',
+  activeStudents: 'active_students', badge: 'badge', description: 'description', rantingId: 'ranting_id',
 };
 
 export const listTrainingGrounds = async () =>
   ok(
     await supabase
       .from('training_grounds')
-      .select('id,name,tier,parentPR:parent_pr,address,trainerName:trainer_name,trainerBelt:trainer_belt,trainerPhone:trainer_phone,trainerPhoto:trainer_photo_url,schedule,facilities,activeStudents:active_students,badge,description')
+      .select('id,name,tier,parentPR:parent_pr,address,trainerName:trainer_name,trainerBelt:trainer_belt,trainerPhone:trainer_phone,trainerPhoto:trainer_photo_url,schedule,facilities,activeStudents:active_students,badge,description,rantingId:ranting_id')
       .order('created_at', { ascending: false }),
   );
 export const addTrainingGround = async (input) => ok(await supabase.from('training_grounds').insert(toRow(input, GROUND_MAP)));
 export const updateTrainingGround = async (id, patch) => hit(supabase.from('training_grounds').update(toRow(patch, GROUND_MAP)).eq('id', id));
 export const deleteTrainingGround = async (id) => hit(supabase.from('training_grounds').delete().eq('id', id));
+
+// PAC -> Ranting (tempat latihan = Anak Ranting menempel ke Ranting lewat rantingId).
+export const listTrainingUnits = async () =>
+  ok(await supabase.from('training_units').select('id,level,name,parentId:parent_id').order('name'));
+export const addTrainingUnit = async ({ level, name, parentId }) =>
+  ok(await supabase.from('training_units').insert({ level, name: name.trim(), parent_id: parentId ?? null }));
+export const deleteTrainingUnit = async (id) => {
+  const { data, error } = await supabase.from('training_units').delete().eq('id', id).select('id');
+  if (error) throw error.code === '23503' ? new UserError('Tidak bisa dihapus: masih ada isinya') : error;
+  if (!data.length) throw new Error(NOT_ALLOWED);
+};
 
 // --- Direktori Pengurus PAC/Ranting ---
 const OFFICIAL_MAP = {
