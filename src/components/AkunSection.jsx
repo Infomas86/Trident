@@ -7,6 +7,11 @@ import RegCodesSection from './RegCodesSection';
 const input = 'w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-amber-500 outline-none';
 const ROLE_OPTIONS = [[ROLES.MEMBER, 'Anggota'], [ROLES.EXAMINER, 'Penguji'], [ROLES.ADMIN, 'Admin']];
 const roleLabel = (u) => (u.is_super ? 'Super Admin' : ROLE_OPTIONS.find(([v]) => v === u.role)?.[1] ?? '-');
+// Sandi sementara acak per reset (tanpa huruf/angka yang mirip), 10 karakter > minimal 8 Supabase.
+const tempPassword = () => {
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  return Array.from(crypto.getRandomValues(new Uint8Array(10)), (n) => abc[n % abc.length]).join('');
+};
 const EMPTY = { email: '', password: '', full_name: '', role: ROLES.MEMBER, reg_number: '', pac: '' };
 const blank = (v) => v.trim() || null;
 
@@ -67,11 +72,12 @@ export default function AkunSection() {
     if (done) setEdit(null);
   };
 
-  const reset = (u) => {
-    const pw = window.prompt(`Sandi baru untuk ${u.email} (minimal 8 karakter):`);
-    if (pw === null) return;
-    if (pw.length < 8) return showToast('Sandi minimal 8 karakter', 'error');
-    if (window.confirm(`Reset sandi ${u.email}?`)) run(() => api.resetPassword(u.id, pw), 'Sandi berhasil direset', 'Gagal mereset sandi');
+  const reset = async (u) => {
+    if (!window.confirm(`Reset sandi ${u.email}? Sandi sementara baru dibuat; ${u.email} wajib membuat sandi sendiri saat masuk.`)) return;
+    const pw = tempPassword();
+    if (await run(() => api.resetPassword(u.id, pw, true), 'Sandi berhasil direset', 'Gagal mereset sandi')) {
+      window.prompt(`Sandi sementara ${u.email} (hanya ditampilkan sekali, salin lalu kirim ke anggota):`, pw);
+    }
   };
 
   const toggle = (u) => {

@@ -193,6 +193,7 @@ export function AppProvider({ children }) {
         email: session?.user?.email,
         role: profile.role,
         isSuper: profile.is_super === true,
+        mustChangePassword: profile.must_change_password === true,
         belt: profile.belt,
         branch: profile.branch,
         regNumber: profile.reg_number,
@@ -200,6 +201,12 @@ export function AppProvider({ children }) {
         avatar: profile.photo_url,
       }
     : null;
+
+  const changeOwnPassword = async (password) => {
+    await api.changeOwnPassword(password);
+    setProfile((p) => (p ? { ...p, must_change_password: false } : p));
+    showToast('Sandi berhasil diganti', 'success');
+  };
 
   const signIn = async (email, password, captchaToken) => {
     const r = await api.signIn(email, password, captchaToken);
@@ -733,6 +740,7 @@ export function AppProvider({ children }) {
         isAdmin,
         authLoading,
         signIn,
+        changeOwnPassword,
         signUp,
         joinUktByCode,
         uktEvents,

@@ -45,7 +45,7 @@ const fmtDate = (iso) =>
   new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
 export async function getProfile(userId) {
-  const { data, error } = await supabase.from('profiles').select('id,full_name,role,is_super,belt,branch,reg_number,pac,photo_url').eq('id', userId).single();
+  const { data, error } = await supabase.from('profiles').select('id,full_name,role,is_super,must_change_password,belt,branch,reg_number,pac,photo_url').eq('id', userId).single();
   if (error) throw error;
   return data;
 }
@@ -516,7 +516,12 @@ async function manageUser(body) {
 }
 export const listUsers = async () => (await manageUser({ action: 'list' })).users;
 export const createUser = (input) => manageUser({ action: 'create', ...input });
-export const resetPassword = (userId, password) => manageUser({ action: 'reset_password', user_id: userId, password });
+export const resetPassword = (userId, password, force = false) => manageUser({ action: 'reset_password', user_id: userId, password, force });
+export const changeOwnPassword = async (password) => {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw new UserError(/same|different/i.test(error.message) ? 'Sandi baru harus berbeda dari sandi sementara' : 'Gagal mengganti sandi: ' + error.message);
+  ok(await supabase.rpc('clear_must_change_password'));
+};
 export const setUserActive = (userId, active) => manageUser({ action: 'set_active', user_id: userId, active });
 export const deleteUser = (userId) => manageUser({ action: 'delete', user_id: userId });
 export const updateUserProfile = (userId, patch) => manageUser({ action: 'update_profile', user_id: userId, ...patch });

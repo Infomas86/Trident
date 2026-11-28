@@ -5,6 +5,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import LockedFeatureModal from './components/LockedFeatureModal';
 import LoginPage from './components/LoginPage';
+import ForcePasswordModal from './components/ForcePasswordModal';
 import VisiMisiSection from './components/VisiMisiSection';
 const BeritaSection = lazy(() => import('./components/BeritaSection'));
 const PrestasiSection = lazy(() => import('./components/PrestasiSection'));
@@ -30,6 +31,7 @@ function MainContent() {
 
       {/* User Login Portal Modal */}
       <LoginPage />
+      <ForcePasswordModal />
 
       {/* Toast Notification */}
       {toast && (

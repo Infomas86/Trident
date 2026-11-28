@@ -64,6 +64,8 @@ async function handle(req: Request) {
     case 'reset_password':
       checkPassword(b.password);
       must(await db.auth.admin.updateUserById(uid, { password: b.password }));
+      // force: sandi sementara dari admin -> pemilik akun wajib menggantinya saat masuk berikutnya.
+      if (b.force === true && uid !== me) must(await db.from('profiles').update({ must_change_password: true }).eq('id', uid).select('id'));
       return { ok: true };
     case 'set_active':
       if (typeof b.active !== 'boolean') throw bad('active harus boolean');
