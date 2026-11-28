@@ -14,6 +14,7 @@ export default function AkunSection() {
   const { showToast, currentUser } = useApp();
   const [users, setUsers] = useState(() => memoGet('users') ?? []);
   const [q, setQ] = useState('');
+  const [pacTab, setPacTab] = useState('');
   const [form, setForm] = useState(EMPTY);
   const [edit, setEdit] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -88,7 +89,9 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
   };
 
   const needle = q.trim().toLowerCase();
-  const shown = users.filter((u) => !needle || [u.full_name, u.email, u.reg_number].some((v) => v?.toLowerCase().includes(needle)));
+  const pacs = [...new Set(users.map((u) => u.pac).filter(Boolean))].sort();
+  const countOf = (pac) => users.filter((u) => (pac === '-' ? !u.pac : u.pac === pac)).length;
+  const shown = users.filter((u) => (!pacTab || (pacTab === '-' ? !u.pac : u.pac === pacTab)) && (!needle || [u.full_name, u.email, u.reg_number].some((v) => v?.toLowerCase().includes(needle))));
   const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
   const setE = (k) => (e) => setEdit({ ...edit, [k]: e.target.value });
 
@@ -102,7 +105,7 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
       )}
       <input className={input} required placeholder="Nama lengkap" value={v.full_name} onChange={set('full_name')} />
       <select className={input} value={v.role} onChange={set('role')}>
-        {ROLE_OPTIONS.filter(([val]) => val !== ROLES.ADMIN || currentUser?.isSuper || v.role === ROLES.ADMIN).map(([val, label]) => (
+        {ROLE_OPTIONS.filter(([val]) => (val !== ROLES.EXAMINER || v.role === ROLES.EXAMINER) && (val !== ROLES.ADMIN || currentUser?.isSuper || v.role === ROLES.ADMIN)).map(([val, label]) => (
           <option key={val} value={val} disabled={val === ROLES.ADMIN && !currentUser?.isSuper}>{val === ROLES.ADMIN ? 'Admin (khusus super admin)' : label}</option>
         ))}
       </select>
@@ -140,6 +143,14 @@ Akun dan profilnya terhapus dan tidak bisa dikembalikan. Riwayat donasinya tetap
       )}
 
       <div className="space-y-3">
+        <div className="flex flex-wrap gap-2">
+          {[['', 'Semua', users.length], ...pacs.map((p) => [p, p, countOf(p)]), ['-', 'Tanpa PAC', countOf('-')]].map(([key, label, n]) => (
+            <button key={key} type="button" onClick={() => setPacTab(key)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold ${pacTab === key ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
+              {label} <span className="opacity-70">({n})</span>
+            </button>
+          ))}
+        </div>
         <input className={input} placeholder="Cari nama, email, atau N.I.A" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-xs text-left">
