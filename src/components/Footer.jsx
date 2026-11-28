@@ -147,6 +147,7 @@ export default function Footer() {
         {/* Copyright bar */}
         <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
           <p>© 2026 Pagar Nusa Cabang Batam. Hak Cipta Dilindungi Undang-Undang.</p>
+          <a href="/privasi.html" className="hover:text-amber-500 underline">Kebijakan Privasi</a>
           <p className="flex items-center gap-1">
             Dirancang dengan kehormatan & semangat kesatria
           </p>

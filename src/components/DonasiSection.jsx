@@ -542,6 +542,10 @@ export default function DonasiSection() {
                 </label>
               </div>
 
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Donasi bersifat sukarela untuk sarana dan kegiatan organisasi, bukan investasi, dan tanpa imbalan. Pembayaran dilakukan di luar aplikasi; foto bukti hanya dipakai untuk verifikasi dan dapat dilihat Anda dan admin. <a href="/privasi.html" target="_blank" rel="noreferrer" className="underline">Kebijakan Privasi</a>
+              </p>
+
               {/* Submit Button */}
               <div className="pt-2">
                 <button
